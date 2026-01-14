@@ -30,7 +30,7 @@ body {
     background-color: var(--background);
     color: var(--text-primary);
     line-height: 1.6;
-    overflow: hidden;
+    overflow: auto; /* 스크롤 허용 */
 }
 
 /* 페이지 전환 */
@@ -585,6 +585,7 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
     margin-top: 32px;
+    padding-bottom: 40px; /* 하단 여백 추가 */
 }
 
 .job-posting-card {

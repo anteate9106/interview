@@ -13,26 +13,21 @@ const jobPostings = [
 ];
 
 // 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    loadData();
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadData();
     checkAuth();
     setupEventListeners();
 });
 
-// 데이터 로드
-function loadData() {
-    const storedApplicants = localStorage.getItem('applicants');
-    if (storedApplicants) {
-        applicants = JSON.parse(storedApplicants);
-    } else {
+// 데이터 로드 (Supabase에서)
+async function loadData() {
+    try {
+        applicants = await getAllApplicants();
+        console.log('Loaded applicants from Supabase:', applicants);
+    } catch (error) {
+        console.error('Error loading applicants:', error);
         applicants = [];
-        saveData();
     }
-}
-
-// 데이터 저장
-function saveData() {
-    localStorage.setItem('applicants', JSON.stringify(applicants));
 }
 
 // 인증 확인
@@ -101,7 +96,7 @@ function renderJobPostings() {
 
     jobPostings.forEach(posting => {
         // 해당 공고의 지원자 수 계산
-        const postingApplicants = applicants.filter(a => a.jobPosting === posting);
+        const postingApplicants = applicants.filter(a => a.job_posting === posting);
         const totalCount = postingApplicants.length;
         
         // 평가 완료된 지원자 수 (1명이라도 평가받은 경우)
@@ -142,8 +137,9 @@ function renderJobPostings() {
 }
 
 // 채용공고 선택
-function selectJobPosting(posting) {
+async function selectJobPosting(posting) {
     selectedJobPosting = posting;
+    await loadData(); // 데이터 다시 로드
     showMainPage();
 }
 
@@ -171,7 +167,7 @@ function updateUI() {
     
     // 해당 공고의 지원자만 필터링
     const filteredApplicants = selectedJobPosting 
-        ? applicants.filter(a => a.jobPosting === selectedJobPosting)
+        ? applicants.filter(a => a.job_posting === selectedJobPosting)
         : applicants;
     
     document.getElementById('applicantCount').textContent = `${filteredApplicants.length}명`;
@@ -185,7 +181,7 @@ function renderApplicantList() {
 
     // 선택된 채용공고의 지원자만 표시
     const filteredApplicants = selectedJobPosting 
-        ? applicants.filter(a => a.jobPosting === selectedJobPosting)
+        ? applicants.filter(a => a.job_posting === selectedJobPosting)
         : applicants;
 
     if (filteredApplicants.length === 0) {
@@ -250,7 +246,7 @@ function showCoverLetter(applicant) {
             <span>${applicant.phone || '미입력'}</span>
         </div>
         <div class="applicant-detail" style="margin-top: 8px;">
-            <span style="color: #6366f1; font-weight: 700;">📢 ${applicant.jobPosting || '채용공고 미선택'}</span>
+            <span style="color: #6366f1; font-weight: 700;">📢 ${applicant.job_posting || '채용공고 미선택'}</span>
         </div>
         <div class="applicant-detail" style="margin-top: 4px;">
             <span><strong>지원 지점:</strong> ${applicant.branch || '미입력'}</span>
