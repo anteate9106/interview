@@ -10,10 +10,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // 로그인 상태 확인
-function checkLoginStatus() {
+async function checkLoginStatus() {
     const loggedInEmail = localStorage.getItem('loggedInApplicant');
     if (loggedInEmail) {
-        loadApplicantData(loggedInEmail);
+        await loadApplicantData(loggedInEmail);
         showEditApplicationPage();
     } else {
         showWelcomePage();
@@ -115,29 +115,33 @@ function showEditApplicationPage() {
 }
 
 // 로그인 처리
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
 
-    const applicants = JSON.parse(localStorage.getItem('applicants') || '[]');
-    const applicant = applicants.find(a => a.email === email);
+    try {
+        const applicant = await getApplicantByEmail(email);
 
-    if (!applicant) {
-        alert('등록되지 않은 이메일입니다.');
-        return;
+        if (!applicant) {
+            alert('등록되지 않은 이메일입니다.');
+            return;
+        }
+
+        if (!verifyPassword(password, applicant.password)) {
+            alert('비밀번호가 올바르지 않습니다.');
+            return;
+        }
+
+        localStorage.setItem('loggedInApplicant', email);
+        currentApplicant = applicant;
+        await loadApplicantData(email);
+        showEditApplicationPage();
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('로그인 중 오류가 발생했습니다.');
     }
-
-    if (applicant.password !== password) {
-        alert('비밀번호가 올바르지 않습니다.');
-        return;
-    }
-
-    localStorage.setItem('loggedInApplicant', email);
-    currentApplicant = applicant;
-    loadApplicantData(email);
-    showEditApplicationPage();
 }
 
 // 로그아웃 처리
@@ -154,17 +158,17 @@ function handleLogout() {
 }
 
 // 지원자 데이터 로드
-function loadApplicantData(email) {
-    const applicants = JSON.parse(localStorage.getItem('applicants') || '[]');
-    const applicant = applicants.find(a => a.email === email);
-    
-    if (!applicant) {
-        alert('지원자 정보를 찾을 수 없습니다.');
-        handleLogout();
-        return;
-    }
-
-    currentApplicant = applicant;
+async function loadApplicantData(email) {
+    try {
+        const applicant = await getApplicantByEmail(email);
+        
+        if (!applicant) {
+            alert('지원자 정보를 찾을 수 없습니다.');
+            handleLogout();
+            return;
+        }
+        
+        currentApplicant = applicant;
 
     document.getElementById('applicantWelcome').textContent = `${applicant.name}님, 환영합니다!`;
 
@@ -465,7 +469,7 @@ function updateApplicationStatus(applicant) {
 }
 
 // 신규 지원서 제출 처리
-function handleSubmit(e) {
+async function handleSubmit(e) {
     e.preventDefault();
 
     const formData = {
@@ -492,48 +496,52 @@ function handleSubmit(e) {
         return;
     }
 
-    const applicants = JSON.parse(localStorage.getItem('applicants') || '[]');
-    if (applicants.some(a => a.email === formData.email)) {
-        alert('이미 등록된 이메일입니다. 로그인하여 지원서를 수정하세요.');
-        return;
+    try {
+        // 이메일 중복 체크
+        const existing = await getApplicantByEmail(formData.email);
+        if (existing) {
+            alert('이미 등록된 이메일입니다. 로그인하여 지원서를 수정하세요.');
+            return;
+        }
+
+        const application = {
+            id: Date.now(),
+            job_posting: formData.jobPosting,
+            name: formData.name,
+            birthdate: formData.birthdate,
+            email: formData.email,
+            password: formData.password,
+            phone: formData.phone,
+            branch: formData.branch,
+            position: formData.position,
+            address: formData.address,
+            education: formData.education,
+            certifications: formData.certifications,
+            career: formData.career,
+            self_introduction: formData.selfIntroduction,
+            career_description: formData.careerDescription,
+            motivation: formData.motivation,
+            aspiration: formData.aspiration,
+            submit_date: new Date().toISOString().split('T')[0]
+        };
+
+        await createApplicant(application);
+
+        // 임시 저장 데이터 삭제
+        localStorage.removeItem('applicationDraft');
+        updateDraftInfo();
+
+        alert('✅ 지원서 제출 완료\n\n입사지원서가 성공적으로 제출되었습니다.\n제출하신 내용을 확인하실 수 있습니다.');
+        
+        // 제출된 데이터 다시 로드하여 currentApplicant 설정
+        currentApplicant = await getApplicantByEmail(application.email);
+        
+        // 지원서 수정 페이지로 이동
+        await loadApplicantData(application.email);
+    } catch (error) {
+        console.error('Submit error:', error);
+        alert('지원서 제출 중 오류가 발생했습니다. 다시 시도해주세요.');
     }
-
-    const application = {
-        id: Date.now(),
-        jobPosting: formData.jobPosting,
-        name: formData.name,
-        birthdate: formData.birthdate,
-        email: formData.email,
-        password: formData.password,
-        phone: formData.phone,
-        branch: formData.branch,
-        position: formData.position,
-        address: formData.address,
-        education: formData.education,
-        certifications: formData.certifications,
-        career: formData.career,
-        selfIntroduction: formData.selfIntroduction,
-        careerDescription: formData.careerDescription,
-        motivation: formData.motivation,
-        aspiration: formData.aspiration,
-        submitDate: new Date().toISOString().split('T')[0],
-        evaluation: null
-    };
-
-    applicants.push(application);
-    localStorage.setItem('applicants', JSON.stringify(applicants));
-
-    // 임시 저장 데이터 삭제
-    localStorage.removeItem('applicationDraft');
-    updateDraftInfo();
-
-    // 제출 후 자동 로그인 및 지원서 확인 페이지로 이동
-    currentApplicant = application;
-    
-    alert('✅ 지원서 제출 완료\n\n입사지원서가 성공적으로 제출되었습니다.\n제출하신 내용을 확인하실 수 있습니다.');
-    
-    // 지원서 수정 페이지로 이동
-    loadApplicantData(application.email);
 }
 
 // 지원서 수정 처리
