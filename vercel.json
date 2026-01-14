@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "name": "insarecord",
+  "builds": [
+    {
+      "src": "**/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "**/*.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "**/*.js",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/apply",
+      "destination": "/apply.html"
+    },
+    {
+      "source": "/evaluator",
+      "destination": "/evaluator.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/index.html"
+    }
+  ]
+}

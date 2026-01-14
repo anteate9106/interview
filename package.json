@@ -1,0 +1,24 @@
+{
+  "name": "insarecord",
+  "version": "1.0.0",
+  "description": "청년들 입사지원 시스템 - 지원자, 평가자, 관리자 통합 플랫폼",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'No build step needed for static site'",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "recruitment",
+    "evaluation",
+    "supabase",
+    "static-site"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/insarecord.git"
+  },
+  "homepage": "https://github.com/yourusername/insarecord#readme"
+}
