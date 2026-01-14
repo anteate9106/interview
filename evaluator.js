@@ -109,41 +109,48 @@ function showJobPostingPage() {
     renderJobPostings();
 }
 
-// 채용공고 목록 렌더링
+// 채용공고 목록 렌더링 (리스트형)
 function renderJobPostings() {
     const grid = document.getElementById('jobPostingGrid');
-    grid.innerHTML = '';
-
-    jobPostings.forEach(posting => {
-        // 해당 공고의 지원자 수 계산
-        const postingApplicants = applicants.filter(a => a.job_posting === posting);
-        const totalCount = postingApplicants.length;
-        
-        // 내가 평가한 지원자 수
-        const myEvaluatedCount = postingApplicants.filter(a => 
-            a.evaluations && a.evaluations.some(e => e.evaluator_id === currentEvaluator)
-        ).length;
-
-        const card = document.createElement('div');
-        card.className = 'job-posting-card';
-        card.innerHTML = `
-            <div class="job-posting-icon">📢</div>
-            <div class="job-posting-title">${posting}</div>
-            <div class="job-posting-stats">
-                <div class="stat-item">
-                    <div class="stat-label">총 지원자</div>
-                    <div class="stat-value">${totalCount}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">평가 완료</div>
-                    <div class="stat-value" style="color: #10b981;">${myEvaluatedCount}</div>
-                </div>
+    grid.innerHTML = `
+        <div class="job-posting-list">
+            <div class="list-header">
+                <div class="list-col-title">채용공고</div>
+                <div class="list-col-count">총 지원자</div>
+                <div class="list-col-count">평가 완료</div>
+                <div class="list-col-count">평가율</div>
             </div>
-        `;
-
-        card.addEventListener('click', () => selectJobPosting(posting));
-        grid.appendChild(card);
-    });
+            ${jobPostings.map(posting => {
+                const postingApplicants = applicants.filter(a => a.job_posting === posting);
+                const totalCount = postingApplicants.length;
+                const myEvaluatedCount = postingApplicants.filter(a => 
+                    a.evaluations && a.evaluations.some(e => e.evaluator_id === currentEvaluator)
+                ).length;
+                const evaluationRate = totalCount > 0 ? Math.round((myEvaluatedCount / totalCount) * 100) : 0;
+                
+                return `
+                    <div class="job-posting-item" onclick="selectJobPosting('${posting}')">
+                        <div class="list-col-title">
+                            <span class="posting-icon">📢</span>
+                            <span class="posting-title">${posting}</span>
+                        </div>
+                        <div class="list-col-count">
+                            <span class="count-badge">${totalCount}명</span>
+                        </div>
+                        <div class="list-col-count">
+                            <span class="count-badge success">${myEvaluatedCount}명</span>
+                        </div>
+                        <div class="list-col-count">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${evaluationRate}%"></div>
+                            </div>
+                            <span class="progress-text">${evaluationRate}%</span>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
 }
 
 // 채용공고 선택

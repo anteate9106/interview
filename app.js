@@ -89,51 +89,56 @@ function showJobPostingPage() {
     renderJobPostings();
 }
 
-// 채용공고 목록 렌더링
+// 채용공고 목록 렌더링 (리스트형)
 function renderJobPostings() {
     const grid = document.getElementById('jobPostingGrid');
-    grid.innerHTML = '';
-
-    jobPostings.forEach(posting => {
-        // 해당 공고의 지원자 수 계산
-        const postingApplicants = applicants.filter(a => a.job_posting === posting);
-        const totalCount = postingApplicants.length;
-        
-        // 평가 완료된 지원자 수 (1명이라도 평가받은 경우)
-        const evaluatedCount = postingApplicants.filter(a => 
-            a.evaluations && a.evaluations.length > 0
-        ).length;
-        
-        // 평균 평가자 수
-        const totalEvaluators = postingApplicants.reduce((sum, a) => 
-            sum + (a.evaluations ? a.evaluations.length : 0), 0
-        );
-        const avgEvaluators = totalCount > 0 ? (totalEvaluators / totalCount).toFixed(1) : 0;
-
-        const card = document.createElement('div');
-        card.className = 'job-posting-card';
-        card.innerHTML = `
-            <div class="job-posting-icon">📢</div>
-            <div class="job-posting-title">${posting}</div>
-            <div class="job-posting-stats">
-                <div class="stat-item">
-                    <div class="stat-label">총 지원자</div>
-                    <div class="stat-value">${totalCount}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">평가 완료</div>
-                    <div class="stat-value" style="color: #10b981;">${evaluatedCount}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">평균 평가자</div>
-                    <div class="stat-value" style="color: #f59e0b;">${avgEvaluators}명</div>
-                </div>
+    grid.innerHTML = `
+        <div class="job-posting-list">
+            <div class="list-header">
+                <div class="list-col-title">채용공고</div>
+                <div class="list-col-count">총 지원자</div>
+                <div class="list-col-count">평가 완료</div>
+                <div class="list-col-count">평가율</div>
+                <div class="list-col-count">평균 평가자</div>
             </div>
-        `;
-
-        card.addEventListener('click', () => selectJobPosting(posting));
-        grid.appendChild(card);
-    });
+            ${jobPostings.map(posting => {
+                const postingApplicants = applicants.filter(a => a.job_posting === posting);
+                const totalCount = postingApplicants.length;
+                const evaluatedCount = postingApplicants.filter(a => 
+                    a.evaluations && a.evaluations.length > 0
+                ).length;
+                const totalEvaluators = postingApplicants.reduce((sum, a) => 
+                    sum + (a.evaluations ? a.evaluations.length : 0), 0
+                );
+                const avgEvaluators = totalCount > 0 ? (totalEvaluators / totalCount).toFixed(1) : 0;
+                const evaluationRate = totalCount > 0 ? Math.round((evaluatedCount / totalCount) * 100) : 0;
+                
+                return `
+                    <div class="job-posting-item" onclick="selectJobPosting('${posting}')">
+                        <div class="list-col-title">
+                            <span class="posting-icon">📢</span>
+                            <span class="posting-title">${posting}</span>
+                        </div>
+                        <div class="list-col-count">
+                            <span class="count-badge">${totalCount}명</span>
+                        </div>
+                        <div class="list-col-count">
+                            <span class="count-badge success">${evaluatedCount}명</span>
+                        </div>
+                        <div class="list-col-count">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${evaluationRate}%"></div>
+                            </div>
+                            <span class="progress-text">${evaluationRate}%</span>
+                        </div>
+                        <div class="list-col-count">
+                            <span class="count-badge warning">${avgEvaluators}명</span>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
 }
 
 // 채용공고 선택
