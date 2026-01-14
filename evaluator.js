@@ -20,8 +20,8 @@ const evaluators = {
 };
 
 // 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    loadData();
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadData();
     checkAuth();
     setupEventListeners();
 });
@@ -116,12 +116,12 @@ function renderJobPostings() {
 
     jobPostings.forEach(posting => {
         // 해당 공고의 지원자 수 계산
-        const postingApplicants = applicants.filter(a => a.jobPosting === posting);
+        const postingApplicants = applicants.filter(a => a.job_posting === posting);
         const totalCount = postingApplicants.length;
         
         // 내가 평가한 지원자 수
         const myEvaluatedCount = postingApplicants.filter(a => 
-            a.evaluations && a.evaluations.some(e => e.evaluatorId === currentEvaluator)
+            a.evaluations && a.evaluations.some(e => e.evaluator_id === currentEvaluator)
         ).length;
 
         const card = document.createElement('div');
@@ -232,7 +232,7 @@ function renderApplicantList() {
             : '<span class="applicant-status status-pending">평가대기</span>';
 
         const score = myEval 
-            ? `<span class="applicant-score">${myEval.totalScore}점</span>`
+            ? `<span class="applicant-score">${myEval.total_score}점</span>`
             : '';
 
         item.innerHTML = `
@@ -251,7 +251,7 @@ function hasMyEvaluation(applicant) {
     if (!applicant.evaluations || !Array.isArray(applicant.evaluations)) {
         return null;
     }
-    return applicant.evaluations.find(e => e.evaluatorId === currentEvaluator);
+    return applicant.evaluations.find(e => e.evaluator_id === currentEvaluator);
 }
 
 // 지원자 선택
