@@ -170,16 +170,21 @@ async function loadApplicantData(email) {
         
         currentApplicant = applicant;
 
-    document.getElementById('applicantWelcome').textContent = `${applicant.name}님, 환영합니다!`;
+        document.getElementById('applicantWelcome').textContent = `${applicant.name}님, 환영합니다!`;
 
-    // 상태 배너 표시
-    updateStatusBanner(applicant);
+        // 상태 배너 표시
+        updateStatusBanner(applicant);
 
-    // 지원 현황 표시
-    updateApplicationStatus(applicant);
+        // 지원 현황 표시
+        updateApplicationStatus(applicant);
 
-    // 수정 폼 생성
-    createEditForm(applicant);
+        // 수정 폼 생성
+        createEditForm(applicant);
+    } catch (error) {
+        console.error('Error loading applicant data:', error);
+        alert('지원자 정보를 불러오는 중 오류가 발생했습니다.');
+        handleLogout();
+    }
 }
 
 // 수정 폼 생성
