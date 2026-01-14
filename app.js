@@ -199,7 +199,7 @@ function renderApplicantList() {
         // 평가 상태 확인 (evaluations 배열 사용)
         const evaluationCount = applicant.evaluations ? applicant.evaluations.length : 0;
         const avgScore = evaluationCount > 0 
-            ? Math.round(applicant.evaluations.reduce((sum, e) => sum + e.totalScore, 0) / evaluationCount)
+            ? Math.round(applicant.evaluations.reduce((sum, e) => sum + (e.total_score || 0), 0) / evaluationCount)
             : null;
 
         const status = evaluationCount > 0
@@ -257,7 +257,7 @@ function showCoverLetter(applicant) {
     // 평가 정보 표시
     let evaluationSummary = '';
     if (applicant.evaluations && applicant.evaluations.length > 0) {
-        const avgScore = Math.round(applicant.evaluations.reduce((sum, e) => sum + e.totalScore, 0) / applicant.evaluations.length);
+        const avgScore = Math.round(applicant.evaluations.reduce((sum, e) => sum + (e.total_score || 0), 0) / applicant.evaluations.length);
         
         evaluationSummary = `
             <div class="section-block" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left-color: #10b981;">
@@ -275,8 +275,8 @@ function showCoverLetter(applicant) {
                 <div style="margin-top: 16px;">
                     ${applicant.evaluations.map(e => `
                         <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600; color: #0f172a;">${e.evaluatorName || e.evaluatorId}</span>
-                            <span style="font-size: 18px; font-weight: 700; color: #6366f1;">${e.totalScore}점</span>
+                            <span style="font-weight: 600; color: #0f172a;">${e.evaluator_name || e.evaluator_id}</span>
+                            <span style="font-size: 18px; font-weight: 700; color: #6366f1;">${e.total_score}점</span>
                         </div>
                     `).join('')}
                 </div>
@@ -392,8 +392,8 @@ function loadEvaluation(applicant) {
                     ${applicant.evaluations.map(e => `
                         <div class="evaluator-card">
                             <div class="evaluator-header">
-                                <strong>${e.evaluatorName || e.evaluatorId}</strong>
-                                <span style="font-size: 20px; font-weight: 700; color: #6366f1;">${e.totalScore}점</span>
+                                <strong>${e.evaluator_name || e.evaluator_id}</strong>
+                                <span style="font-size: 20px; font-weight: 700; color: #6366f1;">${e.total_score}점</span>
                             </div>
                             <div class="evaluator-scores">
                                 <div>내용충실도: ${e.score1}점</div>
