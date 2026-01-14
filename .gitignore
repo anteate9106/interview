@@ -1,0 +1,29 @@
+# 의존성
+node_modules/
+
+# 데이터베이스
+*.db
+*.db-journal
+
+# 로그
+*.log
+npm-debug.log*
+
+# 환경 변수
+.env
+.env.local
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 임시 파일
+*.tmp
+temp/
+

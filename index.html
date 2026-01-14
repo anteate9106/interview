@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>청년들 입사지원 시스템 - 관리자</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 로그인 페이지 -->
+    <div id="loginPage" class="page active">
+        <div class="login-container">
+            <div class="login-box">
+                <h1>청년들 입사지원 시스템</h1>
+                <p class="subtitle">입사지원서류 평가 시스템</p>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">아이디</label>
+                        <input type="text" id="username" placeholder="아이디를 입력하세요" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">비밀번호</label>
+                        <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
+                    </div>
+                    <button type="submit" class="btn-primary">로그인</button>
+                    <p class="help-text">테스트 계정: admin / admin123</p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 채용공고 선택 페이지 -->
+    <div id="jobPostingPage" class="page">
+        <nav class="navbar">
+            <div class="nav-brand">청년들 입사지원 시스템</div>
+            <div class="nav-actions">
+                <a href="evaluator.html" class="btn-evaluator-link" target="_blank">📊 평가자 페이지</a>
+                <a href="apply.html" class="btn-apply-link" target="_blank">📝 지원서 작성</a>
+                <span id="currentUserPosting" class="current-user"></span>
+                <button onclick="logout()" class="btn-logout">로그아웃</button>
+            </div>
+        </nav>
+
+        <div class="job-posting-container">
+            <div class="page-header">
+                <h1>📢 채용공고 관리</h1>
+                <p class="subtitle">관리할 채용공고를 선택하세요</p>
+            </div>
+
+            <div class="job-posting-grid" id="jobPostingGrid">
+                <!-- 동적 생성 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 평가 페이지 (3분할) -->
+    <div id="mainPage" class="page">
+        <nav class="navbar">
+            <div class="nav-brand">청년들 입사지원 시스템</div>
+            <div class="nav-actions">
+                <button onclick="backToJobPostings()" class="btn-back">← 공고 목록</button>
+                <span id="currentJobPosting" class="current-job-posting"></span>
+                <a href="evaluator.html" class="btn-evaluator-link" target="_blank">📊 평가자 페이지</a>
+                <a href="apply.html" class="btn-apply-link" target="_blank">📝 지원서 작성</a>
+                <span id="currentUser" class="current-user"></span>
+                <button onclick="logout()" class="btn-logout">로그아웃</button>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <!-- 왼쪽: 지원자 목록 -->
+            <div class="left-panel">
+                <div class="panel-header">
+                    <h3>지원자 목록</h3>
+                    <div class="stats-mini">
+                        <span id="applicantCount">0명</span>
+                    </div>
+                </div>
+                <div class="applicant-list" id="applicantList">
+                    <!-- 동적으로 생성 -->
+                </div>
+            </div>
+
+            <!-- 중간: 자기소개서 -->
+            <div class="middle-panel">
+                <div class="panel-header">
+                    <h3>자기소개서</h3>
+                    <div id="applicantInfoHeader">
+                        <!-- 선택된 지원자 정보 -->
+                    </div>
+                </div>
+                <div class="cover-letter-content" id="coverLetterContent">
+                    <div class="empty-state">
+                        <p>👈 왼쪽에서 지원자를 선택하세요</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 평가 결과 -->
+            <div class="right-panel">
+                <div class="panel-header">
+                    <h3>평가 결과</h3>
+                </div>
+                <div class="evaluation-content" id="evaluationContent">
+                    <div class="empty-evaluation">
+                        <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                            <p style="font-size: 16px;">지원자를 선택하세요</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+                                <option value="">점수 선택</option>
+                                <option value="25">25점</option>
+                                <option value="24">24점</option>
+                                <option value="23">23점</option>
+                                <option value="22">22점</option>
+                                <option value="21">21점</option>
+                                <option value="20">20점</option>
+                                <option value="19">19점</option>
+                                <option value="18">18점</option>
+                                <option value="17">17점</option>
+                                <option value="16">16점</option>
+                                <option value="15">15점</option>
+                                <option value="14">14점</option>
+                                <option value="13">13점</option>
+                                <option value="12">12점</option>
+                                <option value="11">11점</option>
+                                <option value="10">10점</option>
+                                <option value="9">9점</option>
+                                <option value="8">8점</option>
+                                <option value="7">7점</option>
+                                <option value="6">6점</option>
+                                <option value="5">5점</option>
+                                <option value="4">4점</option>
+                                <option value="3">3점</option>
+                                <option value="2">2점</option>
+                                <option value="1">1점</option>
+                                <option value="0">0점</option>
+                            </select>
+                            <textarea id="comment1" placeholder="평가 코멘트 (선택사항)" rows="2"></textarea>
+                        </div>
+
+                        <div class="evaluation-section">
+                            <div class="section-header">
+                                <h4>2. 경력 및 교육사항</h4>
+                                <span class="max-score">25점</span>
+                            </div>
+                            <p class="section-description">관련 경력의 적합성, 교육 배경</p>
+                            <select id="score2" required>
+                                <option value="">점수 선택</option>
+                                <option value="25">25점</option>
+                                <option value="24">24점</option>
+                                <option value="23">23점</option>
+                                <option value="22">22점</option>
+                                <option value="21">21점</option>
+                                <option value="20">20점</option>
+                                <option value="19">19점</option>
+                                <option value="18">18점</option>
+                                <option value="17">17점</option>
+                                <option value="16">16점</option>
+                                <option value="15">15점</option>
+                                <option value="14">14점</option>
+                                <option value="13">13점</option>
+                                <option value="12">12점</option>
+                                <option value="11">11점</option>
+                                <option value="10">10점</option>
+                                <option value="9">9점</option>
+                                <option value="8">8점</option>
+                                <option value="7">7점</option>
+                                <option value="6">6점</option>
+                                <option value="5">5점</option>
+                                <option value="4">4점</option>
+                                <option value="3">3점</option>
+                                <option value="2">2점</option>
+                                <option value="1">1점</option>
+                                <option value="0">0점</option>
+                            </select>
+                            <textarea id="comment2" placeholder="평가 코멘트 (선택사항)" rows="2"></textarea>
+                        </div>
+
+                        <div class="evaluation-section">
+                            <div class="section-header">
+                                <h4>3. 조직적합성</h4>
+                                <span class="max-score">25점</span>
+                            </div>
+                            <p class="section-description">조직 문화 적합성, 팀워크 능력</p>
+                            <select id="score3" required>
+                                <option value="">점수 선택</option>
+                                <option value="25">25점</option>
+                                <option value="24">24점</option>
+                                <option value="23">23점</option>
+                                <option value="22">22점</option>
+                                <option value="21">21점</option>
+                                <option value="20">20점</option>
+                                <option value="19">19점</option>
+                                <option value="18">18점</option>
+                                <option value="17">17점</option>
+                                <option value="16">16점</option>
+                                <option value="15">15점</option>
+                                <option value="14">14점</option>
+                                <option value="13">13점</option>
+                                <option value="12">12점</option>
+                                <option value="11">11점</option>
+                                <option value="10">10점</option>
+                                <option value="9">9점</option>
+                                <option value="8">8점</option>
+                                <option value="7">7점</option>
+                                <option value="6">6점</option>
+                                <option value="5">5점</option>
+                                <option value="4">4점</option>
+                                <option value="3">3점</option>
+                                <option value="2">2점</option>
+                                <option value="1">1점</option>
+                                <option value="0">0점</option>
+                            </select>
+                            <textarea id="comment3" placeholder="평가 코멘트 (선택사항)" rows="2"></textarea>
+                        </div>
+
+                        <div class="evaluation-section">
+                            <div class="section-header">
+                                <h4>4. 직무적합성</h4>
+                                <span class="max-score">25점</span>
+                            </div>
+                            <p class="section-description">직무 이해도, 필요 역량 보유</p>
+                            <select id="score4" required>
+                                <option value="">점수 선택</option>
+                                <option value="25">25점</option>
+                                <option value="24">24점</option>
+                                <option value="23">23점</option>
+                                <option value="22">22점</option>
+                                <option value="21">21점</option>
+                                <option value="20">20점</option>
+                                <option value="19">19점</option>
+                                <option value="18">18점</option>
+                                <option value="17">17점</option>
+                                <option value="16">16점</option>
+                                <option value="15">15점</option>
+                                <option value="14">14점</option>
+                                <option value="13">13점</option>
+                                <option value="12">12점</option>
+                                <option value="11">11점</option>
+                                <option value="10">10점</option>
+                                <option value="9">9점</option>
+                                <option value="8">8점</option>
+                                <option value="7">7점</option>
+                                <option value="6">6점</option>
+                                <option value="5">5점</option>
+                                <option value="4">4점</option>
+                                <option value="3">3점</option>
+                                <option value="2">2점</option>
+                                <option value="1">1점</option>
+                                <option value="0">0점</option>
+                            </select>
+                            <textarea id="comment4" placeholder="평가 코멘트 (선택사항)" rows="2"></textarea>
+                        </div>
+
+                        <div class="total-score-section">
+                            <div class="total-label">총점</div>
+                            <div class="total-value" id="totalScore">0</div>
+                            <div class="total-max">/ 100</div>
+                        </div>
+
+                        <button type="submit" class="btn-submit">평가 저장</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 지원자 추가 모달 -->
+    <div id="addApplicantModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>지원자 추가</h3>
+                <button onclick="closeAddApplicantModal()" class="modal-close">&times;</button>
+            </div>
+            <form id="addApplicantForm">
+                <div class="form-group">
+                    <label for="applicantName">이름 *</label>
+                    <input type="text" id="applicantName" required>
+                </div>
+                <div class="form-group">
+                    <label for="applicantPosition">지원직무 *</label>
+                    <input type="text" id="applicantPosition" required>
+                </div>
+                <div class="form-group">
+                    <label for="applicantEmail">이메일</label>
+                    <input type="email" id="applicantEmail">
+                </div>
+                <div class="form-group">
+                    <label for="applicantPhone">연락처</label>
+                    <input type="tel" id="applicantPhone">
+                </div>
+                <div class="form-group">
+                    <label for="applicantCoverLetter">자기소개서 *</label>
+                    <textarea id="applicantCoverLetter" rows="10" placeholder="지원자의 자기소개서를 입력하세요..." required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeAddApplicantModal()" class="btn-secondary">취소</button>
+                    <button type="submit" class="btn-primary">추가</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

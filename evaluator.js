@@ -1,0 +1,454 @@
+// 전역 변수
+let currentEvaluator = null;
+let applicants = [];
+let selectedApplicantId = null;
+let selectedJobPosting = null;
+
+// 채용공고 목록 (실제로는 서버에서 관리해야 함)
+const jobPostings = [
+    '2026년 상반기 신입사원 공채',
+    '2026년 상반기 경력직 수시채용',
+    '2026년 인턴 채용',
+    '2026년 계약직 채용'
+];
+
+// 평가자 계정 (실제로는 서버에서 관리해야 함)
+const evaluators = {
+    'evaluator1': { password: 'eval123', name: '평가자 1' },
+    'evaluator2': { password: 'eval123', name: '평가자 2' },
+    'evaluator3': { password: 'eval123', name: '평가자 3' }
+};
+
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    checkAuth();
+    setupEventListeners();
+});
+
+// 데이터 로드
+function loadData() {
+    const storedApplicants = localStorage.getItem('applicants');
+    if (storedApplicants) {
+        applicants = JSON.parse(storedApplicants);
+    } else {
+        applicants = [];
+    }
+}
+
+// 데이터 저장
+function saveData() {
+    localStorage.setItem('applicants', JSON.stringify(applicants));
+}
+
+// 인증 확인
+function checkAuth() {
+    const evaluatorId = localStorage.getItem('currentEvaluator');
+    if (evaluatorId && evaluators[evaluatorId]) {
+        currentEvaluator = evaluatorId;
+        showJobPostingPage();
+    } else {
+        showPage('loginPage');
+    }
+}
+
+// 이벤트 리스너 설정
+function setupEventListeners() {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
+    const evaluationForm = document.getElementById('evaluationForm');
+    if (evaluationForm) {
+        evaluationForm.addEventListener('submit', handleEvaluation);
+        
+        for (let i = 1; i <= 4; i++) {
+            const scoreInput = document.getElementById(`score${i}`);
+            if (scoreInput) {
+                scoreInput.addEventListener('change', calculateTotalScore);
+            }
+        }
+    }
+}
+
+// 로그인 처리
+function handleLogin(e) {
+    e.preventDefault();
+    const evaluatorId = document.getElementById('evaluatorId').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (evaluators[evaluatorId] && evaluators[evaluatorId].password === password) {
+        currentEvaluator = evaluatorId;
+        localStorage.setItem('currentEvaluator', evaluatorId);
+        showJobPostingPage();
+    } else {
+        alert('평가자 ID 또는 비밀번호가 올바르지 않습니다.');
+    }
+}
+
+// 로그아웃
+function logout() {
+    if (confirm('로그아웃 하시겠습니까?')) {
+        currentEvaluator = null;
+        selectedApplicantId = null;
+        selectedJobPosting = null;
+        localStorage.removeItem('currentEvaluator');
+        showPage('loginPage');
+    }
+}
+
+// 페이지 표시
+function showPage(pageId) {
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(page => page.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+}
+
+// 채용공고 페이지 표시
+function showJobPostingPage() {
+    showPage('jobPostingPage');
+    const evaluatorName = evaluators[currentEvaluator].name;
+    document.getElementById('evaluatorNamePosting').textContent = evaluatorName;
+    renderJobPostings();
+}
+
+// 채용공고 목록 렌더링
+function renderJobPostings() {
+    const grid = document.getElementById('jobPostingGrid');
+    grid.innerHTML = '';
+
+    jobPostings.forEach(posting => {
+        // 해당 공고의 지원자 수 계산
+        const postingApplicants = applicants.filter(a => a.jobPosting === posting);
+        const totalCount = postingApplicants.length;
+        
+        // 내가 평가한 지원자 수
+        const myEvaluatedCount = postingApplicants.filter(a => 
+            a.evaluations && a.evaluations.some(e => e.evaluatorId === currentEvaluator)
+        ).length;
+
+        const card = document.createElement('div');
+        card.className = 'job-posting-card';
+        card.innerHTML = `
+            <div class="job-posting-icon">📢</div>
+            <div class="job-posting-title">${posting}</div>
+            <div class="job-posting-stats">
+                <div class="stat-item">
+                    <div class="stat-label">총 지원자</div>
+                    <div class="stat-value">${totalCount}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">평가 완료</div>
+                    <div class="stat-value" style="color: #10b981;">${myEvaluatedCount}</div>
+                </div>
+            </div>
+        `;
+
+        card.addEventListener('click', () => selectJobPosting(posting));
+        grid.appendChild(card);
+    });
+}
+
+// 채용공고 선택
+function selectJobPosting(posting) {
+    selectedJobPosting = posting;
+    showMainPage();
+}
+
+// 채용공고 목록으로 돌아가기
+function backToJobPostings() {
+    selectedJobPosting = null;
+    selectedApplicantId = null;
+    showJobPostingPage();
+}
+
+// 메인 페이지 표시
+function showMainPage() {
+    showPage('mainPage');
+    updateUI();
+}
+
+// UI 업데이트
+function updateUI() {
+    const evaluatorName = evaluators[currentEvaluator].name;
+    document.getElementById('evaluatorName').textContent = evaluatorName;
+    
+    // 현재 선택된 채용공고 표시
+    if (selectedJobPosting) {
+        document.getElementById('currentJobPosting').textContent = selectedJobPosting;
+    }
+    
+    // 해당 공고의 지원자만 필터링
+    const filteredApplicants = selectedJobPosting 
+        ? applicants.filter(a => a.jobPosting === selectedJobPosting)
+        : applicants;
+    
+    document.getElementById('applicantCount').textContent = `${filteredApplicants.length}명`;
+    renderApplicantList();
+}
+
+// 지원자 필터링
+function filterApplicants() {
+    renderApplicantList();
+}
+
+// 지원자 목록 렌더링
+function renderApplicantList() {
+    const listContainer = document.getElementById('applicantList');
+    const filterValue = document.getElementById('statusFilter').value;
+    listContainer.innerHTML = '';
+
+    // 선택된 채용공고의 지원자만 표시
+    let filteredApplicants = selectedJobPosting 
+        ? applicants.filter(a => a.jobPosting === selectedJobPosting)
+        : applicants;
+
+    if (filteredApplicants.length === 0) {
+        listContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">해당 공고의 지원자가 없습니다.</div>';
+        return;
+    }
+    
+    if (filterValue === 'pending') {
+        filteredApplicants = filteredApplicants.filter(a => !hasMyEvaluation(a));
+    } else if (filterValue === 'completed') {
+        filteredApplicants = filteredApplicants.filter(a => hasMyEvaluation(a));
+    }
+
+    // 상태 필터 적용
+    
+    if (filteredApplicants.length === 0) {
+        listContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">해당하는 지원자가 없습니다.</div>';
+        return;
+    }
+
+    filteredApplicants.forEach(applicant => {
+        const item = document.createElement('div');
+        item.className = 'applicant-item';
+        if (selectedApplicantId === applicant.id) {
+            item.classList.add('active');
+        }
+
+        const myEval = hasMyEvaluation(applicant);
+        const status = myEval 
+            ? '<span class="applicant-status status-completed">평가완료</span>'
+            : '<span class="applicant-status status-pending">평가대기</span>';
+
+        const score = myEval 
+            ? `<span class="applicant-score">${myEval.totalScore}점</span>`
+            : '';
+
+        item.innerHTML = `
+            <div class="applicant-name">${applicant.name}</div>
+            <div class="applicant-position">${applicant.branch || '지점'} - ${applicant.position || '직무'}</div>
+            <div>${status}${score}</div>
+        `;
+
+        item.addEventListener('click', () => selectApplicant(applicant.id));
+        listContainer.appendChild(item);
+    });
+}
+
+// 내가 평가했는지 확인
+function hasMyEvaluation(applicant) {
+    if (!applicant.evaluations || !Array.isArray(applicant.evaluations)) {
+        return null;
+    }
+    return applicant.evaluations.find(e => e.evaluatorId === currentEvaluator);
+}
+
+// 지원자 선택
+function selectApplicant(id) {
+    selectedApplicantId = id;
+    const applicant = applicants.find(a => a.id === id);
+    
+    if (!applicant) return;
+
+    renderApplicantList();
+    showApplication(applicant);
+    loadEvaluation(applicant);
+}
+
+// 지원서 표시
+function showApplication(applicant) {
+    const header = document.getElementById('applicantInfoHeader');
+    const content = document.getElementById('coverLetterContent');
+
+    header.innerHTML = `
+        <div class="applicant-detail">
+            <span><strong>${applicant.name}</strong></span>
+            <span>생년월일: ${applicant.birthdate || '미입력'}</span>
+            <span>${applicant.email}</span>
+            <span>${applicant.phone || '미입력'}</span>
+        </div>
+        <div class="applicant-detail" style="margin-top: 8px;">
+            <span style="color: #6366f1; font-weight: 700;">📢 ${applicant.jobPosting || '채용공고 미선택'}</span>
+        </div>
+        <div class="applicant-detail" style="margin-top: 4px;">
+            <span><strong>지원 지점:</strong> ${applicant.branch || '미입력'}</span>
+            <span><strong>지원 직무:</strong> ${applicant.position || '미입력'}</span>
+        </div>
+    `;
+
+    content.innerHTML = `
+        <div class="application-sections">
+            <div class="section-block">
+                <h3>📋 기본 정보</h3>
+                <p><strong>주소:</strong> ${applicant.address || '미입력'}</p>
+            </div>
+
+            <div class="section-block">
+                <h3>🎓 학력사항</h3>
+                <p class="pre-wrap">${applicant.education || '미입력'}</p>
+            </div>
+
+            ${applicant.certifications ? `
+            <div class="section-block">
+                <h3>📜 자격 및 교육사항</h3>
+                <p class="pre-wrap">${applicant.certifications}</p>
+            </div>
+            ` : ''}
+
+            ${applicant.career ? `
+            <div class="section-block">
+                <h3>💼 경력사항</h3>
+                <p class="pre-wrap">${applicant.career}</p>
+            </div>
+            ` : ''}
+
+            <div class="section-block">
+                <h3>✍️ 자기소개서</h3>
+                <p class="pre-wrap">${applicant.selfIntroduction || applicant.coverLetter || '미입력'}</p>
+            </div>
+
+            <div class="section-block">
+                <h3>💻 경력기술서</h3>
+                <p class="pre-wrap">${applicant.careerDescription || '미입력'}</p>
+            </div>
+
+            <div class="section-block">
+                <h3>🎯 지원동기</h3>
+                <p class="pre-wrap">${applicant.motivation || '미입력'}</p>
+            </div>
+
+            <div class="section-block">
+                <h3>🚀 입사 후 포부</h3>
+                <p class="pre-wrap">${applicant.aspiration || '미입력'}</p>
+            </div>
+        </div>
+    `;
+}
+
+// 평가 로드
+function loadEvaluation(applicant) {
+    const form = document.getElementById('evaluationForm');
+    const myEval = hasMyEvaluation(applicant);
+    
+    if (myEval) {
+        // 이미 평가한 경우 기존 평가 로드
+        document.getElementById('score1').value = myEval.score1;
+        document.getElementById('score2').value = myEval.score2;
+        document.getElementById('score3').value = myEval.score3;
+        document.getElementById('score4').value = myEval.score4;
+        
+        document.getElementById('comment1').value = myEval.comment1 || '';
+        document.getElementById('comment2').value = myEval.comment2 || '';
+        document.getElementById('comment3').value = myEval.comment3 || '';
+        document.getElementById('comment4').value = myEval.comment4 || '';
+        
+        calculateTotalScore();
+    } else {
+        // 새로운 평가
+        form.reset();
+        document.getElementById('totalScore').textContent = '0';
+    }
+}
+
+// 총점 계산
+function calculateTotalScore() {
+    let total = 0;
+    for (let i = 1; i <= 4; i++) {
+        const value = parseInt(document.getElementById(`score${i}`).value) || 0;
+        total += value;
+    }
+    document.getElementById('totalScore').textContent = total;
+}
+
+// 평가 저장
+function handleEvaluation(e) {
+    e.preventDefault();
+    
+    if (!selectedApplicantId) {
+        alert('지원자를 선택해주세요.');
+        return;
+    }
+
+    const score1 = parseInt(document.getElementById('score1').value);
+    const score2 = parseInt(document.getElementById('score2').value);
+    const score3 = parseInt(document.getElementById('score3').value);
+    const score4 = parseInt(document.getElementById('score4').value);
+    
+    if (isNaN(score1) || isNaN(score2) || isNaN(score3) || isNaN(score4)) {
+        alert('모든 평가 항목의 점수를 선택해주세요.');
+        return;
+    }
+    
+    const totalScore = score1 + score2 + score3 + score4;
+    
+    const evaluation = {
+        evaluatorId: currentEvaluator,
+        evaluatorName: evaluators[currentEvaluator].name,
+        score1,
+        score2,
+        score3,
+        score4,
+        comment1: document.getElementById('comment1').value,
+        comment2: document.getElementById('comment2').value,
+        comment3: document.getElementById('comment3').value,
+        comment4: document.getElementById('comment4').value,
+        totalScore,
+        evaluationDate: new Date().toISOString().split('T')[0]
+    };
+
+    const applicant = applicants.find(a => a.id === selectedApplicantId);
+    if (applicant) {
+        // evaluations 배열 초기화
+        if (!applicant.evaluations) {
+            applicant.evaluations = [];
+        }
+
+        // 기존 평가 찾기
+        const existingIndex = applicant.evaluations.findIndex(e => e.evaluatorId === currentEvaluator);
+        
+        if (existingIndex >= 0) {
+            // 기존 평가 업데이트
+            applicant.evaluations[existingIndex] = evaluation;
+            alert('평가가 수정되었습니다.');
+        } else {
+            // 새 평가 추가
+            applicant.evaluations.push(evaluation);
+            alert('평가가 저장되었습니다.');
+        }
+
+        saveData();
+        renderApplicantList();
+    }
+}
+
+// 데이터 새로고침
+function refreshData() {
+    loadData();
+    
+    // 채용공고 페이지인지 메인 페이지인지 확인
+    const currentPage = document.querySelector('.page.active');
+    if (currentPage && currentPage.id === 'jobPostingPage') {
+        renderJobPostings();
+    } else {
+        updateUI();
+        if (selectedApplicantId) {
+            selectApplicant(selectedApplicantId);
+        }
+    }
+    
+    alert('데이터를 새로고침했습니다.');
+}

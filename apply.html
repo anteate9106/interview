@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>청년들 입사지원 시스템</title>
+    <link rel="stylesheet" href="apply.css">
+</head>
+<body>
+    <!-- 로그인/메인 선택 페이지 -->
+    <div id="welcomePage" class="page active">
+        <div class="welcome-container">
+            <div class="welcome-header">
+                <h1>청년들 입사지원 시스템</h1>
+                <p class="subtitle">환영합니다</p>
+            </div>
+
+            <div class="welcome-cards">
+                <div class="welcome-card" onclick="showNewApplicationPage()">
+                    <div class="card-icon">📝</div>
+                    <h3>신규 지원</h3>
+                    <p>처음 지원하시는 분</p>
+                    <button class="card-btn">지원서 작성하기</button>
+                </div>
+
+                <div class="welcome-card" onclick="showLoginPage()">
+                    <div class="card-icon">🔐</div>
+                    <h3>지원서 관리</h3>
+                    <p>기존 지원자</p>
+                    <button class="card-btn">로그인하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로그인 페이지 -->
+    <div id="loginPage" class="page">
+        <div class="login-container">
+            <div class="login-box">
+                <button onclick="showWelcomePage()" class="back-btn">← 돌아가기</button>
+                <h2>지원자 로그인</h2>
+                <p class="login-subtitle">지원서를 확인하고 수정할 수 있습니다</p>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">이메일</label>
+                        <input type="email" id="loginEmail" placeholder="이메일을 입력하세요" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">비밀번호</label>
+                        <input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요" required>
+                    </div>
+                    <button type="submit" class="btn-login">로그인</button>
+                </form>
+                <p class="login-help">* 지원서 제출 시 설정한 비밀번호를 입력하세요</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 신규 지원서 작성 페이지 -->
+    <div id="newApplicationPage" class="page">
+        <div class="apply-container">
+            <div class="apply-header">
+                <button onclick="showWelcomePage()" class="back-btn-light">← 돌아가기</button>
+                <h1>청년들 입사지원서</h1>
+                <p class="subtitle">채용에 지원해주셔서 감사합니다</p>
+            </div>
+
+            <div class="apply-content">
+                <form id="applyForm" class="apply-form">
+                    <!-- 기본 정보 섹션 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <span class="section-number">01</span>
+                            기본 정보
+                        </h2>
+                        
+                        <div class="form-field full-width">
+                            <label for="jobPosting">채용공고 선택 <span class="required">*</span></label>
+                            <select id="jobPosting" required>
+                                <option value="">지원할 채용공고를 선택하세요</option>
+                                <option value="2026년 상반기 신입사원 공채">2026년 상반기 신입사원 공채</option>
+                                <option value="2026년 상반기 경력직 수시채용">2026년 상반기 경력직 수시채용</option>
+                                <option value="2026년 인턴 채용">2026년 인턴 채용</option>
+                                <option value="2026년 계약직 채용">2026년 계약직 채용</option>
+                            </select>
+                            <small class="field-hint">💡 지원하시려는 채용공고를 선택해주세요</small>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="name">이름 <span class="required">*</span></label>
+                                <input type="text" id="name" placeholder="홍길동" required>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label for="birthdate">생년월일 <span class="required">*</span></label>
+                                <input type="date" id="birthdate" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="email">이메일 <span class="required">*</span></label>
+                                <input type="email" id="email" placeholder="hong@example.com" required>
+                                <small class="field-hint">로그인 아이디로 사용됩니다</small>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="phone">연락처 <span class="required">*</span></label>
+                                <input type="tel" id="phone" placeholder="010-1234-5678" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="branch">지원 지점 <span class="required">*</span></label>
+                                <select id="branch" required>
+                                    <option value="">선택하세요</option>
+                                    <option value="영등포점">영등포점</option>
+                                    <option value="수원시청점">수원시청점</option>
+                                    <option value="천안아산점">천안아산점</option>
+                                    <option value="부산점">부산점</option>
+                                    <option value="수원인계점">수원인계점</option>
+                                    <option value="고양일산점">고양일산점</option>
+                                    <option value="청주점">청주점</option>
+                                </select>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="position">지원 직무 <span class="required">*</span></label>
+                                <select id="position" required>
+                                    <option value="">선택하세요</option>
+                                    <option value="TAX팀">TAX팀</option>
+                                    <option value="원천팀">원천팀</option>
+                                    <option value="결산팀">결산팀</option>
+                                    <option value="경리팀">경리팀</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="password">비밀번호 <span class="required">*</span></label>
+                                <input type="password" id="password" placeholder="8자 이상" required minlength="8">
+                                <small class="field-hint">지원서 수정 시 사용됩니다</small>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="passwordConfirm">비밀번호 확인 <span class="required">*</span></label>
+                                <input type="password" id="passwordConfirm" placeholder="비밀번호 재입력" required>
+                            </div>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="address">주소 <span class="required">*</span></label>
+                            <input type="text" id="address" placeholder="서울시 강남구 테헤란로 123" required>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="education">학력사항 <span class="required">*</span></label>
+                            <textarea id="education" rows="3" placeholder="예) 2020.03 - 2024.02 서울대학교 컴퓨터공학과 졸업" required></textarea>
+                            <small class="field-hint">학교명, 전공, 재학기간, 졸업여부 등을 입력하세요</small>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="certifications">자격 및 교육사항</label>
+                            <textarea id="certifications" rows="3" placeholder="예) 정보처리기사 (2023.06 취득)&#10;AWS Solutions Architect (2023.09 취득)"></textarea>
+                            <small class="field-hint">보유 자격증, 수료한 교육과정 등을 입력하세요</small>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="career">경력사항</label>
+                            <textarea id="career" rows="4" placeholder="예) 2022.07 - 2024.12 (주)테크컴퍼니 / 프론트엔드 개발자&#10;- React 기반 웹 애플리케이션 개발&#10;- UI/UX 개선 프로젝트 수행"></textarea>
+                            <small class="field-hint">회사명, 직무, 근무기간, 주요 업무를 입력하세요 (신입의 경우 '해당없음' 입력)</small>
+                        </div>
+                    </div>
+
+                    <!-- 자기소개서 섹션 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <span class="section-number">02</span>
+                            자기소개서
+                        </h2>
+                        
+                        <div class="form-field full-width">
+                            <label for="selfIntroduction">
+                                자기소개서 <span class="required">*</span>
+                                <span class="char-count" id="charCount1">0 / 800자</span>
+                            </label>
+                            <textarea 
+                                id="selfIntroduction" 
+                                rows="8" 
+                                maxlength="800"
+                                placeholder="자신의 성장과정, 성격, 가치관 등을 작성해주세요. (800자 이내)"
+                                required
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 경력기술서 섹션 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <span class="section-number">03</span>
+                            경력기술서
+                        </h2>
+                        
+                        <div class="form-field full-width">
+                            <label for="careerDescription">
+                                경력기술서 <span class="required">*</span>
+                                <span class="char-count" id="charCount2">0 / 500자</span>
+                            </label>
+                            <textarea 
+                                id="careerDescription" 
+                                rows="6" 
+                                maxlength="500"
+                                placeholder="주요 경력 및 프로젝트 경험, 보유 기술 등을 구체적으로 작성해주세요. (500자 이내)&#10;신입의 경우 프로젝트, 인턴, 대외활동 경험을 작성해주세요."
+                                required
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 지원동기 섹션 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <span class="section-number">04</span>
+                            지원동기
+                        </h2>
+                        
+                        <div class="form-field full-width">
+                            <label for="motivation">
+                                지원동기 <span class="required">*</span>
+                                <span class="char-count" id="charCount3">0 / 500자</span>
+                            </label>
+                            <textarea 
+                                id="motivation" 
+                                rows="6" 
+                                maxlength="500"
+                                placeholder="우리 회사에 지원하게 된 동기를 구체적으로 작성해주세요. (500자 이내)"
+                                required
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 입사 후 포부 섹션 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <span class="section-number">05</span>
+                            입사 후 포부
+                        </h2>
+                        
+                        <div class="form-field full-width">
+                            <label for="aspiration">
+                                입사 후 포부 <span class="required">*</span>
+                                <span class="char-count" id="charCount4">0 / 500자</span>
+                            </label>
+                            <textarea 
+                                id="aspiration" 
+                                rows="6" 
+                                maxlength="500"
+                                placeholder="입사 후 실현하고 싶은 목표와 기여하고 싶은 점을 작성해주세요. (500자 이내)"
+                                required
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 개인정보 동의 섹션 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <span class="section-number">06</span>
+                            개인정보 수집 및 이용 동의
+                        </h2>
+                        
+                        <div class="privacy-box">
+                            <p><strong>수집 목적:</strong> 채용 전형 진행 및 합격자 발표</p>
+                            <p><strong>수집 항목:</strong> 이름, 생년월일, 이메일, 연락처, 주소, 학력, 자격증, 경력, 지원서류</p>
+                            <p><strong>보유 기간:</strong> 채용 종료 후 3개월</p>
+                        </div>
+                        
+                        <div class="checkbox-field">
+                            <input type="checkbox" id="privacy" required>
+                            <label for="privacy">
+                                개인정보 수집 및 이용에 동의합니다. <span class="required">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 제출 버튼 -->
+                    <div class="form-actions">
+                        <button type="reset" class="btn-reset" onclick="confirmReset(event)">초기화</button>
+                        <button type="button" class="btn-save" onclick="saveDraft()">💾 임시 저장</button>
+                        <button type="submit" class="btn-submit">지원서 제출</button>
+                    </div>
+                    
+                    <!-- 임시 저장 알림 -->
+                    <div id="saveNotification" class="save-notification">
+                        ✓ 임시 저장되었습니다
+                    </div>
+                </form>
+            </div>
+
+            <!-- 안내 사이드바 -->
+            <div class="sidebar">
+                <div class="info-card">
+                    <h3>📋 작성 안내</h3>
+                    <ul>
+                        <li>모든 필수 항목(*)을 입력해주세요</li>
+                        <li>각 항목의 글자 수를 확인하세요</li>
+                        <li>비밀번호는 8자 이상 입력해주세요</li>
+                        <li><strong>💾 임시 저장</strong>으로 작성 중 저장</li>
+                        <li>제출 후 로그인하여 수정 가능합니다</li>
+                    </ul>
+                </div>
+                
+                <div class="info-card" id="draftInfo" style="display: none;">
+                    <h3>💾 임시 저장됨</h3>
+                    <p style="color: var(--success-color); font-weight: 600;">작성 중인 내용이 있습니다</p>
+                    <p style="font-size: 13px; margin-top: 8px;">저장 시간: <span id="draftTime"></span></p>
+                    <button onclick="clearDraft()" style="margin-top: 12px; padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">임시 저장 삭제</button>
+                </div>
+                
+                <div class="info-card">
+                    <h3>✍️ 작성 항목</h3>
+                    <ul>
+                        <li>자기소개서: 800자 이내</li>
+                        <li>경력기술서: 500자 이내</li>
+                        <li>지원동기: 500자 이내</li>
+                        <li>입사 후 포부: 500자 이내</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h3>📞 문의</h3>
+                    <p>채용 관련 문의사항이 있으시면</p>
+                    <p><strong>recruit@company.com</strong></p>
+                    <p>으로 연락 주시기 바랍니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 지원서 수정 페이지는 생략 - apply.js에서 동적으로 생성 -->
+    <div id="editApplicationPage" class="page">
+        <div class="apply-container">
+            <div class="apply-header">
+                <div class="header-actions">
+                    <button onclick="handleLogout()" class="btn-logout-light">로그아웃</button>
+                </div>
+                <h1>청년들 지원서 수정</h1>
+                <p class="subtitle" id="applicantWelcome"></p>
+            </div>
+
+            <div class="apply-content">
+                <div class="status-banner" id="statusBanner"></div>
+
+                <form id="editForm" class="apply-form">
+                    <!-- 동적으로 생성됨 -->
+                    <div id="editFormContent"></div>
+
+                    <div class="form-actions">
+                        <button type="button" onclick="handleLogout()" class="btn-reset">취소</button>
+                        <button type="submit" class="btn-submit">수정사항 저장</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="sidebar">
+                <div class="info-card">
+                    <h3>✏️ 수정 안내</h3>
+                    <ul>
+                        <li>이메일은 변경할 수 없습니다</li>
+                        <li>평가 전까지만 수정 가능합니다</li>
+                        <li><strong style="color: #ef4444;">평가 완료 시 수정 불가</strong></li>
+                        <li>변경사항은 즉시 반영됩니다</li>
+                        <li>신중하게 작성해주세요</li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <h3>📊 지원 현황</h3>
+                    <div id="applicationStatus"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 성공 모달 -->
+    <div id="successModal" class="modal">
+        <div class="modal-content success-modal">
+            <div class="success-icon">✓</div>
+            <h2 id="modalTitle">지원서 제출 완료</h2>
+            <p id="modalMessage">입사지원서가 성공적으로 제출되었습니다.</p>
+            <p class="success-detail" id="modalDetail">로그인하여 지원서를 수정할 수 있습니다.</p>
+            <button onclick="closeSuccessModal()" class="btn-close-modal">확인</button>
+        </div>
+    </div>
+
+    <script src="apply.js"></script>
+</body>
+</html>
