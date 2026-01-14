@@ -26,19 +26,15 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
 });
 
-// 데이터 로드
-function loadData() {
-    const storedApplicants = localStorage.getItem('applicants');
-    if (storedApplicants) {
-        applicants = JSON.parse(storedApplicants);
-    } else {
+// 데이터 로드 (Supabase에서)
+async function loadData() {
+    try {
+        applicants = await getAllApplicants();
+        console.log('Loaded applicants from Supabase:', applicants);
+    } catch (error) {
+        console.error('Error loading applicants:', error);
         applicants = [];
     }
-}
-
-// 데이터 저장
-function saveData() {
-    localStorage.setItem('applicants', JSON.stringify(applicants));
 }
 
 // 인증 확인
@@ -151,8 +147,9 @@ function renderJobPostings() {
 }
 
 // 채용공고 선택
-function selectJobPosting(posting) {
+async function selectJobPosting(posting) {
     selectedJobPosting = posting;
+    await loadData(); // 데이터 다시 로드
     showMainPage();
 }
 
@@ -181,7 +178,7 @@ function updateUI() {
     
     // 해당 공고의 지원자만 필터링
     const filteredApplicants = selectedJobPosting 
-        ? applicants.filter(a => a.jobPosting === selectedJobPosting)
+        ? applicants.filter(a => a.job_posting === selectedJobPosting)
         : applicants;
     
     document.getElementById('applicantCount').textContent = `${filteredApplicants.length}명`;
@@ -201,7 +198,7 @@ function renderApplicantList() {
 
     // 선택된 채용공고의 지원자만 표시
     let filteredApplicants = selectedJobPosting 
-        ? applicants.filter(a => a.jobPosting === selectedJobPosting)
+        ? applicants.filter(a => a.job_posting === selectedJobPosting)
         : applicants;
 
     if (filteredApplicants.length === 0) {
@@ -375,7 +372,7 @@ function calculateTotalScore() {
 }
 
 // 평가 저장
-function handleEvaluation(e) {
+async function handleEvaluation(e) {
     e.preventDefault();
     
     if (!selectedApplicantId) {
@@ -396,8 +393,9 @@ function handleEvaluation(e) {
     const totalScore = score1 + score2 + score3 + score4;
     
     const evaluation = {
-        evaluatorId: currentEvaluator,
-        evaluatorName: evaluators[currentEvaluator].name,
+        applicant_id: selectedApplicantId,
+        evaluator_id: currentEvaluator,
+        evaluator_name: evaluators[currentEvaluator].name,
         score1,
         score2,
         score3,
@@ -406,38 +404,29 @@ function handleEvaluation(e) {
         comment2: document.getElementById('comment2').value,
         comment3: document.getElementById('comment3').value,
         comment4: document.getElementById('comment4').value,
-        totalScore,
-        evaluationDate: new Date().toISOString().split('T')[0]
+        evaluation_date: new Date().toISOString().split('T')[0]
     };
 
-    const applicant = applicants.find(a => a.id === selectedApplicantId);
-    if (applicant) {
-        // evaluations 배열 초기화
-        if (!applicant.evaluations) {
-            applicant.evaluations = [];
-        }
-
-        // 기존 평가 찾기
-        const existingIndex = applicant.evaluations.findIndex(e => e.evaluatorId === currentEvaluator);
+    try {
+        console.log('Saving evaluation:', evaluation);
+        await saveEvaluation(evaluation);
+        alert('평가가 저장되었습니다.');
         
-        if (existingIndex >= 0) {
-            // 기존 평가 업데이트
-            applicant.evaluations[existingIndex] = evaluation;
-            alert('평가가 수정되었습니다.');
-        } else {
-            // 새 평가 추가
-            applicant.evaluations.push(evaluation);
-            alert('평가가 저장되었습니다.');
-        }
-
-        saveData();
+        // 데이터 새로고침
+        await loadData();
         renderApplicantList();
+        
+        // 현재 지원자 다시 선택
+        selectApplicant(selectedApplicantId);
+    } catch (error) {
+        console.error('Error saving evaluation:', error);
+        alert('평가 저장 중 오류가 발생했습니다.\n' + error.message);
     }
 }
 
 // 데이터 새로고침
-function refreshData() {
-    loadData();
+async function refreshData() {
+    await loadData();
     
     // 채용공고 페이지인지 메인 페이지인지 확인
     const currentPage = document.querySelector('.page.active');
