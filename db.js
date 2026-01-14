@@ -37,9 +37,16 @@ async function getApplicantByEmail(email) {
             .from('applicants')
             .select('*')
             .eq('email', email)
-            .single();
+            .maybeSingle();
         
-        if (error) throw error;
+        if (error) {
+            console.error('Error fetching applicant:', error);
+            return null;
+        }
+        
+        if (!data) {
+            return null;
+        }
         
         // 평가 데이터 가져오기
         const evaluations = await getEvaluationsByApplicant(data.id);

@@ -163,7 +163,8 @@ async function loadApplicantData(email) {
         const applicant = await getApplicantByEmail(email);
         
         if (!applicant) {
-            alert('지원자 정보를 찾을 수 없습니다.');
+            console.error('Applicant not found:', email);
+            alert('지원자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
             handleLogout();
             return;
         }
@@ -182,8 +183,7 @@ async function loadApplicantData(email) {
         createEditForm(applicant);
     } catch (error) {
         console.error('Error loading applicant data:', error);
-        alert('지원자 정보를 불러오는 중 오류가 발생했습니다.');
-        handleLogout();
+        alert('지원자 정보를 불러오는 중 오류가 발생했습니다.\n' + error.message);
     }
 }
 
@@ -204,10 +204,10 @@ function createEditForm(applicant) {
                 <label for="editJobPosting">채용공고 <span class="required">*</span></label>
                 <select id="editJobPosting" ${isDisabled ? 'disabled' : ''} required>
                     <option value="">선택하세요</option>
-                    <option value="2026년 상반기 신입사원 공채" ${applicant.jobPosting === '2026년 상반기 신입사원 공채' ? 'selected' : ''}>2026년 상반기 신입사원 공채</option>
-                    <option value="2026년 상반기 경력직 수시채용" ${applicant.jobPosting === '2026년 상반기 경력직 수시채용' ? 'selected' : ''}>2026년 상반기 경력직 수시채용</option>
-                    <option value="2026년 인턴 채용" ${applicant.jobPosting === '2026년 인턴 채용' ? 'selected' : ''}>2026년 인턴 채용</option>
-                    <option value="2026년 계약직 채용" ${applicant.jobPosting === '2026년 계약직 채용' ? 'selected' : ''}>2026년 계약직 채용</option>
+                    <option value="2026년 상반기 신입사원 공채" ${applicant.job_posting === '2026년 상반기 신입사원 공채' ? 'selected' : ''}>2026년 상반기 신입사원 공채</option>
+                    <option value="2026년 상반기 경력직 수시채용" ${applicant.job_posting === '2026년 상반기 경력직 수시채용' ? 'selected' : ''}>2026년 상반기 경력직 수시채용</option>
+                    <option value="2026년 인턴 채용" ${applicant.job_posting === '2026년 인턴 채용' ? 'selected' : ''}>2026년 인턴 채용</option>
+                    <option value="2026년 계약직 채용" ${applicant.job_posting === '2026년 계약직 채용' ? 'selected' : ''}>2026년 계약직 채용</option>
                 </select>
             </div>
             
@@ -294,7 +294,7 @@ function createEditForm(applicant) {
             <div class="form-field full-width">
                 <label for="editSelfIntroduction">
                     자기소개서 <span class="required">*</span>
-                    <span class="char-count" id="editCharCount1">${applicant.selfIntroduction.length} / 800자</span>
+                    <span class="char-count" id="editCharCount1">${(applicant.self_introduction || '').length} / 800자</span>
                 </label>
                 <textarea 
                     id="editSelfIntroduction" 
@@ -302,7 +302,7 @@ function createEditForm(applicant) {
                     maxlength="800"
                     ${isDisabled ? 'disabled' : ''}
                     required
-                >${applicant.selfIntroduction}</textarea>
+                >${applicant.self_introduction || ''}</textarea>
             </div>
         </div>
 
@@ -316,7 +316,7 @@ function createEditForm(applicant) {
             <div class="form-field full-width">
                 <label for="editCareerDescription">
                     경력기술서 <span class="required">*</span>
-                    <span class="char-count" id="editCharCount2">${applicant.careerDescription.length} / 500자</span>
+                    <span class="char-count" id="editCharCount2">${(applicant.career_description || '').length} / 500자</span>
                 </label>
                 <textarea 
                     id="editCareerDescription" 
@@ -324,7 +324,7 @@ function createEditForm(applicant) {
                     maxlength="500"
                     ${isDisabled ? 'disabled' : ''}
                     required
-                >${applicant.careerDescription}</textarea>
+                >${applicant.career_description || ''}</textarea>
             </div>
         </div>
 
@@ -338,7 +338,7 @@ function createEditForm(applicant) {
             <div class="form-field full-width">
                 <label for="editMotivation">
                     지원동기 <span class="required">*</span>
-                    <span class="char-count" id="editCharCount3">${applicant.motivation.length} / 500자</span>
+                    <span class="char-count" id="editCharCount3">${(applicant.motivation || '').length} / 500자</span>
                 </label>
                 <textarea 
                     id="editMotivation" 
@@ -346,7 +346,7 @@ function createEditForm(applicant) {
                     maxlength="500"
                     ${isDisabled ? 'disabled' : ''}
                     required
-                >${applicant.motivation}</textarea>
+                >${applicant.motivation || ''}</textarea>
             </div>
         </div>
 
@@ -360,7 +360,7 @@ function createEditForm(applicant) {
             <div class="form-field full-width">
                 <label for="editAspiration">
                     입사 후 포부 <span class="required">*</span>
-                    <span class="char-count" id="editCharCount4">${applicant.aspiration.length} / 500자</span>
+                    <span class="char-count" id="editCharCount4">${(applicant.aspiration || '').length} / 500자</span>
                 </label>
                 <textarea 
                     id="editAspiration" 
@@ -368,7 +368,7 @@ function createEditForm(applicant) {
                     maxlength="500"
                     ${isDisabled ? 'disabled' : ''}
                     required
-                >${applicant.aspiration}</textarea>
+                >${applicant.aspiration || ''}</textarea>
             </div>
         </div>
 
@@ -466,7 +466,7 @@ function updateApplicationStatus(applicant) {
     const hasEvaluations = applicant.evaluations && applicant.evaluations.length > 0;
     
     statusDiv.innerHTML = `
-        <p><strong>채용공고</strong> <span style="color: #6366f1; font-weight: 600;">${applicant.jobPosting || '미선택'}</span></p>
+        <p><strong>채용공고</strong> <span style="color: #6366f1; font-weight: 600;">${applicant.job_posting || '미선택'}</span></p>
         <p><strong>제출일</strong> <span>${applicant.submitDate}</span></p>
         <p><strong>평가상태</strong> <span>${hasEvaluations ? '평가완료' : '평가대기'}</span></p>
         ${hasEvaluations ? `<p><strong>평가자 수</strong> <span>${applicant.evaluations.length}명</span></p>` : ''}
@@ -510,7 +510,6 @@ async function handleSubmit(e) {
         }
 
         const application = {
-            id: Date.now(),
             job_posting: formData.jobPosting,
             name: formData.name,
             birthdate: formData.birthdate,
@@ -530,7 +529,9 @@ async function handleSubmit(e) {
             submit_date: new Date().toISOString().split('T')[0]
         };
 
-        await createApplicant(application);
+        console.log('Submitting application:', application);
+        const newApplicant = await createApplicant(application);
+        console.log('Application created successfully:', newApplicant);
 
         // 임시 저장 데이터 삭제
         localStorage.removeItem('applicationDraft');
@@ -538,19 +539,39 @@ async function handleSubmit(e) {
 
         alert('✅ 지원서 제출 완료\n\n입사지원서가 성공적으로 제출되었습니다.\n제출하신 내용을 확인하실 수 있습니다.');
         
-        // 제출된 데이터 다시 로드하여 currentApplicant 설정
-        currentApplicant = await getApplicantByEmail(application.email);
+        // 로그인 상태로 설정
+        localStorage.setItem('loggedInApplicant', application.email);
+        
+        // 평가 데이터 추가 (빈 배열)
+        newApplicant.evaluations = [];
+        currentApplicant = newApplicant;
+        
+        // UI 직접 업데이트
+        document.getElementById('applicantWelcome').textContent = `${newApplicant.name}님, 환영합니다!`;
+        updateStatusBanner(newApplicant);
+        updateApplicationStatus(newApplicant);
+        createEditForm(newApplicant);
         
         // 지원서 수정 페이지로 이동
-        await loadApplicantData(application.email);
+        showEditApplicationPage();
     } catch (error) {
-        console.error('Submit error:', error);
-        alert('지원서 제출 중 오류가 발생했습니다. 다시 시도해주세요.');
+        console.error('Submit error details:', error);
+        let errorMessage = '지원서 제출 중 오류가 발생했습니다.';
+        if (error.message) {
+            errorMessage += '\n\n오류 내용: ' + error.message;
+        }
+        if (error.details) {
+            errorMessage += '\n상세: ' + error.details;
+        }
+        if (error.hint) {
+            errorMessage += '\n힌트: ' + error.hint;
+        }
+        alert(errorMessage + '\n\n다시 시도해주세요.');
     }
 }
 
 // 지원서 수정 처리
-function handleEdit(e) {
+async function handleEdit(e) {
     e.preventDefault();
 
     // 평가 완료 여부 재확인
@@ -560,9 +581,8 @@ function handleEdit(e) {
         return;
     }
     
-    // LocalStorage에서 최신 데이터 확인 (다른 탭에서 평가되었을 수 있음)
-    const applicants = JSON.parse(localStorage.getItem('applicants') || '[]');
-    const latestApplicant = applicants.find(a => a.email === currentApplicant.email);
+    // Supabase에서 최신 데이터 확인
+    const latestApplicant = await getApplicantByEmail(currentApplicant.email);
     
     if (!latestApplicant) {
         alert('지원자 정보를 찾을 수 없습니다.');
@@ -570,17 +590,17 @@ function handleEdit(e) {
         return;
     }
     
-    // evaluations 배열 확인으로 변경
+    // evaluations 배열 확인
     if (latestApplicant.evaluations && latestApplicant.evaluations.length > 0) {
         alert('⚠️ 평가가 완료된 지원서는 수정할 수 없습니다.\n\n평가자 수: ' + latestApplicant.evaluations.length + '명\n\n수정이 필요한 경우 담당자에게 문의하시기 바랍니다.');
         // 최신 데이터로 화면 갱신
         currentApplicant = latestApplicant;
-        loadApplicantData(currentApplicant.email);
+        await loadApplicantData(currentApplicant.email);
         return;
     }
 
     const formData = {
-        jobPosting: document.getElementById('editJobPosting').value,
+        job_posting: document.getElementById('editJobPosting').value,
         name: document.getElementById('editName').value.trim(),
         birthdate: document.getElementById('editBirthdate').value,
         phone: document.getElementById('editPhone').value.trim(),
@@ -590,8 +610,8 @@ function handleEdit(e) {
         education: document.getElementById('editEducation').value.trim(),
         certifications: document.getElementById('editCertifications').value.trim(),
         career: document.getElementById('editCareer').value.trim(),
-        selfIntroduction: document.getElementById('editSelfIntroduction').value.trim(),
-        careerDescription: document.getElementById('editCareerDescription').value.trim(),
+        self_introduction: document.getElementById('editSelfIntroduction').value.trim(),
+        career_description: document.getElementById('editCareerDescription').value.trim(),
         motivation: document.getElementById('editMotivation').value.trim(),
         aspiration: document.getElementById('editAspiration').value.trim(),
         newPassword: document.getElementById('newPassword').value,
@@ -602,51 +622,43 @@ function handleEdit(e) {
         return;
     }
 
-    const index = applicants.findIndex(a => a.email === currentApplicant.email);
-    
-    if (index === -1) {
-        alert('지원자 정보를 찾을 수 없습니다.');
-        return;
+    try {
+        // 비밀번호 변경이 있는 경우
+        if (formData.newPassword) {
+            formData.password = formData.newPassword;
+        }
+        
+        // newPassword 필드 제거 (DB에 없는 필드)
+        delete formData.newPassword;
+        delete formData.newPasswordConfirm;
+
+        console.log('Updating applicant:', formData);
+        const updatedApplicant = await updateApplicant(currentApplicant.email, formData);
+        console.log('Update successful:', updatedApplicant);
+
+        // 평가 데이터 유지
+        updatedApplicant.evaluations = currentApplicant.evaluations || [];
+        currentApplicant = updatedApplicant;
+
+        showSuccessModal(
+            '수정 완료',
+            '지원서가 성공적으로 수정되었습니다.',
+            '변경사항이 저장되었습니다.'
+        );
+
+        // 화면 갱신
+        await loadApplicantData(currentApplicant.email);
+
+        document.getElementById('newPassword').value = '';
+        document.getElementById('newPasswordConfirm').value = '';
+    } catch (error) {
+        console.error('Edit error:', error);
+        let errorMessage = '지원서 수정 중 오류가 발생했습니다.';
+        if (error.message) {
+            errorMessage += '\n\n오류 내용: ' + error.message;
+        }
+        alert(errorMessage + '\n\n다시 시도해주세요.');
     }
-    
-    // 저장 직전 한번 더 평가 여부 확인
-    if (applicants[index].evaluations && applicants[index].evaluations.length > 0) {
-        alert('⚠️ 다른 곳에서 평가가 완료되어 수정할 수 없습니다.');
-        currentApplicant = applicants[index];
-        loadApplicantData(currentApplicant.email);
-        return;
-    }
-
-    applicants[index].jobPosting = formData.jobPosting;
-    applicants[index].name = formData.name;
-    applicants[index].birthdate = formData.birthdate;
-    applicants[index].phone = formData.phone;
-    applicants[index].branch = formData.branch;
-    applicants[index].position = formData.position;
-    applicants[index].address = formData.address;
-    applicants[index].education = formData.education;
-    applicants[index].certifications = formData.certifications;
-    applicants[index].career = formData.career;
-    applicants[index].selfIntroduction = formData.selfIntroduction;
-    applicants[index].careerDescription = formData.careerDescription;
-    applicants[index].motivation = formData.motivation;
-    applicants[index].aspiration = formData.aspiration;
-
-    if (formData.newPassword) {
-        applicants[index].password = formData.newPassword;
-    }
-
-    localStorage.setItem('applicants', JSON.stringify(applicants));
-    currentApplicant = applicants[index];
-
-    showSuccessModal(
-        '수정 완료',
-        '지원서가 성공적으로 수정되었습니다.',
-        '변경사항이 저장되었습니다.'
-    );
-
-    document.getElementById('newPassword').value = '';
-    document.getElementById('newPasswordConfirm').value = '';
 }
 
 // 신규 지원서 유효성 검사
