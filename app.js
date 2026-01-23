@@ -381,7 +381,15 @@ function onApplicantChange() {
 function renderApplicantList() {
     // 드롭다운 방식으로 변경되어 리스트 렌더링 불필요
     // 이 함수는 호환성을 위해 유지하되 아무 작업도 수행하지 않음
-    return;
+    // 더 이상 사용하지 않는 함수이므로 안전하게 처리
+    try {
+        // 아무 작업도 수행하지 않음
+        return;
+    } catch (error) {
+        // 에러가 발생해도 무시
+        console.warn('renderApplicantList is deprecated:', error);
+        return;
+    }
 }
 
 // 지원자 선택
