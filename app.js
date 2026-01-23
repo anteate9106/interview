@@ -842,7 +842,7 @@ function renderEvaluatorEditor() {
     
     currentEvaluators.forEach((evaluator) => {
         const row = document.createElement('div');
-        row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: center; padding: 16px; background: #f8fafc; border-radius: 8px; margin-bottom: 12px;';
+        row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr auto auto; gap: 12px; align-items: center; padding: 16px; background: #f8fafc; border-radius: 8px; margin-bottom: 12px;';
         row.innerHTML = `
             <div>
                 <strong style="color: var(--text-primary);">${evaluator.id}</strong>
@@ -853,6 +853,10 @@ function renderEvaluatorEditor() {
             <div style="color: var(--text-secondary); font-size: 13px;">
                 생성일: ${new Date(evaluator.created_at).toLocaleDateString('ko-KR')}
             </div>
+            <button onclick="openChangeEvaluatorPasswordModal('${evaluator.id}', '${evaluator.name || evaluator.id}')" 
+                    style="padding: 6px 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                비밀번호 변경
+            </button>
             <button onclick="deleteEvaluatorItem('${evaluator.id}')" class="btn-remove-item">삭제</button>
         `;
         container.appendChild(row);
@@ -926,6 +930,70 @@ async function deleteEvaluatorItem(evaluatorId) {
     } catch (error) {
         console.error('Error deleting evaluator:', error);
         alert('평가자 삭제 중 오류가 발생했습니다.\n' + error.message);
+    }
+}
+
+// 평가자 비밀번호 변경 모달 열기
+let currentPasswordChangeEvaluatorId = null;
+function openChangeEvaluatorPasswordModal(evaluatorId, evaluatorName) {
+    currentPasswordChangeEvaluatorId = evaluatorId;
+    const modal = document.getElementById('changeEvaluatorPasswordModal');
+    document.getElementById('changePasswordEvaluatorName').textContent = evaluatorName;
+    document.getElementById('adminNewPassword').value = '';
+    document.getElementById('adminConfirmPassword').value = '';
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    
+    // 모달 배경 클릭 시 닫기
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeChangeEvaluatorPasswordModal();
+        }
+    });
+}
+
+// 평가자 비밀번호 변경 모달 닫기
+function closeChangeEvaluatorPasswordModal() {
+    const modal = document.getElementById('changeEvaluatorPasswordModal');
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+    currentPasswordChangeEvaluatorId = null;
+    document.getElementById('adminNewPassword').value = '';
+    document.getElementById('adminConfirmPassword').value = '';
+}
+
+// 관리자가 평가자 비밀번호 변경
+async function changeEvaluatorPasswordByAdmin() {
+    try {
+        if (!currentPasswordChangeEvaluatorId) {
+            alert('평가자를 선택해주세요.');
+            return;
+        }
+        
+        const newPassword = document.getElementById('adminNewPassword').value.trim();
+        const confirmPassword = document.getElementById('adminConfirmPassword').value.trim();
+        
+        // 유효성 검사
+        if (!newPassword) {
+            alert('새 비밀번호를 입력해주세요.');
+            return;
+        }
+        if (newPassword.length < 4) {
+            alert('비밀번호는 최소 4자 이상이어야 합니다.');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            alert('새 비밀번호와 확인 비밀번호가 일치하지 않습니다.');
+            return;
+        }
+        
+        await updateEvaluatorPasswordByAdmin(currentPasswordChangeEvaluatorId, newPassword);
+        
+        alert('비밀번호가 변경되었습니다.');
+        closeChangeEvaluatorPasswordModal();
+    } catch (error) {
+        console.error('Error changing evaluator password:', error);
+        alert('비밀번호 변경 중 오류가 발생했습니다.\n' + error.message);
     }
 }
 

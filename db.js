@@ -368,7 +368,7 @@ async function getEvaluatorById(evaluatorId) {
     }
 }
 
-// 평가자 비밀번호 변경
+// 평가자 비밀번호 변경 (평가자 본인용 - 현재 비밀번호 확인 필요)
 async function updateEvaluatorPassword(evaluatorId, currentPassword, newPassword) {
     try {
         // 현재 비밀번호 확인
@@ -389,6 +389,25 @@ async function updateEvaluatorPassword(evaluatorId, currentPassword, newPassword
         return data;
     } catch (error) {
         console.error('Error updating evaluator password:', error);
+        throw error;
+    }
+}
+
+// 평가자 비밀번호 변경 (관리자용 - 현재 비밀번호 확인 불필요)
+async function updateEvaluatorPasswordByAdmin(evaluatorId, newPassword) {
+    try {
+        // 관리자는 현재 비밀번호 확인 없이 직접 변경 가능
+        const { data, error } = await supabase
+            .from('evaluators')
+            .update({ password: newPassword })
+            .eq('id', evaluatorId)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error updating evaluator password by admin:', error);
         throw error;
     }
 }

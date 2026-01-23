@@ -59,6 +59,38 @@
         </div>
     </div>
 
+    <!-- 평가자 비밀번호 변경 모달 (관리자용) -->
+    <div id="changeEvaluatorPasswordModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>평가자 비밀번호 변경</h2>
+                <button onclick="closeChangeEvaluatorPasswordModal()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;">
+                    평가자: <strong id="changePasswordEvaluatorName" style="color: var(--text-primary);"></strong>
+                </p>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">새 비밀번호</label>
+                    <input type="password" id="adminNewPassword" placeholder="새 비밀번호를 입력하세요 (최소 4자)" 
+                           style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">새 비밀번호 확인</label>
+                    <input type="password" id="adminConfirmPassword" placeholder="새 비밀번호를 다시 입력하세요" 
+                           style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                </div>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 12px;">
+                    ⚠️ 관리자는 현재 비밀번호 확인 없이 직접 비밀번호를 변경할 수 있습니다.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeChangeEvaluatorPasswordModal()" class="btn-secondary">취소</button>
+                <button onclick="changeEvaluatorPasswordByAdmin()" class="btn-primary">변경</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 평가자 관리 모달 -->
     <div id="evaluatorEditorModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
