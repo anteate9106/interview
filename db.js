@@ -368,6 +368,31 @@ async function getEvaluatorById(evaluatorId) {
     }
 }
 
+// 평가자 비밀번호 변경
+async function updateEvaluatorPassword(evaluatorId, currentPassword, newPassword) {
+    try {
+        // 현재 비밀번호 확인
+        const evaluator = await authenticateEvaluator(evaluatorId, currentPassword);
+        if (!evaluator) {
+            throw new Error('현재 비밀번호가 올바르지 않습니다.');
+        }
+        
+        // 새 비밀번호로 업데이트
+        const { data, error } = await supabase
+            .from('evaluators')
+            .update({ password: newPassword })
+            .eq('id', evaluatorId)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error updating evaluator password:', error);
+        throw error;
+    }
+}
+
 // ==================== 문의 정보 관련 ====================
 
 // 문의 정보 가져오기

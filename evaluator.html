@@ -65,6 +65,7 @@
                 <span id="currentJobPosting" class="current-job-posting"></span>
                 <span id="evaluatorName" class="evaluator-name"></span>
                 <button onclick="refreshData()" class="btn-refresh">🔄 새로고침</button>
+                <button onclick="openChangePasswordModal()" class="btn-nav-link" style="padding: 6px 12px; font-size: 13px;">비밀번호 변경</button>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
             </div>
         </nav>
@@ -271,6 +272,37 @@
                         <button type="submit" class="btn-submit">평가 저장</button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 비밀번호 변경 모달 -->
+    <div id="changePasswordModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>비밀번호 변경</h2>
+                <button onclick="closeChangePasswordModal()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">현재 비밀번호</label>
+                    <input type="password" id="currentPassword" placeholder="현재 비밀번호를 입력하세요" 
+                           style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">새 비밀번호</label>
+                    <input type="password" id="newPassword" placeholder="새 비밀번호를 입력하세요 (최소 4자)" 
+                           style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">새 비밀번호 확인</label>
+                    <input type="password" id="confirmPassword" placeholder="새 비밀번호를 다시 입력하세요" 
+                           style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeChangePasswordModal()" class="btn-secondary">취소</button>
+                <button onclick="changePassword()" class="btn-primary">변경</button>
             </div>
         </div>
     </div>

@@ -115,6 +115,82 @@ function handleLogin(e) {
     }
 }
 
+// 비밀번호 변경 모달 열기
+function openChangePasswordModal() {
+    const modal = document.getElementById('changePasswordModal');
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    
+    // 입력 필드 초기화
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    
+    // 모달 배경 클릭 시 닫기
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeChangePasswordModal();
+        }
+    });
+}
+
+// 비밀번호 변경 모달 닫기
+function closeChangePasswordModal() {
+    const modal = document.getElementById('changePasswordModal');
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+    
+    // 입력 필드 초기화
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+}
+
+// 비밀번호 변경
+async function changePassword() {
+    try {
+        const currentPassword = document.getElementById('currentPassword').value.trim();
+        const newPassword = document.getElementById('newPassword').value.trim();
+        const confirmPassword = document.getElementById('confirmPassword').value.trim();
+        
+        // 유효성 검사
+        if (!currentPassword) {
+            alert('현재 비밀번호를 입력해주세요.');
+            return;
+        }
+        if (!newPassword) {
+            alert('새 비밀번호를 입력해주세요.');
+            return;
+        }
+        if (newPassword.length < 4) {
+            alert('새 비밀번호는 최소 4자 이상이어야 합니다.');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            alert('새 비밀번호와 확인 비밀번호가 일치하지 않습니다.');
+            return;
+        }
+        if (currentPassword === newPassword) {
+            alert('현재 비밀번호와 새 비밀번호가 동일합니다.');
+            return;
+        }
+        
+        // 비밀번호 변경
+        await updateEvaluatorPassword(currentEvaluator, currentPassword, newPassword);
+        
+        // 로컬 evaluators 객체도 업데이트
+        if (evaluators[currentEvaluator]) {
+            evaluators[currentEvaluator].password = newPassword;
+        }
+        
+        alert('비밀번호가 변경되었습니다.');
+        closeChangePasswordModal();
+    } catch (error) {
+        console.error('Error changing password:', error);
+        alert('비밀번호 변경 중 오류가 발생했습니다.\n' + error.message);
+    }
+}
+
 // 로그아웃
 function logout() {
     if (confirm('로그아웃 하시겠습니까?')) {
