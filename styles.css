@@ -1088,6 +1088,29 @@ body {
     background-color: var(--primary-hover);
 }
 
+/* 네비게이션 링크 버튼 (통일된 스타일) */
+.btn-nav-link {
+    padding: 8px 16px;
+    background-color: white;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    display: inline-block;
+    min-width: 120px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.btn-nav-link:hover {
+    background-color: var(--background);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
 .modal-footer {
     display: flex;
     gap: 12px;
