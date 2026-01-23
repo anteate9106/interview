@@ -22,8 +22,29 @@ document.addEventListener('DOMContentLoaded', async function() {
     // right-panel이 항상 보이도록 (페이지 로드 시)
     setTimeout(() => {
         ensureRightPanelVisible();
+        forceButtonVisible();
     }, 100);
+    
+    // 지속적으로 버튼 표시 강제
+    setInterval(forceButtonVisible, 50);
 });
+
+// 버튼을 강제로 표시하는 함수
+function forceButtonVisible() {
+    const btn = document.getElementById('evaluationSubmitBtn') || document.querySelector('#evaluationForm button[type="submit"]');
+    if (btn) {
+        btn.style.setProperty('display', 'block', 'important');
+        btn.style.setProperty('visibility', 'visible', 'important');
+        btn.style.setProperty('opacity', btn.disabled ? '0.6' : '1', 'important');
+        btn.style.setProperty('position', 'relative', 'important');
+        btn.style.setProperty('z-index', '100', 'important');
+        btn.style.setProperty('width', '100%', 'important');
+        btn.style.setProperty('min-height', '50px', 'important');
+        btn.style.setProperty('height', 'auto', 'important');
+        btn.style.setProperty('max-height', 'none', 'important');
+        btn.style.setProperty('overflow', 'visible', 'important');
+    }
+}
 
 // right-panel이 항상 보이도록 보장
 function ensureRightPanelVisible() {
@@ -50,17 +71,17 @@ function ensureRightPanelVisible() {
     }
     
     // 평가 저장 버튼도 확인 및 강제 표시
-    const submitBtn = document.querySelector('#evaluationForm button[type="submit"]');
+    const submitBtn = document.getElementById('evaluationSubmitBtn') || document.querySelector('#evaluationForm button[type="submit"]');
     if (submitBtn) {
-        submitBtn.style.display = 'block';
-        submitBtn.style.visibility = 'visible';
-        submitBtn.style.opacity = submitBtn.disabled ? '0.6' : '1';
-        submitBtn.style.position = 'relative';
-        submitBtn.style.zIndex = '100';
-        submitBtn.style.minHeight = '50px';
-        submitBtn.style.height = 'auto';
-        submitBtn.style.maxHeight = 'none';
-        submitBtn.style.overflow = 'visible';
+        submitBtn.style.setProperty('display', 'block', 'important');
+        submitBtn.style.setProperty('visibility', 'visible', 'important');
+        submitBtn.style.setProperty('opacity', submitBtn.disabled ? '0.6' : '1', 'important');
+        submitBtn.style.setProperty('position', 'relative', 'important');
+        submitBtn.style.setProperty('z-index', '100', 'important');
+        submitBtn.style.setProperty('min-height', '50px', 'important');
+        submitBtn.style.setProperty('height', 'auto', 'important');
+        submitBtn.style.setProperty('max-height', 'none', 'important');
+        submitBtn.style.setProperty('overflow', 'visible', 'important');
     }
 }
 
@@ -69,21 +90,7 @@ function ensureSubmitButtonVisible() {
     // right-panel도 먼저 보이도록
     ensureRightPanelVisible();
     
-    const submitBtn = document.querySelector('#evaluationForm button[type="submit"]');
-    if (submitBtn) {
-        // 강제로 표시
-        submitBtn.style.display = 'block';
-        submitBtn.style.visibility = 'visible';
-        submitBtn.style.opacity = submitBtn.disabled ? '0.6' : '1';
-        submitBtn.style.position = 'relative';
-        submitBtn.style.zIndex = '100';
-        submitBtn.style.minHeight = '50px';
-        submitBtn.style.height = 'auto';
-        submitBtn.style.maxHeight = 'none';
-        submitBtn.style.overflow = 'visible';
-        // 클래스도 추가하여 CSS 규칙 적용
-        submitBtn.classList.add('btn-submit');
-    }
+    forceButtonVisible();
     
     // 주기적으로 확인하여 항상 보이도록 유지 (더 자주 확인)
     setInterval(() => {
@@ -130,34 +137,7 @@ function ensureSubmitButtonVisible() {
         }
         
         // 버튼 확인 및 강제 표시
-        const btn = document.querySelector('#evaluationForm button[type="submit"]');
-        if (btn) {
-            const computedStyle = window.getComputedStyle(btn);
-            
-            // display 확인
-            if (btn.style.display === 'none' || computedStyle.display === 'none') {
-                btn.style.display = 'block';
-            }
-            
-            // visibility 확인
-            if (btn.style.visibility === 'hidden' || computedStyle.visibility === 'hidden') {
-                btn.style.visibility = 'visible';
-            }
-            
-            // opacity 확인 (0이면 1로, disabled면 0.6으로)
-            const currentOpacity = parseFloat(computedStyle.opacity);
-            if (currentOpacity === 0 || isNaN(currentOpacity)) {
-                btn.style.opacity = btn.disabled ? '0.6' : '1';
-            }
-            
-            // position과 z-index 강제 설정
-            btn.style.position = 'relative';
-            btn.style.zIndex = '100';
-            btn.style.minHeight = '50px';
-            btn.style.height = 'auto';
-            btn.style.maxHeight = 'none';
-            btn.style.overflow = 'visible';
-        }
+        forceButtonVisible();
     }, 50); // 100ms에서 50ms로 더 자주 확인
 }
 
