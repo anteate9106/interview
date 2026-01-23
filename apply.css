@@ -766,6 +766,9 @@ body {
     transition: all 0.3s ease;
     animation: fadeInRight 0.6s ease-out;
     animation-fill-mode: both;
+    overflow: visible;
+    min-height: auto;
+    max-height: none;
 }
 
 .info-card:nth-child(1) {
@@ -819,10 +822,31 @@ body {
     color: var(--text-secondary);
     font-size: 14px;
     margin-bottom: 8px;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
 }
 
 .info-card strong {
     color: var(--primary-color);
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.info-card #contactContent {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+}
+
+.info-card #contactContent p {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
 }
 
 #applicationStatus p {
@@ -932,6 +956,11 @@ body {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 16px;
+    }
+    
+    .info-card {
+        overflow: visible;
+        max-height: none;
     }
 }
 
