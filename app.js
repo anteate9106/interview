@@ -3,18 +3,12 @@ let currentUser = null;
 let applicants = [];
 let selectedApplicantId = null;
 let selectedJobPosting = null;
-
-// 채용공고 목록
-const jobPostings = [
-    '2026년 상반기 신입사원 공채',
-    '2026년 상반기 경력직 수시채용',
-    '2026년 인턴 채용',
-    '2026년 계약직 채용'
-];
+let jobPostings = []; // 동적으로 로드
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', async function() {
     await loadData();
+    await loadJobPostings();
     checkAuth();
     setupEventListeners();
 });
@@ -27,6 +21,24 @@ async function loadData() {
     } catch (error) {
         console.error('Error loading applicants:', error);
         applicants = [];
+    }
+}
+
+// 채용공고 목록 로드
+async function loadJobPostings() {
+    try {
+        const postings = await getAllJobPostings();
+        jobPostings = postings.map(p => p.title);
+        console.log('Loaded job postings:', jobPostings);
+    } catch (error) {
+        console.error('Error loading job postings:', error);
+        // 기본값 사용
+        jobPostings = [
+            '2026년 상반기 신입사원 공채',
+            '2026년 상반기 경력직 수시채용',
+            '2026년 인턴 채용',
+            '2026년 계약직 채용'
+        ];
     }
 }
 
@@ -593,5 +605,145 @@ async function saveGuide() {
     } catch (error) {
         console.error('Error saving guide:', error);
         alert('저장 중 오류가 발생했습니다.\n' + error.message);
+    }
+}
+
+// ==================== 채용공고 관리 ====================
+
+let currentJobPostings = null;
+
+// 채용공고 관리 모달 열기
+async function openJobPostingEditor() {
+    try {
+        currentJobPostings = await getAllJobPostings();
+        renderJobPostingEditor();
+        const modal = document.getElementById('jobPostingEditorModal');
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+        
+        // 모달 배경 클릭 시 닫기
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeJobPostingEditor();
+            }
+        });
+    } catch (error) {
+        console.error('Error loading job postings:', error);
+        alert('채용공고를 불러오는 중 오류가 발생했습니다.');
+    }
+}
+
+// 채용공고 관리 모달 닫기
+function closeJobPostingEditor() {
+    const modal = document.getElementById('jobPostingEditorModal');
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+}
+
+// 채용공고 편집기 렌더링
+function renderJobPostingEditor() {
+    const container = document.getElementById('jobPostingsContainer');
+    container.innerHTML = '';
+    
+    if (!currentJobPostings || currentJobPostings.length === 0) {
+        container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">등록된 채용공고가 없습니다.</div>';
+        return;
+    }
+    
+    currentJobPostings.forEach((posting, index) => {
+        const row = document.createElement('div');
+        row.className = 'guide-item-row';
+        row.style.marginBottom = '12px';
+        row.innerHTML = `
+            <input type="text" value="${posting.title.replace(/"/g, '&quot;')}" 
+                   onchange="updateJobPostingItem(${posting.id}, this.value)" 
+                   placeholder="채용공고명" style="flex: 1;">
+            <button onclick="deleteJobPostingItem(${posting.id}, ${index})" class="btn-remove-item">삭제</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// 채용공고 업데이트
+async function updateJobPostingItem(id, title) {
+    try {
+        if (!title || title.trim() === '') {
+            alert('채용공고명을 입력해주세요.');
+            return;
+        }
+        
+        await updateJobPosting(id, title.trim());
+        
+        // 로컬 데이터 업데이트
+        const posting = currentJobPostings.find(p => p.id === id);
+        if (posting) {
+            posting.title = title.trim();
+        }
+        
+        // jobPostings 배열도 업데이트
+        await loadJobPostings();
+        
+        // 현재 페이지가 채용공고 페이지면 다시 렌더링
+        if (document.getElementById('jobPostingPage').classList.contains('active')) {
+            renderJobPostings();
+        }
+    } catch (error) {
+        console.error('Error updating job posting:', error);
+        alert('수정 중 오류가 발생했습니다.\n' + error.message);
+    }
+}
+
+// 채용공고 삭제
+async function deleteJobPostingItem(id, index) {
+    if (!confirm('이 채용공고를 삭제하시겠습니까?\n삭제된 채용공고는 복구할 수 없습니다.')) {
+        return;
+    }
+    
+    try {
+        await deleteJobPosting(id);
+        
+        // 로컬 데이터에서 제거
+        currentJobPostings.splice(index, 1);
+        renderJobPostingEditor();
+        
+        // jobPostings 배열도 업데이트
+        await loadJobPostings();
+        
+        // 현재 페이지가 채용공고 페이지면 다시 렌더링
+        if (document.getElementById('jobPostingPage').classList.contains('active')) {
+            renderJobPostings();
+        }
+        
+        alert('채용공고가 삭제되었습니다.');
+    } catch (error) {
+        console.error('Error deleting job posting:', error);
+        alert('삭제 중 오류가 발생했습니다.\n' + error.message);
+    }
+}
+
+// 새 채용공고 추가
+async function addNewJobPosting() {
+    const title = prompt('새 채용공고명을 입력하세요:');
+    if (!title || title.trim() === '') {
+        return;
+    }
+    
+    try {
+        const newPosting = await createJobPosting(title.trim());
+        currentJobPostings.push(newPosting);
+        renderJobPostingEditor();
+        
+        // jobPostings 배열도 업데이트
+        await loadJobPostings();
+        
+        // 현재 페이지가 채용공고 페이지면 다시 렌더링
+        if (document.getElementById('jobPostingPage').classList.contains('active')) {
+            renderJobPostings();
+        }
+        
+        alert('채용공고가 추가되었습니다.');
+    } catch (error) {
+        console.error('Error creating job posting:', error);
+        alert('추가 중 오류가 발생했습니다.\n' + error.message);
     }
 }

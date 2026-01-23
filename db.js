@@ -275,6 +275,94 @@ async function saveApplicationGuide(guideData) {
     }
 }
 
+// ==================== 채용공고 관련 ====================
+
+// 모든 채용공고 가져오기
+async function getAllJobPostings() {
+    try {
+        const { data, error } = await supabase
+            .from('job_postings')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error && error.code !== 'PGRST116') throw error;
+        
+        // 기본값 반환 (데이터가 없을 경우)
+        if (!data || data.length === 0) {
+            return [
+                { id: 1, title: '2026년 상반기 신입사원 공채', created_at: new Date().toISOString() },
+                { id: 2, title: '2026년 상반기 경력직 수시채용', created_at: new Date().toISOString() },
+                { id: 3, title: '2026년 인턴 채용', created_at: new Date().toISOString() },
+                { id: 4, title: '2026년 계약직 채용', created_at: new Date().toISOString() }
+            ];
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Error fetching job postings:', error);
+        // 에러 시 기본값 반환
+        return [
+            { id: 1, title: '2026년 상반기 신입사원 공채', created_at: new Date().toISOString() },
+            { id: 2, title: '2026년 상반기 경력직 수시채용', created_at: new Date().toISOString() },
+            { id: 3, title: '2026년 인턴 채용', created_at: new Date().toISOString() },
+            { id: 4, title: '2026년 계약직 채용', created_at: new Date().toISOString() }
+        ];
+    }
+}
+
+// 채용공고 추가
+async function createJobPosting(title) {
+    try {
+        const { data, error } = await supabase
+            .from('job_postings')
+            .insert([{ title: title }])
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error creating job posting:', error);
+        throw error;
+    }
+}
+
+// 채용공고 수정
+async function updateJobPosting(id, title) {
+    try {
+        const { data, error } = await supabase
+            .from('job_postings')
+            .update({ title: title, updated_at: new Date().toISOString() })
+            .eq('id', id)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error updating job posting:', error);
+        throw error;
+    }
+}
+
+// 채용공고 삭제
+async function deleteJobPosting(id) {
+    try {
+        const { data, error } = await supabase
+            .from('job_postings')
+            .delete()
+            .eq('id', id)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error deleting job posting:', error);
+        throw error;
+    }
+}
+
 // ==================== 유틸리티 ====================
 
 // 비밀번호 검증 (클라이언트 측)

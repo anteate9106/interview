@@ -5,6 +5,7 @@ let applicationGuide = null;
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', async function() {
     await loadApplicationGuide(); // 작성 안내 로드
+    await loadJobPostingOptions(); // 채용공고 옵션 로드
     checkLoginStatus();
     setupEventListeners();
     loadDraft(); // 임시 저장 데이터 불러오기
@@ -55,6 +56,31 @@ function setupEventListeners() {
 
     // 전화번호 자동 포맷팅
     setupPhoneFormatting('phone');
+}
+
+// 채용공고 옵션 로드
+async function loadJobPostingOptions() {
+    try {
+        const postings = await getAllJobPostings();
+        const select = document.getElementById('jobPosting');
+        if (select) {
+            // 기존 옵션 제거 (첫 번째 옵션 제외)
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            
+            // 새 옵션 추가
+            postings.forEach(posting => {
+                const option = document.createElement('option');
+                option.value = posting.title;
+                option.textContent = posting.title;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading job posting options:', error);
+        // 에러 시 기본값 유지
+    }
 }
 
 // 작성 안내 로드

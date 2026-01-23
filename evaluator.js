@@ -3,14 +3,7 @@ let currentEvaluator = null;
 let applicants = [];
 let selectedApplicantId = null;
 let selectedJobPosting = null;
-
-// 채용공고 목록 (실제로는 서버에서 관리해야 함)
-const jobPostings = [
-    '2026년 상반기 신입사원 공채',
-    '2026년 상반기 경력직 수시채용',
-    '2026년 인턴 채용',
-    '2026년 계약직 채용'
-];
+let jobPostings = []; // 동적으로 로드
 
 // 평가자 계정 (실제로는 서버에서 관리해야 함)
 const evaluators = {
@@ -22,6 +15,7 @@ const evaluators = {
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', async function() {
     await loadData();
+    await loadJobPostings();
     checkAuth();
     setupEventListeners();
 });
@@ -34,6 +28,24 @@ async function loadData() {
     } catch (error) {
         console.error('Error loading applicants:', error);
         applicants = [];
+    }
+}
+
+// 채용공고 목록 로드
+async function loadJobPostings() {
+    try {
+        const postings = await getAllJobPostings();
+        jobPostings = postings.map(p => p.title);
+        console.log('Loaded job postings:', jobPostings);
+    } catch (error) {
+        console.error('Error loading job postings:', error);
+        // 기본값 사용
+        jobPostings = [
+            '2026년 상반기 신입사원 공채',
+            '2026년 상반기 경력직 수시채용',
+            '2026년 인턴 채용',
+            '2026년 계약직 채용'
+        ];
     }
 }
 

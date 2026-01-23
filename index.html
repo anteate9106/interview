@@ -40,6 +40,7 @@
                 <a href="evaluator.html" class="btn-nav-link" target="_blank">평가자페이지</a>
                 <a href="apply.html" class="btn-nav-link" target="_blank">지원자페이지</a>
                 <button onclick="openGuideEditor()" class="btn-nav-link">작성안내관리</button>
+                <button onclick="openJobPostingEditor()" class="btn-nav-link">채용공고관리</button>
                 <span id="currentUserPosting" class="current-user"></span>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
             </div>
@@ -53,6 +54,27 @@
 
             <div class="job-posting-grid" id="jobPostingGrid">
                 <!-- 동적 생성 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 채용공고 관리 모달 -->
+    <div id="jobPostingEditorModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2>채용공고 관리</h2>
+                <button onclick="closeJobPostingEditor()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 24px;">
+                    <button onclick="addNewJobPosting()" class="btn-add-item">+ 새 채용공고 추가</button>
+                </div>
+                <div id="jobPostingsContainer">
+                    <!-- 동적 생성 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeJobPostingEditor()" class="btn-secondary">닫기</button>
             </div>
         </div>
     </div>
@@ -100,6 +122,7 @@
                 <a href="evaluator.html" class="btn-nav-link" target="_blank">평가자페이지</a>
                 <a href="apply.html" class="btn-nav-link" target="_blank">지원자페이지</a>
                 <button onclick="openGuideEditor()" class="btn-nav-link">작성안내관리</button>
+                <button onclick="openJobPostingEditor()" class="btn-nav-link">채용공고관리</button>
                 <span id="currentUser" class="current-user"></span>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
             </div>
