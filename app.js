@@ -376,65 +376,12 @@ function onApplicantChange() {
 }
 
 // 지원자 목록 렌더링
+// 드롭다운 방식으로 변경되어 더 이상 사용하지 않음
+// 호환성을 위해 빈 함수로 유지 (에러 방지)
 function renderApplicantList() {
-    const listContainer = document.getElementById('applicantList');
-    
-    // 드롭다운 방식으로 변경되어 리스트 컨테이너가 없는 경우 함수 종료
-    if (!listContainer) {
-        console.log('renderApplicantList: applicantList element not found, skipping render');
-        return;
-    }
-    
-    try {
-        listContainer.innerHTML = '';
-
-        // 선택된 채용공고의 지원자만 표시
-        const filteredApplicants = selectedJobPosting 
-            ? applicants.filter(a => a.job_posting === selectedJobPosting)
-            : applicants;
-
-        if (filteredApplicants.length === 0) {
-            if (listContainer) {
-                listContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">해당 공고의 지원자가 없습니다.</div>';
-            }
-            return;
-        }
-
-        filteredApplicants.forEach(applicant => {
-            if (!listContainer) return; // 안전 체크
-            
-            const item = document.createElement('div');
-            item.className = 'applicant-item';
-            if (selectedApplicantId === applicant.id) {
-                item.classList.add('active');
-            }
-
-            // 평가 상태 확인 (evaluations 배열 사용)
-            const evaluationCount = applicant.evaluations ? applicant.evaluations.length : 0;
-            const avgScore = evaluationCount > 0 
-                ? Math.round(applicant.evaluations.reduce((sum, e) => sum + (e.total_score || 0), 0) / evaluationCount)
-                : null;
-
-            const status = evaluationCount > 0
-                ? `<span class="applicant-status status-completed">평가완료 (${evaluationCount}명)</span>`
-                : '<span class="applicant-status status-pending">평가대기</span>';
-
-            const score = avgScore !== null
-                ? `<span class="applicant-score">${avgScore}점</span>`
-                : '';
-
-            item.innerHTML = `
-                <div class="applicant-name">${applicant.name}</div>
-                <div class="applicant-position">${applicant.branch || '지점'} - ${applicant.position || '직무'}</div>
-                <div>${status}${score}</div>
-            `;
-
-            item.addEventListener('click', () => selectApplicant(applicant.id));
-            listContainer.appendChild(item);
-        });
-    } catch (error) {
-        console.error('Error in renderApplicantList:', error);
-    }
+    // 드롭다운 방식으로 변경되어 리스트 렌더링 불필요
+    // 이 함수는 호환성을 위해 유지하되 아무 작업도 수행하지 않음
+    return;
 }
 
 // 지원자 선택
