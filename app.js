@@ -268,6 +268,13 @@ function showCoverLetter(applicant) {
             <span><strong>지원 지점:</strong> ${applicant.branch || '미입력'}</span>
             <span><strong>지원 직무:</strong> ${applicant.position || '미입력'}</span>
         </div>
+        ${applicant.resume_file_url ? `
+        <div class="applicant-detail" style="margin-top: 8px;">
+            <a href="${applicant.resume_file_url}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600;">
+                📄 이력서 PDF 다운로드
+            </a>
+        </div>
+        ` : ''}
     `;
 
     // 평가 정보 표시

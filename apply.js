@@ -1,6 +1,7 @@
 // 전역 변수
 let currentApplicant = null;
 let applicationGuide = null;
+let selectedResumeFile = null; // 선택된 PDF 파일
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', async function() {
@@ -450,6 +451,40 @@ function createEditForm(applicant) {
             </div>
         </div>
 
+        <!-- 이력서 PDF 업로드 섹션 -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <span class="section-number">02-1</span>
+                이력서 PDF (선택사항)
+            </h2>
+            
+            <div class="form-field full-width">
+                <label for="editResumePDF">
+                    이력서 PDF 파일
+                    <span style="color: var(--text-secondary); font-size: 13px; font-weight: normal;"> (선택사항)</span>
+                </label>
+                ${applicant.resume_file_name ? `
+                    <div style="margin-bottom: 8px; padding: 8px; background: var(--background); border-radius: 6px;">
+                        <span style="color: var(--success-color); font-size: 13px;">현재 파일: ${applicant.resume_file_name}</span>
+                        <a href="${applicant.resume_file_url}" target="_blank" style="margin-left: 8px; color: var(--primary-color); text-decoration: none; font-size: 13px;">다운로드</a>
+                    </div>
+                ` : ''}
+                <input 
+                    type="file" 
+                    id="editResumePDF" 
+                    accept=".pdf"
+                    ${isDisabled ? 'disabled' : ''}
+                    style="padding: 12px; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%; cursor: pointer; transition: all 0.3s;"
+                    onchange="handleFileSelect(event)"
+                >
+                <small class="field-hint">PDF 파일만 업로드 가능합니다. (최대 10MB)</small>
+                <div id="editFileInfo" style="margin-top: 8px; display: none;">
+                    <span id="editFileName" style="color: var(--success-color); font-size: 13px;"></span>
+                    <button type="button" onclick="removeFile()" style="margin-left: 8px; padding: 4px 8px; background: var(--danger-color); color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">삭제</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 경력기술서 섹션 -->
         <div class="form-section">
             <h2 class="section-title">
@@ -582,6 +617,66 @@ function getWritingItemLimit(defaultName) {
     return item ? item.limit : (defaultName === '자기소개서' ? 1000 : 500);
 }
 
+// ==================== 파일 업로드 관련 ====================
+
+// 파일 선택 처리
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    const inputId = event.target.id;
+    const isEditForm = inputId === 'editResumePDF';
+    
+    if (!file) {
+        selectedResumeFile = null;
+        if (isEditForm) {
+            document.getElementById('editFileInfo').style.display = 'none';
+        } else {
+            document.getElementById('fileInfo').style.display = 'none';
+        }
+        return;
+    }
+    
+    // PDF 파일 검증
+    if (file.type !== 'application/pdf') {
+        alert('PDF 파일만 업로드 가능합니다.');
+        event.target.value = '';
+        return;
+    }
+    
+    // 파일 크기 검증 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        alert('파일 크기는 10MB 이하여야 합니다.');
+        event.target.value = '';
+        return;
+    }
+    
+    selectedResumeFile = file;
+    const fileInfo = `선택된 파일: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+    
+    if (isEditForm) {
+        document.getElementById('editFileName').textContent = fileInfo;
+        document.getElementById('editFileInfo').style.display = 'block';
+    } else {
+        document.getElementById('fileName').textContent = fileInfo;
+        document.getElementById('fileInfo').style.display = 'block';
+    }
+}
+
+// 파일 삭제
+function removeFile() {
+    selectedResumeFile = null;
+    const resumeInput = document.getElementById('resumePDF');
+    const editResumeInput = document.getElementById('editResumePDF');
+    
+    if (resumeInput) {
+        resumeInput.value = '';
+        document.getElementById('fileInfo').style.display = 'none';
+    }
+    if (editResumeInput) {
+        editResumeInput.value = '';
+        document.getElementById('editFileInfo').style.display = 'none';
+    }
+}
+
 // 상태 배너 업데이트
 function updateStatusBanner(applicant) {
     const banner = document.getElementById('statusBanner');
@@ -688,6 +783,20 @@ async function handleSubmit(e) {
             return;
         }
 
+        // PDF 파일 업로드 (있는 경우)
+        let resumeFileInfo = null;
+        if (selectedResumeFile) {
+            try {
+                // 임시 ID 생성 (실제 저장 후 업데이트)
+                const tempId = 'temp_' + Date.now();
+                resumeFileInfo = await uploadResumePDF(selectedResumeFile, tempId);
+            } catch (error) {
+                console.error('Error uploading resume PDF:', error);
+                alert('이력서 PDF 업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+                return;
+            }
+        }
+
         const application = {
             job_posting: formData.jobPosting,
             name: formData.name,
@@ -705,11 +814,49 @@ async function handleSubmit(e) {
             career_description: formData.careerDescription,
             motivation: formData.motivation,
             aspiration: formData.aspiration,
-            submit_date: new Date().toISOString().split('T')[0]
+            submit_date: new Date().toISOString().split('T')[0],
+            resume_file_path: resumeFileInfo ? resumeFileInfo.file_path : null,
+            resume_file_url: resumeFileInfo ? resumeFileInfo.file_url : null,
+            resume_file_name: resumeFileInfo ? resumeFileInfo.file_name : null
         };
 
         console.log('Submitting application:', application);
         const newApplicant = await createApplicant(application);
+        
+        // 파일이 업로드된 경우, 파일명을 실제 applicant ID로 업데이트
+        if (resumeFileInfo && newApplicant.id) {
+            try {
+                // 기존 파일 삭제
+                await deleteResumePDF(resumeFileInfo.file_path);
+                
+                // 새 파일명으로 업로드
+                const newFileName = `${newApplicant.id}_${Date.now()}.pdf`;
+                const newFilePath = `resumes/${newFileName}`;
+                
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('resumes')
+                    .upload(newFilePath, selectedResumeFile, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+                
+                if (!uploadError) {
+                    const { data: urlData } = supabase.storage
+                        .from('resumes')
+                        .getPublicUrl(newFilePath);
+                    
+                    // 지원자 정보 업데이트
+                    await updateApplicant(newApplicant.email, {
+                        resume_file_path: newFilePath,
+                        resume_file_url: urlData.publicUrl,
+                        resume_file_name: selectedResumeFile.name
+                    });
+                }
+            } catch (error) {
+                console.error('Error updating resume file:', error);
+                // 파일 업로드 실패해도 지원서 제출은 계속 진행
+            }
+        }
         console.log('Application created successfully:', newApplicant);
 
         // 임시 저장 데이터 삭제
@@ -802,6 +949,41 @@ async function handleEdit(e) {
     }
 
     try {
+        // PDF 파일 업로드 (새로 선택된 경우)
+        if (selectedResumeFile) {
+            try {
+                // 기존 파일이 있으면 삭제
+                if (latestApplicant.resume_file_path) {
+                    await deleteResumePDF(latestApplicant.resume_file_path);
+                }
+                
+                // 새 파일 업로드
+                const newFileName = `${latestApplicant.id}_${Date.now()}.pdf`;
+                const newFilePath = `resumes/${newFileName}`;
+                
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('resumes')
+                    .upload(newFilePath, selectedResumeFile, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+                
+                if (!uploadError) {
+                    const { data: urlData } = supabase.storage
+                        .from('resumes')
+                        .getPublicUrl(newFilePath);
+                    
+                    formData.resume_file_path = newFilePath;
+                    formData.resume_file_url = urlData.publicUrl;
+                    formData.resume_file_name = selectedResumeFile.name;
+                }
+            } catch (error) {
+                console.error('Error uploading resume PDF:', error);
+                alert('이력서 PDF 업로드 중 오류가 발생했습니다.');
+                return;
+            }
+        }
+        
         // 비밀번호 변경이 있는 경우
         if (formData.newPassword) {
             formData.password = formData.newPassword;
