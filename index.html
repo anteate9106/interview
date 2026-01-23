@@ -108,21 +108,10 @@
                 <!-- 문의 관리 섹션 -->
                 <div style="margin-bottom: 32px; padding-top: 32px; border-top: 2px solid var(--border-color);">
                     <h3 style="margin-bottom: 16px; color: var(--text-primary);">📞 문의</h3>
-                    <div style="margin-bottom: 24px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">제목</label>
-                        <input type="text" id="contactTitle" placeholder="예: 채용 관련 문의사항이 있으시면" 
-                               style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
-                    </div>
-                    <div style="margin-bottom: 24px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">이메일</label>
-                        <input type="email" id="contactEmail" placeholder="예: recruit@company.com" 
-                               style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
-                    </div>
-                    <div style="margin-bottom: 24px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">설명</label>
-                        <input type="text" id="contactDescription" placeholder="예: 으로 연락 주시기 바랍니다." 
-                               style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
-                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">제목, 이메일, 설명을 각각 한 줄씩 입력하세요</p>
+                    <textarea id="contactTextarea" rows="4" 
+                              placeholder="채용 관련 문의사항이 있으시면&#10;recruit@company.com&#10;으로 연락 주시기 바랍니다."
+                              style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
                 </div>
             </div>
             <div class="modal-footer">

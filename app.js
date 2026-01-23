@@ -502,11 +502,15 @@ function renderGuideEditor() {
         writingTextarea.value = writingText;
     }
     
-    // 문의 정보 렌더링
-    if (currentContactData) {
-        document.getElementById('contactTitle').value = currentContactData.title || '';
-        document.getElementById('contactEmail').value = currentContactData.email || '';
-        document.getElementById('contactDescription').value = currentContactData.description || '';
+    // 문의 정보 렌더링 (textarea에 3줄로 표시)
+    const contactTextarea = document.getElementById('contactTextarea');
+    if (contactTextarea && currentContactData) {
+        const contactLines = [
+            currentContactData.title || '',
+            currentContactData.email || '',
+            currentContactData.description || ''
+        ];
+        contactTextarea.value = contactLines.join('\n');
     }
 }
 
@@ -561,29 +565,32 @@ async function saveGuide() {
             return;
         }
 
-        // 문의 정보 저장
-        const title = document.getElementById('contactTitle').value.trim();
-        const email = document.getElementById('contactEmail').value.trim();
-        const description = document.getElementById('contactDescription').value.trim();
+        // 문의 정보 파싱 (textarea에서 3줄로 구분)
+        const contactTextarea = document.getElementById('contactTextarea');
+        const contactLines = contactTextarea.value.split('\n').map(line => line.trim());
+        
+        const title = contactLines[0] || '';
+        const email = contactLines[1] || '';
+        const description = contactLines[2] || '';
         
         // 문의 정보 유효성 검사
         if (!title) {
-            alert('문의 제목을 입력해주세요.');
+            alert('문의 제목을 입력해주세요. (첫 번째 줄)');
             return;
         }
         if (!email) {
-            alert('문의 이메일을 입력해주세요.');
+            alert('문의 이메일을 입력해주세요. (두 번째 줄)');
             return;
         }
         if (!description) {
-            alert('문의 설명을 입력해주세요.');
+            alert('문의 설명을 입력해주세요. (세 번째 줄)');
             return;
         }
         
         // 이메일 형식 검증
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            alert('올바른 이메일 주소를 입력해주세요.');
+            alert('올바른 이메일 주소를 입력해주세요. (두 번째 줄)');
             return;
         }
         
