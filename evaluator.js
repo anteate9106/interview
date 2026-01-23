@@ -297,7 +297,7 @@ function showApplication(applicant) {
             <span>${applicant.phone || '미입력'}</span>
         </div>
         <div class="applicant-detail" style="margin-top: 8px;">
-            <span style="color: #6366f1; font-weight: 700;">📢 ${applicant.jobPosting || '채용공고 미선택'}</span>
+            <span style="color: #6366f1; font-weight: 700;">📢 ${applicant.job_posting || applicant.jobPosting || '채용공고 미선택'}</span>
         </div>
         <div class="applicant-detail" style="margin-top: 4px;">
             <span><strong>지원 지점:</strong> ${applicant.branch || '미입력'}</span>
@@ -333,12 +333,12 @@ function showApplication(applicant) {
 
             <div class="section-block">
                 <h3>✍️ 자기소개서</h3>
-                <p class="pre-wrap">${applicant.selfIntroduction || applicant.coverLetter || '미입력'}</p>
+                <p class="pre-wrap">${applicant.self_introduction || applicant.selfIntroduction || applicant.coverLetter || '미입력'}</p>
             </div>
 
             <div class="section-block">
                 <h3>💻 경력기술서</h3>
-                <p class="pre-wrap">${applicant.careerDescription || '미입력'}</p>
+                <p class="pre-wrap">${applicant.career_description || applicant.careerDescription || '미입력'}</p>
             </div>
 
             <div class="section-block">
