@@ -48,7 +48,7 @@ function setupEventListeners() {
         setupCharCountsFromGuide();
     } else {
         // 기본값으로 설정 (fallback)
-        setupCharCount('selfIntroduction', 'charCount1', 1000);
+        setupCharCount('selfIntroduction', 'charCount1', 2000);
         setupCharCount('careerDescription', 'charCount2', 500);
         setupCharCount('motivation', 'charCount3', 500);
         setupCharCount('aspiration', 'charCount4', 500);
@@ -101,7 +101,7 @@ async function loadApplicationGuide() {
                 '제출 후 로그인하여 수정 가능합니다'
             ],
             writing_items: [
-                { name: '자기소개서', limit: 1000 },
+                { name: '자기소개서', limit: 2000 },
                 { name: '경력기술서', limit: 500 },
                 { name: '지원동기', limit: 500 },
                 { name: '입사 후 포부', limit: 500 }
@@ -565,7 +565,7 @@ function getWritingItemLimit(defaultName) {
     if (!applicationGuide || !applicationGuide.writing_items) {
         // 기본값
         const defaults = {
-            '자기소개서': 1000,
+            '자기소개서': 2000,
             '경력기술서': 500,
             '지원동기': 500,
             '입사 후 포부': 500
@@ -579,7 +579,7 @@ function getWritingItemLimit(defaultName) {
         (defaultName === '지원동기' && i.name.includes('지원동기')) ||
         (defaultName === '입사 후 포부' && i.name.includes('포부'))
     );
-    return item ? item.limit : (defaultName === '자기소개서' ? 1000 : 500);
+    return item ? item.limit : (defaultName === '자기소개서' ? 2000 : 500);
 }
 
 // 상태 배너 업데이트
