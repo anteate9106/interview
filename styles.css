@@ -603,10 +603,11 @@ body {
     grid-template-columns: 2fr 1fr 1fr 1.5fr 1fr;
     gap: 16px;
     padding: 16px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: white;
+    color: var(--text-primary);
     font-weight: 600;
     font-size: 14px;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .job-posting-item {
