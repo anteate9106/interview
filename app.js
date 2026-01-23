@@ -18,6 +18,56 @@ async function loadData() {
     try {
         applicants = await getAllApplicants();
         console.log('Loaded applicants from Supabase:', applicants);
+        
+        // 필드명 정규화: snake_case와 camelCase 모두 지원
+        applicants = applicants.map(applicant => {
+            // 평가 데이터 확인 및 로그
+            if (applicant.evaluations) {
+                console.log(`Applicant ${applicant.name} (${applicant.id}) has ${applicant.evaluations.length} evaluations:`, applicant.evaluations);
+            } else {
+                console.log(`Applicant ${applicant.name} (${applicant.id}) has no evaluations`);
+            }
+            
+            // self_introduction와 selfIntroduction 모두 확인
+            if (!applicant.self_introduction && applicant.selfIntroduction) {
+                applicant.self_introduction = applicant.selfIntroduction;
+            }
+            if (!applicant.selfIntroduction && applicant.self_introduction) {
+                applicant.selfIntroduction = applicant.self_introduction;
+            }
+            
+            // career_description와 careerDescription 모두 확인
+            if (!applicant.career_description && applicant.careerDescription) {
+                applicant.career_description = applicant.careerDescription;
+            }
+            if (!applicant.careerDescription && applicant.career_description) {
+                applicant.careerDescription = applicant.career_description;
+            }
+            
+            // ID 타입 정규화: 문자열로 통일
+            const originalId = applicant.id;
+            if (applicant.id !== undefined && applicant.id !== null) {
+                applicant.id = String(applicant.id);
+            }
+            
+            // 평가 데이터의 applicant_id도 문자열로 변환 (일치시키기 위해)
+            if (applicant.evaluations && Array.isArray(applicant.evaluations)) {
+                applicant.evaluations = applicant.evaluations.map(eval => {
+                    if (eval.applicant_id !== undefined && eval.applicant_id !== null) {
+                        eval.applicant_id = String(eval.applicant_id);
+                    }
+                    return eval;
+                });
+            }
+            
+            return applicant;
+        });
+        
+        console.log('Normalized applicants with evaluations:', applicants.map(a => ({
+            id: a.id,
+            name: a.name,
+            evaluationCount: a.evaluations ? a.evaluations.length : 0
+        })));
     } catch (error) {
         console.error('Error loading applicants:', error);
         applicants = [];
@@ -373,11 +423,42 @@ function renderApplicantList() {
 }
 
 // 지원자 선택
-function selectApplicant(id) {
+async function selectApplicant(id) {
+    console.log('selectApplicant called with id:', id, 'type:', typeof id);
     selectedApplicantId = id;
-    const applicant = applicants.find(a => a.id === id);
     
-    if (!applicant) return;
+    // ID 타입 정규화: 문자열로 변환
+    const searchId = String(id);
+    console.log('Searching for applicant with id:', searchId);
+    console.log('Available applicant IDs:', applicants.map(a => ({ id: a.id, type: typeof a.id, name: a.name })));
+    
+    let applicant = applicants.find(a => {
+        const applicantId = String(a.id);
+        return applicantId === searchId;
+    });
+    
+    console.log('Found applicant:', applicant);
+    
+    if (!applicant) {
+        console.error('Applicant not found with id:', id);
+        console.error('Available IDs:', applicants.map(a => a.id));
+        return;
+    }
+
+    // 평가 데이터가 없거나 최신 데이터를 확인하기 위해 다시 로드
+    try {
+        const evaluations = await getEvaluationsByApplicant(applicant.id);
+        applicant.evaluations = evaluations;
+        console.log('Loaded evaluations for applicant:', evaluations);
+        
+        // applicants 배열도 업데이트
+        const applicantIndex = applicants.findIndex(a => String(a.id) === searchId);
+        if (applicantIndex !== -1) {
+            applicants[applicantIndex].evaluations = evaluations;
+        }
+    } catch (error) {
+        console.error('Error loading evaluations:', error);
+    }
 
     renderApplicantList();
     showCoverLetter(applicant);
@@ -465,12 +546,12 @@ function showCoverLetter(applicant) {
 
             <div class="section-block">
                 <h3>✍️ 자기소개서</h3>
-                <p class="pre-wrap">${applicant.selfIntroduction || applicant.coverLetter || '미입력'}</p>
+                <p class="pre-wrap">${applicant.self_introduction || applicant.selfIntroduction || applicant.coverLetter || '미입력'}</p>
             </div>
 
             <div class="section-block">
                 <h3>💻 경력기술서</h3>
-                <p class="pre-wrap">${applicant.careerDescription || '미입력'}</p>
+                <p class="pre-wrap">${applicant.career_description || applicant.careerDescription || '미입력'}</p>
             </div>
 
             <div class="section-block">
@@ -491,13 +572,32 @@ function loadEvaluation(applicant) {
     const form = document.getElementById('evaluationForm');
     const evaluationContent = document.getElementById('evaluationContent');
     
+    if (!evaluationContent) {
+        console.error('evaluationContent element not found');
+        return;
+    }
+    
+    console.log('loadEvaluation called for applicant:', applicant);
+    console.log('Evaluations:', applicant.evaluations);
+    
     // 평가 내역이 있으면 표시
     if (applicant.evaluations && applicant.evaluations.length > 0) {
+        console.log('Displaying evaluations, count:', applicant.evaluations.length);
+        console.log('Evaluation data:', applicant.evaluations);
+        
+        // total_score가 없으면 계산
+        const evaluationsWithTotal = applicant.evaluations.map(e => {
+            if (!e.total_score && e.score1 !== undefined) {
+                e.total_score = (e.score1 || 0) + (e.score2 || 0) + (e.score3 || 0) + (e.score4 || 0);
+            }
+            return e;
+        });
+        
         const avgScores = {
-            score1: Math.round(applicant.evaluations.reduce((sum, e) => sum + e.score1, 0) / applicant.evaluations.length),
-            score2: Math.round(applicant.evaluations.reduce((sum, e) => sum + e.score2, 0) / applicant.evaluations.length),
-            score3: Math.round(applicant.evaluations.reduce((sum, e) => sum + e.score3, 0) / applicant.evaluations.length),
-            score4: Math.round(applicant.evaluations.reduce((sum, e) => sum + e.score4, 0) / applicant.evaluations.length)
+            score1: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score1 || 0), 0) / evaluationsWithTotal.length),
+            score2: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score2 || 0), 0) / evaluationsWithTotal.length),
+            score3: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score3 || 0), 0) / evaluationsWithTotal.length),
+            score4: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score4 || 0), 0) / evaluationsWithTotal.length)
         };
 
         evaluationContent.innerHTML = `
@@ -540,17 +640,19 @@ function loadEvaluation(applicant) {
 
                 <div class="evaluators-detail" style="margin-top: 32px;">
                     <h4 style="margin-bottom: 16px;">평가자별 상세</h4>
-                    ${applicant.evaluations.map(e => `
+                    ${evaluationsWithTotal.map(e => {
+                        const totalScore = e.total_score || ((e.score1 || 0) + (e.score2 || 0) + (e.score3 || 0) + (e.score4 || 0));
+                        return `
                         <div class="evaluator-card">
                             <div class="evaluator-header">
                                 <strong>${e.evaluator_name || e.evaluator_id}</strong>
-                                <span style="font-size: 20px; font-weight: 700; color: #6366f1;">${e.total_score}점</span>
+                                <span style="font-size: 20px; font-weight: 700; color: #6366f1;">${totalScore}점</span>
                             </div>
                             <div class="evaluator-scores">
-                                <div>내용충실도: ${e.score1}점</div>
-                                <div>경력·교육: ${e.score2}점</div>
-                                <div>조직적합성: ${e.score3}점</div>
-                                <div>직무적합성: ${e.score4}점</div>
+                                <div>내용충실도: ${e.score1 || 0}점</div>
+                                <div>경력·교육: ${e.score2 || 0}점</div>
+                                <div>조직적합성: ${e.score3 || 0}점</div>
+                                <div>직무적합성: ${e.score4 || 0}점</div>
                             </div>
                             ${e.comment1 || e.comment2 || e.comment3 || e.comment4 ? `
                                 <div class="evaluator-comments">
@@ -561,7 +663,8 @@ function loadEvaluation(applicant) {
                                 </div>
                             ` : ''}
                         </div>
-                    `).join('')}
+                    `;
+                    }).join('')}
                 </div>
             </div>
         `;

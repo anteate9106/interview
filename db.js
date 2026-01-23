@@ -101,13 +101,59 @@ async function updateApplicant(email, updates) {
 // 특정 지원자의 모든 평가 가져오기
 async function getEvaluationsByApplicant(applicantId) {
     try {
-        const { data, error } = await supabase
+        // ID 타입 정규화: 원본 ID와 문자열 변환 모두 시도
+        const originalId = applicantId;
+        const stringId = String(applicantId);
+        const numberId = Number(applicantId);
+        
+        console.log('getEvaluationsByApplicant called with id:', originalId, 'type:', typeof originalId);
+        console.log('Trying stringId:', stringId, 'numberId:', numberId);
+        
+        // 먼저 원본 ID로 시도
+        let { data, error } = await supabase
             .from('evaluations')
             .select('*')
-            .eq('applicant_id', applicantId)
+            .eq('applicant_id', originalId)
             .order('created_at', { ascending: false });
         
-        if (error) throw error;
+        // 실패하면 문자열로 시도
+        if (error || !data || data.length === 0) {
+            console.log('Trying with stringId:', stringId);
+            const result = await supabase
+                .from('evaluations')
+                .select('*')
+                .eq('applicant_id', stringId)
+                .order('created_at', { ascending: false });
+            
+            if (!result.error && result.data && result.data.length > 0) {
+                data = result.data;
+                error = null;
+            }
+        }
+        
+        // 여전히 실패하면 숫자로 시도
+        if (error || !data || data.length === 0) {
+            if (!isNaN(numberId)) {
+                console.log('Trying with numberId:', numberId);
+                const result = await supabase
+                    .from('evaluations')
+                    .select('*')
+                    .eq('applicant_id', numberId)
+                    .order('created_at', { ascending: false });
+                
+                if (!result.error && result.data && result.data.length > 0) {
+                    data = result.data;
+                    error = null;
+                }
+            }
+        }
+        
+        if (error) {
+            console.error('Error in getEvaluationsByApplicant query:', error);
+            throw error;
+        }
+        
+        console.log('Found evaluations:', data ? data.length : 0, 'for applicant_id:', originalId);
         return data || [];
     } catch (error) {
         console.error('Error fetching evaluations:', error);
