@@ -165,8 +165,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-height: 64px;
-    height: auto;
+    height: 64px;
     border-bottom: 1px solid rgba(99, 102, 241, 0.1);
 }
 
@@ -178,11 +177,6 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -0.5px;
-    line-height: 1.4;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
 }
 
 .nav-actions {
@@ -821,13 +815,6 @@ body {
     padding: 8px 16px;
     background: var(--primary-light);
     border-radius: 8px;
-    line-height: 1.5;
-    white-space: normal;
-    word-break: keep-all;
-    max-width: 300px;
-    min-height: 40px;
-    display: flex;
-    align-items: center;
 }
 
 @media (max-width: 768px) {
