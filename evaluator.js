@@ -5,20 +5,40 @@ let selectedApplicantId = null;
 let selectedJobPosting = null;
 let jobPostings = []; // 동적으로 로드
 
-// 평가자 계정 (실제로는 서버에서 관리해야 함)
-const evaluators = {
-    'evaluator1': { password: 'eval123', name: '평가자 1' },
-    'evaluator2': { password: 'eval123', name: '평가자 2' },
-    'evaluator3': { password: 'eval123', name: '평가자 3' }
-};
+// 평가자 계정 (Supabase에서 동적으로 로드)
+let evaluators = {};
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', async function() {
+    await loadEvaluators();
     await loadData();
     await loadJobPostings();
     checkAuth();
     setupEventListeners();
 });
+
+// 평가자 목록 로드
+async function loadEvaluators() {
+    try {
+        const evaluatorList = await getAllEvaluators();
+        evaluators = {};
+        evaluatorList.forEach(eval => {
+            evaluators[eval.id] = {
+                password: eval.password,
+                name: eval.name || eval.id
+            };
+        });
+        console.log('Loaded evaluators from Supabase:', evaluators);
+    } catch (error) {
+        console.error('Error loading evaluators:', error);
+        // 기본값 사용 (하위 호환성)
+        evaluators = {
+            'evaluator1': { password: 'eval123', name: '평가자 1' },
+            'evaluator2': { password: 'eval123', name: '평가자 2' },
+            'evaluator3': { password: 'eval123', name: '평가자 3' }
+        };
+    }
+}
 
 // 데이터 로드 (Supabase에서)
 async function loadData() {

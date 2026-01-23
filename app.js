@@ -798,5 +798,136 @@ async function addNewJobPosting() {
     }
 }
 
+// ==================== 평가자 관리 ====================
+
+let currentEvaluators = null;
+
+// 평가자 관리 모달 열기
+async function openEvaluatorEditor() {
+    try {
+        currentEvaluators = await getAllEvaluators();
+        renderEvaluatorEditor();
+        const modal = document.getElementById('evaluatorEditorModal');
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+        
+        // 모달 배경 클릭 시 닫기
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeEvaluatorEditor();
+            }
+        });
+    } catch (error) {
+        console.error('Error loading evaluators:', error);
+        alert('평가자 목록을 불러오는 중 오류가 발생했습니다.');
+    }
+}
+
+// 평가자 관리 모달 닫기
+function closeEvaluatorEditor() {
+    const modal = document.getElementById('evaluatorEditorModal');
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+}
+
+// 평가자 편집기 렌더링
+function renderEvaluatorEditor() {
+    const container = document.getElementById('evaluatorsContainer');
+    container.innerHTML = '';
+    
+    if (!currentEvaluators || currentEvaluators.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 24px;">등록된 평가자가 없습니다.</p>';
+        return;
+    }
+    
+    currentEvaluators.forEach((evaluator) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: center; padding: 16px; background: #f8fafc; border-radius: 8px; margin-bottom: 12px;';
+        row.innerHTML = `
+            <div>
+                <strong style="color: var(--text-primary);">${evaluator.id}</strong>
+            </div>
+            <div style="color: var(--text-secondary); font-size: 14px;">
+                ${evaluator.name || '이름 없음'}
+            </div>
+            <div style="color: var(--text-secondary); font-size: 13px;">
+                생성일: ${new Date(evaluator.created_at).toLocaleDateString('ko-KR')}
+            </div>
+            <button onclick="deleteEvaluatorItem('${evaluator.id}')" class="btn-remove-item">삭제</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// 새 평가자 추가
+async function addNewEvaluator() {
+    try {
+        const evaluatorId = document.getElementById('newEvaluatorId').value.trim();
+        const password = document.getElementById('newEvaluatorPassword').value.trim();
+        const name = document.getElementById('newEvaluatorName').value.trim();
+        
+        // 유효성 검사
+        if (!evaluatorId) {
+            alert('평가자 아이디를 입력해주세요.');
+            return;
+        }
+        if (!password) {
+            alert('비밀번호를 입력해주세요.');
+            return;
+        }
+        if (password.length < 4) {
+            alert('비밀번호는 최소 4자 이상이어야 합니다.');
+            return;
+        }
+        if (!name) {
+            alert('평가자 이름을 입력해주세요.');
+            return;
+        }
+        
+        // 중복 확인
+        const existing = currentEvaluators.find(e => e.id === evaluatorId);
+        if (existing) {
+            alert('이미 존재하는 평가자 아이디입니다.');
+            return;
+        }
+        
+        await createEvaluator(evaluatorId, password, name);
+        
+        // 입력 필드 초기화
+        document.getElementById('newEvaluatorId').value = '';
+        document.getElementById('newEvaluatorPassword').value = '';
+        document.getElementById('newEvaluatorName').value = '';
+        
+        // 목록 새로고침
+        currentEvaluators = await getAllEvaluators();
+        renderEvaluatorEditor();
+        
+        alert('평가자가 추가되었습니다.');
+    } catch (error) {
+        console.error('Error adding evaluator:', error);
+        alert('평가자 추가 중 오류가 발생했습니다.\n' + error.message);
+    }
+}
+
+// 평가자 삭제
+async function deleteEvaluatorItem(evaluatorId) {
+    if (!confirm(`평가자 "${evaluatorId}"를 삭제하시겠습니까?\n\n주의: 이 평가자의 모든 평가 데이터는 유지되지만, 더 이상 로그인할 수 없습니다.`)) {
+        return;
+    }
+    
+    try {
+        await deleteEvaluator(evaluatorId);
+        
+        // 목록 새로고침
+        currentEvaluators = await getAllEvaluators();
+        renderEvaluatorEditor();
+        
+        alert('평가자가 삭제되었습니다.');
+    } catch (error) {
+        console.error('Error deleting evaluator:', error);
+        alert('평가자 삭제 중 오류가 발생했습니다.\n' + error.message);
+    }
+}
+
 // ==================== 문의 관리 ====================
 // (작성 안내 관리에 통합됨)

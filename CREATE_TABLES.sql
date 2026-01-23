@@ -15,6 +15,14 @@ CREATE TABLE IF NOT EXISTS contact_info (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 평가자 테이블 생성
+CREATE TABLE IF NOT EXISTS evaluators (
+  id TEXT PRIMARY KEY,
+  password TEXT NOT NULL,
+  name TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 초기 데이터 삽입 (application_guide)
 INSERT INTO application_guide (id, guide_items, writing_items)
 VALUES (
@@ -43,4 +51,12 @@ VALUES (
   'recruit@company.com',
   '으로 연락 주시기 바랍니다.'
 )
+ON CONFLICT (id) DO NOTHING;
+
+-- 초기 데이터 삽입 (evaluators) - 기존 평가자들
+INSERT INTO evaluators (id, password, name)
+VALUES 
+  ('evaluator1', 'eval123', '평가자 1'),
+  ('evaluator2', 'eval123', '평가자 2'),
+  ('evaluator3', 'eval123', '평가자 3')
 ON CONFLICT (id) DO NOTHING;

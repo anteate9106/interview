@@ -275,6 +275,99 @@ async function saveApplicationGuide(guideData) {
     }
 }
 
+// ==================== 평가자 관리 관련 ====================
+
+// 모든 평가자 가져오기
+async function getAllEvaluators() {
+    try {
+        const { data, error } = await supabase
+            .from('evaluators')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching evaluators:', error);
+        return [];
+    }
+}
+
+// 평가자 생성
+async function createEvaluator(evaluatorId, password, name) {
+    try {
+        const { data, error } = await supabase
+            .from('evaluators')
+            .insert({
+                id: evaluatorId,
+                password: password,
+                name: name,
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error creating evaluator:', error);
+        throw error;
+    }
+}
+
+// 평가자 삭제
+async function deleteEvaluator(evaluatorId) {
+    try {
+        const { data, error } = await supabase
+            .from('evaluators')
+            .delete()
+            .eq('id', evaluatorId)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error deleting evaluator:', error);
+        throw error;
+    }
+}
+
+// 평가자 인증 (로그인용)
+async function authenticateEvaluator(evaluatorId, password) {
+    try {
+        const { data, error } = await supabase
+            .from('evaluators')
+            .select('*')
+            .eq('id', evaluatorId)
+            .eq('password', password)
+            .maybeSingle();
+        
+        if (error && error.code !== 'PGRST116') throw error;
+        return data;
+    } catch (error) {
+        console.error('Error authenticating evaluator:', error);
+        return null;
+    }
+}
+
+// 평가자 정보 가져오기
+async function getEvaluatorById(evaluatorId) {
+    try {
+        const { data, error } = await supabase
+            .from('evaluators')
+            .select('*')
+            .eq('id', evaluatorId)
+            .maybeSingle();
+        
+        if (error && error.code !== 'PGRST116') throw error;
+        return data;
+    } catch (error) {
+        console.error('Error fetching evaluator:', error);
+        return null;
+    }
+}
+
 // ==================== 문의 정보 관련 ====================
 
 // 문의 정보 가져오기

@@ -58,6 +58,48 @@
         </div>
     </div>
 
+    <!-- 평가자 관리 모달 -->
+    <div id="evaluatorEditorModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2>평가자 관리</h2>
+                <button onclick="closeEvaluatorEditor()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 16px; color: var(--text-primary);">새 평가자 추가</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary); font-size: 13px;">아이디</label>
+                            <input type="text" id="newEvaluatorId" placeholder="예: evaluator1" 
+                                   style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary); font-size: 13px;">비밀번호</label>
+                            <input type="password" id="newEvaluatorPassword" placeholder="비밀번호" 
+                                   style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary); font-size: 13px;">이름</label>
+                            <input type="text" id="newEvaluatorName" placeholder="예: 평가자 1" 
+                                   style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                        </div>
+                        <button onclick="addNewEvaluator()" class="btn-add-item" style="white-space: nowrap;">+ 추가</button>
+                    </div>
+                </div>
+                <div style="margin-top: 32px; padding-top: 32px; border-top: 2px solid var(--border-color);">
+                    <h3 style="margin-bottom: 16px; color: var(--text-primary);">평가자 목록</h3>
+                    <div id="evaluatorsContainer">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeEvaluatorEditor()" class="btn-secondary">닫기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 채용공고 관리 모달 -->
     <div id="jobPostingEditorModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
@@ -132,6 +174,7 @@
                 <a href="apply.html" class="btn-nav-link" target="_blank">지원자페이지</a>
                 <button onclick="openGuideEditor()" class="btn-nav-link">작성안내관리</button>
                 <button onclick="openJobPostingEditor()" class="btn-nav-link">채용공고관리</button>
+                <button onclick="openEvaluatorEditor()" class="btn-nav-link">평가자관리</button>
                 <span id="currentUser" class="current-user"></span>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
             </div>
