@@ -476,11 +476,7 @@ async function selectApplicant(id) {
     }
 
     // 드롭다운 방식으로 변경되어 리스트 렌더링 불필요
-    // renderApplicantList()는 리스트 컨테이너가 있을 때만 호출
-    const listContainer = document.getElementById('applicantList');
-    if (listContainer) {
-        renderApplicantList();
-    }
+    // renderApplicantList() 호출 제거 - 드롭다운 방식에서는 지원자 목록을 렌더링할 필요 없음
     
     showCoverLetter(applicant);
     loadEvaluation(applicant);
