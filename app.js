@@ -487,41 +487,20 @@ function closeGuideEditor() {
 
 // 작성 안내 편집기 렌더링
 function renderGuideEditor() {
-    // 작성 안내 항목 렌더링
-    const guideContainer = document.getElementById('guideItemsContainer');
-    guideContainer.innerHTML = '';
-    
-    currentGuideData.guide_items.forEach((item, index) => {
-        const row = document.createElement('div');
-        row.className = 'guide-item-row';
-        row.innerHTML = `
-            <input type="text" value="${item.replace(/"/g, '&quot;')}" 
-                   onchange="updateGuideItem(${index}, this.value)" 
-                   placeholder="작성 안내 항목">
-            <button onclick="removeGuideItem(${index})" class="btn-remove-item">삭제</button>
-        `;
-        guideContainer.appendChild(row);
-    });
+    // 작성 안내 항목을 textarea에 표시
+    const guideTextarea = document.getElementById('guideItemsTextarea');
+    if (guideTextarea && currentGuideData.guide_items) {
+        guideTextarea.value = currentGuideData.guide_items.join('\n');
+    }
 
-    // 작성 항목 렌더링
-    const writingContainer = document.getElementById('writingItemsContainer');
-    writingContainer.innerHTML = '';
-    
-    currentGuideData.writing_items.forEach((item, index) => {
-        const row = document.createElement('div');
-        row.className = 'writing-item-row';
-        row.innerHTML = `
-            <input type="text" name="name" value="${item.name.replace(/"/g, '&quot;')}" 
-                   onchange="updateWritingItem(${index}, 'name', this.value)" 
-                   placeholder="항목명">
-            <input type="number" name="limit" value="${item.limit}" 
-                   onchange="updateWritingItem(${index}, 'limit', parseInt(this.value))" 
-                   placeholder="글자수" min="0">
-            <span style="color: var(--text-secondary); font-size: 14px;">자 이내</span>
-            <button onclick="removeWritingItem(${index})" class="btn-remove-item">삭제</button>
-        `;
-        writingContainer.appendChild(row);
-    });
+    // 작성 항목을 textarea에 표시 (이름:글자수 형식)
+    const writingTextarea = document.getElementById('writingItemsTextarea');
+    if (writingTextarea && currentGuideData.writing_items) {
+        const writingText = currentGuideData.writing_items
+            .map(item => `${item.name}:${item.limit}`)
+            .join('\n');
+        writingTextarea.value = writingText;
+    }
     
     // 문의 정보 렌더링
     if (currentContactData) {
@@ -531,81 +510,55 @@ function renderGuideEditor() {
     }
 }
 
-// 작성 안내 항목 업데이트
-function updateGuideItem(index, value) {
-    currentGuideData.guide_items[index] = value;
-}
-
-// 작성 안내 항목 삭제
-function removeGuideItem(index) {
-    if (confirm('이 항목을 삭제하시겠습니까?')) {
-        currentGuideData.guide_items.splice(index, 1);
-        renderGuideEditor();
-    }
-}
-
-// 작성 안내 항목 추가
-function addGuideItem() {
-    currentGuideData.guide_items.push('새 항목');
-    renderGuideEditor();
-    // 새로 추가된 입력 필드에 포커스
-    const inputs = document.querySelectorAll('#guideItemsContainer input');
-    if (inputs.length > 0) {
-        inputs[inputs.length - 1].focus();
-    }
-}
-
-// 작성 항목 업데이트
-function updateWritingItem(index, field, value) {
-    if (field === 'name') {
-        currentGuideData.writing_items[index].name = value;
-    } else if (field === 'limit') {
-        currentGuideData.writing_items[index].limit = value;
-    }
-}
-
-// 작성 항목 삭제
-function removeWritingItem(index) {
-    if (confirm('이 항목을 삭제하시겠습니까?')) {
-        currentGuideData.writing_items.splice(index, 1);
-        renderGuideEditor();
-    }
-}
-
-// 작성 항목 추가
-function addWritingItem() {
-    currentGuideData.writing_items.push({ name: '새 항목', limit: 500 });
-    renderGuideEditor();
-    // 새로 추가된 입력 필드에 포커스
-    const inputs = document.querySelectorAll('#writingItemsContainer input[name="name"]');
-    if (inputs.length > 0) {
-        inputs[inputs.length - 1].focus();
-    }
-}
 
 // 작성 안내 저장
 async function saveGuide() {
     try {
-        // 유효성 검사
-        if (currentGuideData.guide_items.length === 0) {
+        // 작성 안내 항목 파싱 (textarea에서 줄바꿈으로 구분)
+        const guideTextarea = document.getElementById('guideItemsTextarea');
+        const guideItems = guideTextarea.value
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+        
+        if (guideItems.length === 0) {
             alert('작성 안내 항목이 최소 1개 이상 필요합니다.');
             return;
         }
-        if (currentGuideData.writing_items.length === 0) {
-            alert('작성 항목이 최소 1개 이상 필요합니다.');
-            return;
+
+        // 작성 항목 파싱 (이름:글자수 형식)
+        const writingTextarea = document.getElementById('writingItemsTextarea');
+        const writingItems = [];
+        const writingLines = writingTextarea.value.split('\n');
+        
+        for (let i = 0; i < writingLines.length; i++) {
+            const line = writingLines[i].trim();
+            if (line.length === 0) continue;
+            
+            const parts = line.split(':');
+            if (parts.length !== 2) {
+                alert(`작성 항목 ${i + 1}번째 줄의 형식이 올바르지 않습니다.\n"이름:글자수" 형식으로 입력해주세요. (예: 자기소개서:2000)`);
+                return;
+            }
+            
+            const name = parts[0].trim();
+            const limit = parseInt(parts[1].trim());
+            
+            if (!name || name.length === 0) {
+                alert(`작성 항목 ${i + 1}번째 줄의 이름을 입력해주세요.`);
+                return;
+            }
+            if (isNaN(limit) || limit <= 0) {
+                alert(`작성 항목 ${i + 1}번째 줄의 글자수 제한을 올바르게 입력해주세요.`);
+                return;
+            }
+            
+            writingItems.push({ name, limit });
         }
         
-        for (let i = 0; i < currentGuideData.writing_items.length; i++) {
-            const item = currentGuideData.writing_items[i];
-            if (!item.name || item.name.trim() === '') {
-                alert('작성 항목의 이름을 입력해주세요.');
-                return;
-            }
-            if (!item.limit || item.limit <= 0) {
-                alert('작성 항목의 글자수 제한을 올바르게 입력해주세요.');
-                return;
-            }
+        if (writingItems.length === 0) {
+            alert('작성 항목이 최소 1개 이상 필요합니다.');
+            return;
         }
 
         // 문의 정보 저장
@@ -633,6 +586,10 @@ async function saveGuide() {
             alert('올바른 이메일 주소를 입력해주세요.');
             return;
         }
+        
+        // 데이터 업데이트
+        currentGuideData.guide_items = guideItems;
+        currentGuideData.writing_items = writingItems;
         
         await saveApplicationGuide(currentGuideData);
         await saveContactInfo({

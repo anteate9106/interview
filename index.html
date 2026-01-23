@@ -41,7 +41,6 @@
                 <a href="apply.html" class="btn-nav-link" target="_blank">지원자페이지</a>
                 <button onclick="openGuideEditor()" class="btn-nav-link">작성안내관리</button>
                 <button onclick="openJobPostingEditor()" class="btn-nav-link">채용공고관리</button>
-                <button onclick="openContactEditor()" class="btn-nav-link">문의관리</button>
                 <span id="currentUserPosting" class="current-user"></span>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
             </div>
@@ -91,19 +90,19 @@
                 <!-- 작성 안내 섹션 -->
                 <div style="margin-bottom: 32px;">
                     <h3 style="margin-bottom: 16px; color: var(--text-primary);">📋 작성 안내</h3>
-                    <div id="guideItemsContainer">
-                        <!-- 동적 생성 -->
-                    </div>
-                    <button onclick="addGuideItem()" class="btn-add-item" style="margin-top: 12px;">+ 항목 추가</button>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">각 항목을 한 줄씩 입력하세요</p>
+                    <textarea id="guideItemsTextarea" rows="8" 
+                              placeholder="모든 필수 항목(*)을 입력해주세요&#10;각 항목의 글자 수를 확인하세요&#10;비밀번호는 8자 이상 입력해주세요"
+                              style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
                 </div>
 
                 <!-- 작성 항목 섹션 -->
                 <div style="margin-bottom: 32px;">
                     <h3 style="margin-bottom: 16px; color: var(--text-primary);">✍️ 작성 항목</h3>
-                    <div id="writingItemsContainer">
-                        <!-- 동적 생성 -->
-                    </div>
-                    <button onclick="addWritingItem()" class="btn-add-item" style="margin-top: 12px;">+ 항목 추가</button>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">각 항목을 "이름:글자수" 형식으로 한 줄씩 입력하세요 (예: 자기소개서:2000)</p>
+                    <textarea id="writingItemsTextarea" rows="8" 
+                              placeholder="자기소개서:2000&#10;경력기술서:2000&#10;지원동기:2000&#10;입사 후 포부:2000"
+                              style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
                 </div>
 
                 <!-- 문의 관리 섹션 -->
