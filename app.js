@@ -116,7 +116,6 @@ function renderJobPostings() {
                 return `
                     <div class="job-posting-item" onclick="selectJobPosting('${posting}')">
                         <div class="list-col-title">
-                            <span class="posting-icon">📢</span>
                             <span class="posting-title">${posting}</span>
                         </div>
                         <div class="list-col-count">
