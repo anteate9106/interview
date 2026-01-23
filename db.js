@@ -302,6 +302,7 @@ async function createEvaluator(evaluatorId, password, name) {
                 id: evaluatorId,
                 password: password,
                 name: name,
+                is_admin: false,
                 created_at: new Date().toISOString()
             })
             .select()
@@ -408,6 +409,24 @@ async function updateEvaluatorPasswordByAdmin(evaluatorId, newPassword) {
         return data;
     } catch (error) {
         console.error('Error updating evaluator password by admin:', error);
+        throw error;
+    }
+}
+
+// 평가자 관리자 권한 업데이트
+async function updateEvaluatorAdminStatus(evaluatorId, isAdmin) {
+    try {
+        const { data, error } = await supabase
+            .from('evaluators')
+            .update({ is_admin: isAdmin })
+            .eq('id', evaluatorId)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error updating evaluator admin status:', error);
         throw error;
     }
 }

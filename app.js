@@ -62,18 +62,34 @@ function setupEventListeners() {
 }
 
 // 로그인 처리
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
+    // 기본 관리자 계정
     if (username === 'admin' && password === 'admin123') {
         currentUser = username;
         localStorage.setItem('currentUser', username);
         showJobPostingPage();
-    } else {
-        alert('아이디 또는 비밀번호가 올바르지 않습니다.');
+        return;
     }
+    
+    // 평가자 계정 중 관리자 권한이 있는 경우 확인
+    try {
+        const evaluator = await authenticateEvaluator(username, password);
+        if (evaluator && evaluator.is_admin === true) {
+            currentUser = username;
+            localStorage.setItem('currentUser', username);
+            localStorage.setItem('isEvaluatorAdmin', 'true');
+            showJobPostingPage();
+            return;
+        }
+    } catch (error) {
+        console.error('Error checking evaluator admin:', error);
+    }
+    
+    alert('아이디 또는 비밀번호가 올바르지 않습니다.');
 }
 
 // 로그아웃
@@ -842,10 +858,12 @@ function renderEvaluatorEditor() {
     
     currentEvaluators.forEach((evaluator) => {
         const row = document.createElement('div');
-        row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr auto auto; gap: 12px; align-items: center; padding: 16px; background: #f8fafc; border-radius: 8px; margin-bottom: 12px;';
+        const isAdmin = evaluator.is_admin === true;
+        row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr auto auto auto; gap: 12px; align-items: center; padding: 16px; background: #f8fafc; border-radius: 8px; margin-bottom: 12px;';
         row.innerHTML = `
             <div>
                 <strong style="color: var(--text-primary);">${evaluator.id}</strong>
+                ${isAdmin ? '<span style="margin-left: 8px; padding: 2px 8px; background: #fef3c7; color: #f59e0b; border-radius: 4px; font-size: 11px; font-weight: 600;">관리자</span>' : ''}
             </div>
             <div style="color: var(--text-secondary); font-size: 14px;">
                 ${evaluator.name || '이름 없음'}
@@ -853,6 +871,12 @@ function renderEvaluatorEditor() {
             <div style="color: var(--text-secondary); font-size: 13px;">
                 생성일: ${new Date(evaluator.created_at).toLocaleDateString('ko-KR')}
             </div>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" ${isAdmin ? 'checked' : ''} 
+                       onchange="toggleEvaluatorAdmin('${evaluator.id}', this.checked)"
+                       style="width: 18px; height: 18px; cursor: pointer;">
+                <span style="font-size: 13px; color: var(--text-primary); font-weight: 600;">관리자 권한</span>
+            </label>
             <button onclick="openChangeEvaluatorPasswordModal('${evaluator.id}', '${evaluator.name || evaluator.id}')" 
                     style="padding: 6px 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
                 비밀번호 변경
@@ -910,6 +934,26 @@ async function addNewEvaluator() {
     } catch (error) {
         console.error('Error adding evaluator:', error);
         alert('평가자 추가 중 오류가 발생했습니다.\n' + error.message);
+    }
+}
+
+// 평가자 관리자 권한 토글
+async function toggleEvaluatorAdmin(evaluatorId, isAdmin) {
+    try {
+        await updateEvaluatorAdminStatus(evaluatorId, isAdmin);
+        
+        // 목록 새로고침
+        currentEvaluators = await getAllEvaluators();
+        renderEvaluatorEditor();
+        
+        const status = isAdmin ? '부여' : '해제';
+        alert(`평가자 "${evaluatorId}"의 관리자 권한이 ${status}되었습니다.`);
+    } catch (error) {
+        console.error('Error toggling evaluator admin status:', error);
+        alert('관리자 권한 변경 중 오류가 발생했습니다.\n' + error.message);
+        // 오류 발생 시 목록 새로고침하여 원래 상태로 복구
+        currentEvaluators = await getAllEvaluators();
+        renderEvaluatorEditor();
     }
 }
 

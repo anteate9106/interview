@@ -225,7 +225,7 @@ function setupEventListeners() {
 }
 
 // 로그인 처리
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     const evaluatorId = document.getElementById('evaluatorId').value.trim();
     const password = document.getElementById('password').value;
@@ -233,6 +233,17 @@ function handleLogin(e) {
     if (evaluators[evaluatorId] && evaluators[evaluatorId].password === password) {
         currentEvaluator = evaluatorId;
         localStorage.setItem('currentEvaluator', evaluatorId);
+        
+        // 관리자 권한 확인
+        const evaluator = await getEvaluatorById(evaluatorId);
+        if (evaluator && evaluator.is_admin === true) {
+            // 관리자 권한이 있으면 관리자 페이지로 이동
+            if (confirm('관리자 권한이 있습니다. 관리자 페이지로 이동하시겠습니까?')) {
+                window.location.href = 'index.html';
+                return;
+            }
+        }
+        
         showJobPostingPage();
     } else {
         alert('평가자 ID 또는 비밀번호가 올바르지 않습니다.');

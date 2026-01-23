@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS evaluators (
   id TEXT PRIMARY KEY,
   password TEXT NOT NULL,
   name TEXT NOT NULL,
+  is_admin BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -54,9 +55,12 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- 초기 데이터 삽입 (evaluators) - 기존 평가자들
-INSERT INTO evaluators (id, password, name)
+INSERT INTO evaluators (id, password, name, is_admin)
 VALUES 
-  ('evaluator1', 'eval123', '평가자 1'),
-  ('evaluator2', 'eval123', '평가자 2'),
-  ('evaluator3', 'eval123', '평가자 3')
+  ('evaluator1', 'eval123', '평가자 1', FALSE),
+  ('evaluator2', 'eval123', '평가자 2', FALSE),
+  ('evaluator3', 'eval123', '평가자 3', FALSE)
 ON CONFLICT (id) DO NOTHING;
+
+-- 기존 테이블에 is_admin 컬럼이 없는 경우 추가
+ALTER TABLE evaluators ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
