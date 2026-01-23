@@ -18,6 +18,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 평가 저장 버튼이 항상 보이도록 강제 설정
     ensureSubmitButtonVisible();
+    
+    // right-panel이 항상 보이도록 (페이지 로드 시)
+    setTimeout(() => {
+        ensureRightPanelVisible();
+    }, 100);
 });
 
 // right-panel이 항상 보이도록 보장
@@ -34,12 +39,22 @@ function ensureRightPanelVisible() {
     if (evaluationContent) {
         evaluationContent.style.display = 'block';
         evaluationContent.style.visibility = 'visible';
+        evaluationContent.style.opacity = '1';
     }
     
     const evaluationForm = document.getElementById('evaluationForm');
     if (evaluationForm) {
         evaluationForm.style.display = 'block';
         evaluationForm.style.visibility = 'visible';
+        evaluationForm.style.opacity = '1';
+    }
+    
+    // 평가 저장 버튼도 확인
+    const submitBtn = document.querySelector('#evaluationForm button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.style.display = 'block';
+        submitBtn.style.visibility = 'visible';
+        submitBtn.style.opacity = submitBtn.disabled ? '0.6' : '1';
     }
 }
 
@@ -503,6 +518,26 @@ function selectApplicant(id) {
     renderApplicantList();
     showApplication(applicant);
     loadEvaluation(applicant);
+    
+    // 폼 필드 활성화 및 right-panel 표시
+    const form = document.getElementById('evaluationForm');
+    if (form) {
+        const formInputs = form.querySelectorAll('select, textarea');
+        formInputs.forEach(input => {
+            input.disabled = false;
+        });
+        // 평가 저장 버튼 활성화
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.display = 'block';
+            submitBtn.style.visibility = 'visible';
+        }
+    }
+    
+    // right-panel이 항상 보이도록
+    ensureRightPanelVisible();
 }
 
 // 지원서 표시
