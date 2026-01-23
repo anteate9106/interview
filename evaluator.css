@@ -175,6 +175,24 @@ body {
     transition: all 0.3s;
     margin-top: 16px;
     box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 평가 폼 항상 표시 */
+#evaluationContent {
+    display: block !important;
+}
+
+#evaluationForm {
+    display: block !important;
+    visibility: visible !important;
 }
 
 .btn-submit:hover {
