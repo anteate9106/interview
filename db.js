@@ -275,6 +275,67 @@ async function saveApplicationGuide(guideData) {
     }
 }
 
+// ==================== 문의 정보 관련 ====================
+
+// 문의 정보 가져오기
+async function getContactInfo() {
+    try {
+        const { data, error } = await supabase
+            .from('contact_info')
+            .select('*')
+            .eq('id', 'default')
+            .maybeSingle();
+        
+        if (error && error.code !== 'PGRST116') throw error;
+        
+        // 기본값 반환
+        if (!data) {
+            return {
+                id: 'default',
+                title: '채용 관련 문의사항이 있으시면',
+                email: 'recruit@company.com',
+                description: '으로 연락 주시기 바랍니다.'
+            };
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Error fetching contact info:', error);
+        // 에러 시 기본값 반환
+        return {
+            id: 'default',
+            title: '채용 관련 문의사항이 있으시면',
+            email: 'recruit@company.com',
+            description: '으로 연락 주시기 바랍니다.'
+        };
+    }
+}
+
+// 문의 정보 저장 (upsert)
+async function saveContactInfo(contactData) {
+    try {
+        const { data, error } = await supabase
+            .from('contact_info')
+            .upsert({
+                id: 'default',
+                title: contactData.title,
+                email: contactData.email,
+                description: contactData.description,
+                updated_at: new Date().toISOString()
+            }, {
+                onConflict: 'id'
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving contact info:', error);
+        throw error;
+    }
+}
+
 // ==================== 채용공고 관련 ====================
 
 // 모든 채용공고 가져오기

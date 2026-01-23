@@ -6,6 +6,7 @@ let applicationGuide = null;
 document.addEventListener('DOMContentLoaded', async function() {
     await loadApplicationGuide(); // 작성 안내 로드
     await loadJobPostingOptions(); // 채용공고 옵션 로드
+    await loadContactInfo(); // 문의 정보 로드
     checkLoginStatus();
     setupEventListeners();
     loadDraft(); // 임시 저장 데이터 불러오기
@@ -138,6 +139,34 @@ function renderApplicationGuide() {
             li.textContent = item.name;
             writingList.appendChild(li);
         });
+    }
+}
+
+// 문의 정보 로드
+async function loadContactInfo() {
+    try {
+        const contactInfo = await getContactInfo();
+        renderContactInfo(contactInfo);
+    } catch (error) {
+        console.error('Error loading contact info:', error);
+        // 기본값 사용
+        renderContactInfo({
+            title: '채용 관련 문의사항이 있으시면',
+            email: 'recruit@company.com',
+            description: '으로 연락 주시기 바랍니다.'
+        });
+    }
+}
+
+// 문의 정보 렌더링
+function renderContactInfo(contactInfo) {
+    const contactContent = document.getElementById('contactContent');
+    if (contactContent && contactInfo) {
+        contactContent.innerHTML = `
+            <p>${contactInfo.title || '채용 관련 문의사항이 있으시면'}</p>
+            <p><strong>${contactInfo.email || 'recruit@company.com'}</strong></p>
+            <p>${contactInfo.description || '으로 연락 주시기 바랍니다.'}</p>
+        `;
     }
 }
 
