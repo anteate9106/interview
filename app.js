@@ -378,6 +378,12 @@ function onApplicantChange() {
 // 지원자 목록 렌더링
 function renderApplicantList() {
     const listContainer = document.getElementById('applicantList');
+    
+    // 드롭다운 방식으로 변경되어 리스트 컨테이너가 없는 경우 함수 종료
+    if (!listContainer) {
+        return;
+    }
+    
     listContainer.innerHTML = '';
 
     // 선택된 채용공고의 지원자만 표시
