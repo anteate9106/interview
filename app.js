@@ -454,11 +454,13 @@ function backToDashboard() {
 // ==================== 작성 안내 편집 ====================
 
 let currentGuideData = null;
+let currentContactData = null;
 
 // 작성 안내 편집 모달 열기
 async function openGuideEditor() {
     try {
         currentGuideData = await getApplicationGuide();
+        currentContactData = await getContactInfo();
         renderGuideEditor();
         const modal = document.getElementById('guideEditorModal');
         modal.style.display = 'flex';
@@ -520,6 +522,13 @@ function renderGuideEditor() {
         `;
         writingContainer.appendChild(row);
     });
+    
+    // 문의 정보 렌더링
+    if (currentContactData) {
+        document.getElementById('contactTitle').value = currentContactData.title || '';
+        document.getElementById('contactEmail').value = currentContactData.email || '';
+        document.getElementById('contactDescription').value = currentContactData.description || '';
+    }
 }
 
 // 작성 안내 항목 업데이트
@@ -599,8 +608,39 @@ async function saveGuide() {
             }
         }
 
+        // 문의 정보 저장
+        const title = document.getElementById('contactTitle').value.trim();
+        const email = document.getElementById('contactEmail').value.trim();
+        const description = document.getElementById('contactDescription').value.trim();
+        
+        // 문의 정보 유효성 검사
+        if (!title) {
+            alert('문의 제목을 입력해주세요.');
+            return;
+        }
+        if (!email) {
+            alert('문의 이메일을 입력해주세요.');
+            return;
+        }
+        if (!description) {
+            alert('문의 설명을 입력해주세요.');
+            return;
+        }
+        
+        // 이메일 형식 검증
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('올바른 이메일 주소를 입력해주세요.');
+            return;
+        }
+        
         await saveApplicationGuide(currentGuideData);
-        alert('작성 안내가 저장되었습니다.');
+        await saveContactInfo({
+            title: title,
+            email: email,
+            description: description
+        });
+        alert('작성 안내와 문의 정보가 저장되었습니다.');
         closeGuideEditor();
     } catch (error) {
         console.error('Error saving guide:', error);
@@ -749,84 +789,4 @@ async function addNewJobPosting() {
 }
 
 // ==================== 문의 관리 ====================
-
-let currentContactData = null;
-
-// 문의 관리 모달 열기
-async function openContactEditor() {
-    try {
-        currentContactData = await getContactInfo();
-        renderContactEditor();
-        const modal = document.getElementById('contactEditorModal');
-        modal.style.display = 'flex';
-        modal.classList.add('active');
-        
-        // 모달 배경 클릭 시 닫기
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                closeContactEditor();
-            }
-        });
-    } catch (error) {
-        console.error('Error loading contact info:', error);
-        alert('문의 정보를 불러오는 중 오류가 발생했습니다.');
-    }
-}
-
-// 문의 관리 모달 닫기
-function closeContactEditor() {
-    const modal = document.getElementById('contactEditorModal');
-    modal.style.display = 'none';
-    modal.classList.remove('active');
-}
-
-// 문의 편집기 렌더링
-function renderContactEditor() {
-    if (!currentContactData) return;
-    
-    document.getElementById('contactTitle').value = currentContactData.title || '';
-    document.getElementById('contactEmail').value = currentContactData.email || '';
-    document.getElementById('contactDescription').value = currentContactData.description || '';
-}
-
-// 문의 정보 저장
-async function saveContact() {
-    try {
-        const title = document.getElementById('contactTitle').value.trim();
-        const email = document.getElementById('contactEmail').value.trim();
-        const description = document.getElementById('contactDescription').value.trim();
-        
-        // 유효성 검사
-        if (!title) {
-            alert('제목을 입력해주세요.');
-            return;
-        }
-        if (!email) {
-            alert('이메일을 입력해주세요.');
-            return;
-        }
-        if (!description) {
-            alert('설명을 입력해주세요.');
-            return;
-        }
-        
-        // 이메일 형식 검증
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            alert('올바른 이메일 주소를 입력해주세요.');
-            return;
-        }
-        
-        await saveContactInfo({
-            title: title,
-            email: email,
-            description: description
-        });
-        
-        alert('문의 정보가 저장되었습니다.');
-        closeContactEditor();
-    } catch (error) {
-        console.error('Error saving contact info:', error);
-        alert('저장 중 오류가 발생했습니다.\n' + error.message);
-    }
-}
+// (작성 안내 관리에 통합됨)
