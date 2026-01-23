@@ -38,6 +38,7 @@
             <div class="nav-brand">청년들 입사지원 시스템</div>
             <div class="nav-actions">
                 <a href="evaluator.html" class="btn-evaluator-link" target="_blank">📊 평가자 페이지</a>
+                <button onclick="openGuideEditor()" class="btn-guide-edit">작성 안내 관리</button>
                 <a href="apply.html" class="btn-apply-link" target="_blank">📝 지원서 작성</a>
                 <span id="currentUserPosting" class="current-user"></span>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
@@ -48,7 +49,6 @@
             <div class="page-header">
                 <h1>채용공고 관리</h1>
                 <p class="subtitle">관리할 채용공고를 선택하세요</p>
-                <button onclick="openGuideEditor()" class="btn-guide-edit" style="margin-top: 16px;">작성 안내 관리</button>
             </div>
 
             <div class="job-posting-grid" id="jobPostingGrid">
@@ -98,6 +98,7 @@
                 <button onclick="backToJobPostings()" class="btn-back">← 공고 목록</button>
                 <span id="currentJobPosting" class="current-job-posting"></span>
                 <a href="evaluator.html" class="btn-evaluator-link" target="_blank">📊 평가자 페이지</a>
+                <button onclick="openGuideEditor()" class="btn-guide-edit">작성 안내 관리</button>
                 <a href="apply.html" class="btn-apply-link" target="_blank">📝 지원서 작성</a>
                 <span id="currentUser" class="current-user"></span>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>

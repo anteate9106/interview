@@ -1072,15 +1072,16 @@ body {
 
 /* 작성 안내 편집 스타일 */
 .btn-guide-edit {
-    padding: 10px 20px;
+    padding: 8px 16px;
     background-color: var(--primary-color);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
+    display: inline-block;
 }
 
 .btn-guide-edit:hover {
