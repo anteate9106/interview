@@ -430,11 +430,26 @@ async function selectApplicant(id) {
 
     // 평가 데이터가 없거나 최신 데이터를 확인하기 위해 다시 로드
     try {
-        console.log('Loading evaluations for applicant:', applicant.id);
+        console.log('Loading evaluations for applicant:', applicant.id, 'name:', applicant.name);
         const evaluations = await getEvaluationsByApplicant(applicant.id);
         applicant.evaluations = evaluations;
         console.log('Loaded evaluations for applicant:', evaluations);
         console.log('Evaluation count:', evaluations ? evaluations.length : 0);
+        
+        // 평가 데이터 상세 로그
+        if (evaluations && evaluations.length > 0) {
+            console.log('Evaluation details:', evaluations.map(e => ({
+                evaluator_id: e.evaluator_id,
+                evaluator_name: e.evaluator_name,
+                score1: e.score1,
+                score2: e.score2,
+                score3: e.score3,
+                score4: e.score4,
+                total_score: e.total_score
+            })));
+        } else {
+            console.warn('No evaluations found for applicant:', applicant.id, applicant.name);
+        }
         
         // applicants 배열도 업데이트
         const applicantIndex = applicants.findIndex(a => String(a.id) === searchId);

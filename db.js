@@ -153,6 +153,33 @@ async function getEvaluationsByApplicant(applicantId) {
             throw error;
         }
         
+        // 평가자 이름이 없으면 평가자 정보를 조회해서 채워넣기
+        if (data && data.length > 0) {
+            const uniqueEvaluatorIds = [...new Set(data.map(e => e.evaluator_id).filter(id => id))];
+            
+            // 평가자 정보 일괄 조회
+            const evaluatorMap = {};
+            for (const evaluatorId of uniqueEvaluatorIds) {
+                try {
+                    const evaluator = await getEvaluatorById(evaluatorId);
+                    if (evaluator) {
+                        evaluatorMap[evaluatorId] = evaluator.name || evaluatorId;
+                    }
+                } catch (err) {
+                    console.warn('Error fetching evaluator:', evaluatorId, err);
+                    evaluatorMap[evaluatorId] = evaluatorId; // 폴백
+                }
+            }
+            
+            // 평가 데이터에 평가자 이름 추가
+            data = data.map(evaluation => {
+                if (!evaluation.evaluator_name && evaluation.evaluator_id) {
+                    evaluation.evaluator_name = evaluatorMap[evaluation.evaluator_id] || evaluation.evaluator_id;
+                }
+                return evaluation;
+            });
+        }
+        
         console.log('Found evaluations:', data ? data.length : 0, 'for applicant_id:', originalId);
         return data || [];
     } catch (error) {
