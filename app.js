@@ -196,7 +196,7 @@ function showMainPage() {
         if (content) {
             content.innerHTML = `
                 <div class="empty-state">
-                    <p>위에서 채용공고를 선택하세요</p>
+                    <p>왼쪽에서 채용공고와 지원자를 선택하세요</p>
                 </div>
             `;
         }
@@ -297,7 +297,7 @@ function onJobPostingChange() {
         if (content) {
             content.innerHTML = `
                 <div class="empty-state">
-                    <p>채용공고를 선택하세요</p>
+                    <p>왼쪽에서 채용공고와 지원자를 선택하세요</p>
                 </div>
             `;
         }
