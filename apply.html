@@ -305,14 +305,10 @@
 
             <!-- 안내 사이드바 -->
             <div class="sidebar">
-                <div class="info-card">
+                <div class="info-card" id="guideCard">
                     <h3>📋 작성 안내</h3>
-                    <ul>
-                        <li>모든 필수 항목(*)을 입력해주세요</li>
-                        <li>각 항목의 글자 수를 확인하세요</li>
-                        <li>비밀번호는 8자 이상 입력해주세요</li>
-                        <li><strong>💾 임시 저장</strong>으로 작성 중 저장</li>
-                        <li>제출 후 로그인하여 수정 가능합니다</li>
+                    <ul id="guideItemsList">
+                        <!-- 동적으로 로드 -->
                     </ul>
                 </div>
                 
@@ -323,13 +319,10 @@
                     <button onclick="clearDraft()" style="margin-top: 12px; padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">임시 저장 삭제</button>
                 </div>
                 
-                <div class="info-card">
+                <div class="info-card" id="writingItemsCard">
                     <h3>✍️ 작성 항목</h3>
-                    <ul>
-                        <li>자기소개서: 800자 이내</li>
-                        <li>경력기술서: 500자 이내</li>
-                        <li>지원동기: 500자 이내</li>
-                        <li>입사 후 포부: 500자 이내</li>
+                    <ul id="writingItemsList">
+                        <!-- 동적으로 로드 -->
                     </ul>
                 </div>
 

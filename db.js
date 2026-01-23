@@ -195,6 +195,86 @@ async function saveEvaluation(evaluationData) {
     }
 }
 
+// ==================== 작성 안내 관련 ====================
+
+// 작성 안내 가져오기
+async function getApplicationGuide() {
+    try {
+        const { data, error } = await supabase
+            .from('application_guide')
+            .select('*')
+            .eq('id', 'default')
+            .maybeSingle();
+        
+        if (error && error.code !== 'PGRST116') throw error;
+        
+        // 기본값 반환
+        if (!data) {
+            return {
+                id: 'default',
+                guide_items: [
+                    '모든 필수 항목(*)을 입력해주세요',
+                    '각 항목의 글자 수를 확인하세요',
+                    '비밀번호는 8자 이상 입력해주세요',
+                    '**💾 임시 저장**으로 작성 중 저장',
+                    '제출 후 로그인하여 수정 가능합니다'
+                ],
+                writing_items: [
+                    { name: '자기소개서', limit: 800 },
+                    { name: '경력기술서', limit: 500 },
+                    { name: '지원동기', limit: 500 },
+                    { name: '입사 후 포부', limit: 500 }
+                ]
+            };
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Error fetching application guide:', error);
+        // 에러 시 기본값 반환
+        return {
+            id: 'default',
+            guide_items: [
+                '모든 필수 항목(*)을 입력해주세요',
+                '각 항목의 글자 수를 확인하세요',
+                '비밀번호는 8자 이상 입력해주세요',
+                '**💾 임시 저장**으로 작성 중 저장',
+                '제출 후 로그인하여 수정 가능합니다'
+            ],
+            writing_items: [
+                { name: '자기소개서', limit: 800 },
+                { name: '경력기술서', limit: 500 },
+                { name: '지원동기', limit: 500 },
+                { name: '입사 후 포부', limit: 500 }
+            ]
+        };
+    }
+}
+
+// 작성 안내 저장 (upsert)
+async function saveApplicationGuide(guideData) {
+    try {
+        const { data, error } = await supabase
+            .from('application_guide')
+            .upsert({
+                id: 'default',
+                guide_items: guideData.guide_items,
+                writing_items: guideData.writing_items,
+                updated_at: new Date().toISOString()
+            }, {
+                onConflict: 'id'
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving application guide:', error);
+        throw error;
+    }
+}
+
 // ==================== 유틸리티 ====================
 
 // 비밀번호 검증 (클라이언트 측)

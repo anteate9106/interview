@@ -438,3 +438,160 @@ function backToDashboard() {
     selectedApplicantId = null;
     showMainPage();
 }
+
+// ==================== 작성 안내 편집 ====================
+
+let currentGuideData = null;
+
+// 작성 안내 편집 모달 열기
+async function openGuideEditor() {
+    try {
+        currentGuideData = await getApplicationGuide();
+        renderGuideEditor();
+        const modal = document.getElementById('guideEditorModal');
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+        
+        // 모달 배경 클릭 시 닫기
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeGuideEditor();
+            }
+        });
+    } catch (error) {
+        console.error('Error loading guide:', error);
+        alert('작성 안내를 불러오는 중 오류가 발생했습니다.');
+    }
+}
+
+// 작성 안내 편집 모달 닫기
+function closeGuideEditor() {
+    const modal = document.getElementById('guideEditorModal');
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+}
+
+// 작성 안내 편집기 렌더링
+function renderGuideEditor() {
+    // 작성 안내 항목 렌더링
+    const guideContainer = document.getElementById('guideItemsContainer');
+    guideContainer.innerHTML = '';
+    
+    currentGuideData.guide_items.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'guide-item-row';
+        row.innerHTML = `
+            <input type="text" value="${item.replace(/"/g, '&quot;')}" 
+                   onchange="updateGuideItem(${index}, this.value)" 
+                   placeholder="작성 안내 항목">
+            <button onclick="removeGuideItem(${index})" class="btn-remove-item">삭제</button>
+        `;
+        guideContainer.appendChild(row);
+    });
+
+    // 작성 항목 렌더링
+    const writingContainer = document.getElementById('writingItemsContainer');
+    writingContainer.innerHTML = '';
+    
+    currentGuideData.writing_items.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'writing-item-row';
+        row.innerHTML = `
+            <input type="text" name="name" value="${item.name.replace(/"/g, '&quot;')}" 
+                   onchange="updateWritingItem(${index}, 'name', this.value)" 
+                   placeholder="항목명">
+            <input type="number" name="limit" value="${item.limit}" 
+                   onchange="updateWritingItem(${index}, 'limit', parseInt(this.value))" 
+                   placeholder="글자수" min="0">
+            <span style="color: var(--text-secondary); font-size: 14px;">자 이내</span>
+            <button onclick="removeWritingItem(${index})" class="btn-remove-item">삭제</button>
+        `;
+        writingContainer.appendChild(row);
+    });
+}
+
+// 작성 안내 항목 업데이트
+function updateGuideItem(index, value) {
+    currentGuideData.guide_items[index] = value;
+}
+
+// 작성 안내 항목 삭제
+function removeGuideItem(index) {
+    if (confirm('이 항목을 삭제하시겠습니까?')) {
+        currentGuideData.guide_items.splice(index, 1);
+        renderGuideEditor();
+    }
+}
+
+// 작성 안내 항목 추가
+function addGuideItem() {
+    currentGuideData.guide_items.push('새 항목');
+    renderGuideEditor();
+    // 새로 추가된 입력 필드에 포커스
+    const inputs = document.querySelectorAll('#guideItemsContainer input');
+    if (inputs.length > 0) {
+        inputs[inputs.length - 1].focus();
+    }
+}
+
+// 작성 항목 업데이트
+function updateWritingItem(index, field, value) {
+    if (field === 'name') {
+        currentGuideData.writing_items[index].name = value;
+    } else if (field === 'limit') {
+        currentGuideData.writing_items[index].limit = value;
+    }
+}
+
+// 작성 항목 삭제
+function removeWritingItem(index) {
+    if (confirm('이 항목을 삭제하시겠습니까?')) {
+        currentGuideData.writing_items.splice(index, 1);
+        renderGuideEditor();
+    }
+}
+
+// 작성 항목 추가
+function addWritingItem() {
+    currentGuideData.writing_items.push({ name: '새 항목', limit: 500 });
+    renderGuideEditor();
+    // 새로 추가된 입력 필드에 포커스
+    const inputs = document.querySelectorAll('#writingItemsContainer input[name="name"]');
+    if (inputs.length > 0) {
+        inputs[inputs.length - 1].focus();
+    }
+}
+
+// 작성 안내 저장
+async function saveGuide() {
+    try {
+        // 유효성 검사
+        if (currentGuideData.guide_items.length === 0) {
+            alert('작성 안내 항목이 최소 1개 이상 필요합니다.');
+            return;
+        }
+        if (currentGuideData.writing_items.length === 0) {
+            alert('작성 항목이 최소 1개 이상 필요합니다.');
+            return;
+        }
+        
+        for (let i = 0; i < currentGuideData.writing_items.length; i++) {
+            const item = currentGuideData.writing_items[i];
+            if (!item.name || item.name.trim() === '') {
+                alert('작성 항목의 이름을 입력해주세요.');
+                return;
+            }
+            if (!item.limit || item.limit <= 0) {
+                alert('작성 항목의 글자수 제한을 올바르게 입력해주세요.');
+                return;
+            }
+        }
+
+        await saveApplicationGuide(currentGuideData);
+        alert('작성 안내가 저장되었습니다.');
+        closeGuideEditor();
+    } catch (error) {
+        console.error('Error saving guide:', error);
+        alert('저장 중 오류가 발생했습니다.\n' + error.message);
+    }
+}

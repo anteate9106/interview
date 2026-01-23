@@ -1,8 +1,10 @@
 // 전역 변수
 let currentApplicant = null;
+let applicationGuide = null;
 
 // 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadApplicationGuide(); // 작성 안내 로드
     checkLoginStatus();
     setupEventListeners();
     loadDraft(); // 임시 저장 데이터 불러오기
@@ -40,14 +42,130 @@ function setupEventListeners() {
         editForm.addEventListener('submit', handleEdit);
     }
 
-    // 글자 수 카운트 설정
-    setupCharCount('selfIntroduction', 'charCount1', 800);
-    setupCharCount('careerDescription', 'charCount2', 500);
-    setupCharCount('motivation', 'charCount3', 500);
-    setupCharCount('aspiration', 'charCount4', 500);
+    // 작성 안내가 로드된 후 글자 수 카운트 설정
+    if (applicationGuide) {
+        setupCharCountsFromGuide();
+    } else {
+        // 기본값으로 설정 (fallback)
+        setupCharCount('selfIntroduction', 'charCount1', 800);
+        setupCharCount('careerDescription', 'charCount2', 500);
+        setupCharCount('motivation', 'charCount3', 500);
+        setupCharCount('aspiration', 'charCount4', 500);
+    }
 
     // 전화번호 자동 포맷팅
     setupPhoneFormatting('phone');
+}
+
+// 작성 안내 로드
+async function loadApplicationGuide() {
+    try {
+        applicationGuide = await getApplicationGuide();
+        renderApplicationGuide();
+        updateFormFieldsFromGuide();
+    } catch (error) {
+        console.error('Error loading application guide:', error);
+        // 기본값 사용
+        applicationGuide = {
+            guide_items: [
+                '모든 필수 항목(*)을 입력해주세요',
+                '각 항목의 글자 수를 확인하세요',
+                '비밀번호는 8자 이상 입력해주세요',
+                '**💾 임시 저장**으로 작성 중 저장',
+                '제출 후 로그인하여 수정 가능합니다'
+            ],
+            writing_items: [
+                { name: '자기소개서', limit: 800 },
+                { name: '경력기술서', limit: 500 },
+                { name: '지원동기', limit: 500 },
+                { name: '입사 후 포부', limit: 500 }
+            ]
+        };
+        renderApplicationGuide();
+    }
+}
+
+// 작성 안내 렌더링
+function renderApplicationGuide() {
+    if (!applicationGuide) return;
+
+    // 작성 안내 항목 렌더링
+    const guideList = document.getElementById('guideItemsList');
+    if (guideList) {
+        guideList.innerHTML = '';
+        applicationGuide.guide_items.forEach(item => {
+            const li = document.createElement('li');
+            // **텍스트** 형식을 <strong>로 변환
+            let html = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            // 💾 같은 이모지가 있으면 그대로 유지
+            li.innerHTML = html;
+            guideList.appendChild(li);
+        });
+    }
+
+    // 작성 항목 렌더링
+    const writingList = document.getElementById('writingItemsList');
+    if (writingList) {
+        writingList.innerHTML = '';
+        applicationGuide.writing_items.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = `${item.name}: ${item.limit}자 이내`;
+            writingList.appendChild(li);
+        });
+    }
+}
+
+// 작성 안내 데이터로 폼 필드 업데이트
+function updateFormFieldsFromGuide() {
+    if (!applicationGuide || !applicationGuide.writing_items) return;
+
+    const fieldMapping = {
+        '자기소개서': { textarea: 'selfIntroduction', count: 'charCount1', label: 'selfIntroduction' },
+        '경력기술서': { textarea: 'careerDescription', count: 'charCount2', label: 'careerDescription' },
+        '지원동기': { textarea: 'motivation', count: 'charCount3', label: 'motivation' },
+        '입사 후 포부': { textarea: 'aspiration', count: 'charCount4', label: 'aspiration' }
+    };
+
+    applicationGuide.writing_items.forEach((item, index) => {
+        const mapping = fieldMapping[item.name];
+        if (mapping) {
+            const textarea = document.getElementById(mapping.textarea);
+            const counter = document.getElementById(mapping.count);
+            const label = document.querySelector(`label[for="${mapping.label}"]`);
+            
+            if (textarea) {
+                textarea.setAttribute('maxlength', item.limit);
+            }
+            if (counter) {
+                counter.textContent = `0 / ${item.limit}자`;
+            }
+            if (label) {
+                const labelText = label.querySelector('span.required') 
+                    ? `${item.name} <span class="required">*</span>`
+                    : item.name;
+                label.innerHTML = labelText + (counter ? ` <span class="char-count" id="${mapping.count}">0 / ${item.limit}자</span>` : '');
+            }
+        }
+    });
+}
+
+// 작성 안내 데이터로 글자 수 카운트 설정
+function setupCharCountsFromGuide() {
+    if (!applicationGuide || !applicationGuide.writing_items) return;
+
+    const fieldMapping = {
+        '자기소개서': { textarea: 'selfIntroduction', count: 'charCount1' },
+        '경력기술서': { textarea: 'careerDescription', count: 'charCount2' },
+        '지원동기': { textarea: 'motivation', count: 'charCount3' },
+        '입사 후 포부': { textarea: 'aspiration', count: 'charCount4' }
+    };
+
+    applicationGuide.writing_items.forEach(item => {
+        const mapping = fieldMapping[item.name];
+        if (mapping) {
+            setupCharCount(mapping.textarea, mapping.count, item.limit);
+        }
+    });
 }
 
 // 글자 수 카운트 설정
@@ -293,13 +411,13 @@ function createEditForm(applicant) {
             
             <div class="form-field full-width">
                 <label for="editSelfIntroduction">
-                    자기소개서 <span class="required">*</span>
-                    <span class="char-count" id="editCharCount1">${(applicant.self_introduction || '').length} / 800자</span>
+                    ${getWritingItemName('자기소개서')} <span class="required">*</span>
+                    <span class="char-count" id="editCharCount1">${(applicant.self_introduction || '').length} / ${getWritingItemLimit('자기소개서')}자</span>
                 </label>
                 <textarea 
                     id="editSelfIntroduction" 
                     rows="8" 
-                    maxlength="800"
+                    maxlength="${getWritingItemLimit('자기소개서')}"
                     ${isDisabled ? 'disabled' : ''}
                     required
                 >${applicant.self_introduction || ''}</textarea>
@@ -310,18 +428,18 @@ function createEditForm(applicant) {
         <div class="form-section">
             <h2 class="section-title">
                 <span class="section-number">03</span>
-                경력기술서
+                ${getWritingItemName('경력기술서')}
             </h2>
             
             <div class="form-field full-width">
                 <label for="editCareerDescription">
-                    경력기술서 <span class="required">*</span>
-                    <span class="char-count" id="editCharCount2">${(applicant.career_description || '').length} / 500자</span>
+                    ${getWritingItemName('경력기술서')} <span class="required">*</span>
+                    <span class="char-count" id="editCharCount2">${(applicant.career_description || '').length} / ${getWritingItemLimit('경력기술서')}자</span>
                 </label>
                 <textarea 
                     id="editCareerDescription" 
                     rows="6" 
-                    maxlength="500"
+                    maxlength="${getWritingItemLimit('경력기술서')}"
                     ${isDisabled ? 'disabled' : ''}
                     required
                 >${applicant.career_description || ''}</textarea>
@@ -332,18 +450,18 @@ function createEditForm(applicant) {
         <div class="form-section">
             <h2 class="section-title">
                 <span class="section-number">04</span>
-                지원동기
+                ${getWritingItemName('지원동기')}
             </h2>
             
             <div class="form-field full-width">
                 <label for="editMotivation">
-                    지원동기 <span class="required">*</span>
-                    <span class="char-count" id="editCharCount3">${(applicant.motivation || '').length} / 500자</span>
+                    ${getWritingItemName('지원동기')} <span class="required">*</span>
+                    <span class="char-count" id="editCharCount3">${(applicant.motivation || '').length} / ${getWritingItemLimit('지원동기')}자</span>
                 </label>
                 <textarea 
                     id="editMotivation" 
                     rows="6" 
-                    maxlength="500"
+                    maxlength="${getWritingItemLimit('지원동기')}"
                     ${isDisabled ? 'disabled' : ''}
                     required
                 >${applicant.motivation || ''}</textarea>
@@ -354,18 +472,18 @@ function createEditForm(applicant) {
         <div class="form-section">
             <h2 class="section-title">
                 <span class="section-number">05</span>
-                입사 후 포부
+                ${getWritingItemName('입사 후 포부')}
             </h2>
             
             <div class="form-field full-width">
                 <label for="editAspiration">
-                    입사 후 포부 <span class="required">*</span>
-                    <span class="char-count" id="editCharCount4">${(applicant.aspiration || '').length} / 500자</span>
+                    ${getWritingItemName('입사 후 포부')} <span class="required">*</span>
+                    <span class="char-count" id="editCharCount4">${(applicant.aspiration || '').length} / ${getWritingItemLimit('입사 후 포부')}자</span>
                 </label>
                 <textarea 
                     id="editAspiration" 
                     rows="6" 
-                    maxlength="500"
+                    maxlength="${getWritingItemLimit('입사 후 포부')}"
                     ${isDisabled ? 'disabled' : ''}
                     required
                 >${applicant.aspiration || ''}</textarea>
@@ -395,12 +513,47 @@ function createEditForm(applicant) {
 
     // 글자 수 카운트 재설정
     if (!isDisabled) {
-        setupCharCount('editSelfIntroduction', 'editCharCount1', 800);
-        setupCharCount('editCareerDescription', 'editCharCount2', 500);
-        setupCharCount('editMotivation', 'editCharCount3', 500);
-        setupCharCount('editAspiration', 'editCharCount4', 500);
+        setupCharCount('editSelfIntroduction', 'editCharCount1', getWritingItemLimit('자기소개서'));
+        setupCharCount('editCareerDescription', 'editCharCount2', getWritingItemLimit('경력기술서'));
+        setupCharCount('editMotivation', 'editCharCount3', getWritingItemLimit('지원동기'));
+        setupCharCount('editAspiration', 'editCharCount4', getWritingItemLimit('입사 후 포부'));
         setupPhoneFormatting('editPhone');
     }
+}
+
+// 작성 항목 이름 가져오기 (기본값 포함)
+function getWritingItemName(defaultName) {
+    if (!applicationGuide || !applicationGuide.writing_items) return defaultName;
+    const item = applicationGuide.writing_items.find(i => 
+        i.name === defaultName || 
+        (defaultName === '자기소개서' && i.name.includes('자기소개')) ||
+        (defaultName === '경력기술서' && i.name.includes('경력기술')) ||
+        (defaultName === '지원동기' && i.name.includes('지원동기')) ||
+        (defaultName === '입사 후 포부' && i.name.includes('포부'))
+    );
+    return item ? item.name : defaultName;
+}
+
+// 작성 항목 글자수 제한 가져오기 (기본값 포함)
+function getWritingItemLimit(defaultName) {
+    if (!applicationGuide || !applicationGuide.writing_items) {
+        // 기본값
+        const defaults = {
+            '자기소개서': 800,
+            '경력기술서': 500,
+            '지원동기': 500,
+            '입사 후 포부': 500
+        };
+        return defaults[defaultName] || 500;
+    }
+    const item = applicationGuide.writing_items.find(i => 
+        i.name === defaultName || 
+        (defaultName === '자기소개서' && i.name.includes('자기소개')) ||
+        (defaultName === '경력기술서' && i.name.includes('경력기술')) ||
+        (defaultName === '지원동기' && i.name.includes('지원동기')) ||
+        (defaultName === '입사 후 포부' && i.name.includes('포부'))
+    );
+    return item ? item.limit : (defaultName === '자기소개서' ? 800 : 500);
 }
 
 // 상태 배너 업데이트
