@@ -297,6 +297,54 @@ function updateUI() {
     
     document.getElementById('applicantCount').textContent = `${filteredApplicants.length}명`;
     renderApplicantList();
+    
+    // 지원자를 선택하지 않은 경우 빈 상태 표시 (평가 폼은 항상 보이도록)
+    if (!selectedApplicantId) {
+        const header = document.getElementById('applicantInfoHeader');
+        const content = document.getElementById('coverLetterContent');
+        if (header) header.innerHTML = '';
+        if (content) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <p>👈 왼쪽에서 지원자를 선택하세요</p>
+                </div>
+            `;
+        }
+        
+        // 평가 폼 초기화 (평가 저장 버튼은 항상 보이도록)
+        const form = document.getElementById('evaluationForm');
+        if (form) {
+            form.reset();
+            const totalScoreEl = document.getElementById('totalScore');
+            if (totalScoreEl) totalScoreEl.textContent = '0';
+            // 지원자를 선택하지 않았을 때는 폼 필드를 비활성화
+            const formInputs = form.querySelectorAll('select, textarea');
+            formInputs.forEach(input => {
+                input.disabled = true;
+            });
+            // 평가 저장 버튼은 비활성화하되 보이도록
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.6';
+            }
+        }
+    } else {
+        // 지원자를 선택했을 때는 폼 필드 활성화
+        const form = document.getElementById('evaluationForm');
+        if (form) {
+            const formInputs = form.querySelectorAll('select, textarea');
+            formInputs.forEach(input => {
+                input.disabled = false;
+            });
+            // 평가 저장 버튼 활성화
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            }
+        }
+    }
 }
 
 // 지원자 필터링
