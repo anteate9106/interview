@@ -243,9 +243,9 @@ async function getApplicationGuide() {
             ],
             writing_items: [
                 { name: '자기소개서', limit: 2000 },
-                { name: '경력기술서', limit: 500 },
-                { name: '지원동기', limit: 500 },
-                { name: '입사 후 포부', limit: 500 }
+                { name: '경력기술서', limit: 2000 },
+                { name: '지원동기', limit: 2000 },
+                { name: '입사 후 포부', limit: 2000 }
             ]
         };
     }

@@ -49,9 +49,9 @@ function setupEventListeners() {
     } else {
         // 기본값으로 설정 (fallback)
         setupCharCount('selfIntroduction', 'charCount1', 2000);
-        setupCharCount('careerDescription', 'charCount2', 500);
-        setupCharCount('motivation', 'charCount3', 500);
-        setupCharCount('aspiration', 'charCount4', 500);
+        setupCharCount('careerDescription', 'charCount2', 2000);
+        setupCharCount('motivation', 'charCount3', 2000);
+        setupCharCount('aspiration', 'charCount4', 2000);
     }
 
     // 전화번호 자동 포맷팅
@@ -102,9 +102,9 @@ async function loadApplicationGuide() {
             ],
             writing_items: [
                 { name: '자기소개서', limit: 2000 },
-                { name: '경력기술서', limit: 500 },
-                { name: '지원동기', limit: 500 },
-                { name: '입사 후 포부', limit: 500 }
+                { name: '경력기술서', limit: 2000 },
+                { name: '지원동기', limit: 2000 },
+                { name: '입사 후 포부', limit: 2000 }
             ]
         };
         renderApplicationGuide();
@@ -135,7 +135,7 @@ function renderApplicationGuide() {
         writingList.innerHTML = '';
         applicationGuide.writing_items.forEach(item => {
             const li = document.createElement('li');
-            li.textContent = `${item.name}: ${item.limit}자 이내`;
+            li.textContent = item.name;
             writingList.appendChild(li);
         });
     }
@@ -564,13 +564,7 @@ function getWritingItemName(defaultName) {
 function getWritingItemLimit(defaultName) {
     if (!applicationGuide || !applicationGuide.writing_items) {
         // 기본값
-        const defaults = {
-            '자기소개서': 2000,
-            '경력기술서': 500,
-            '지원동기': 500,
-            '입사 후 포부': 500
-        };
-        return defaults[defaultName] || 500;
+        return 2000;
     }
     const item = applicationGuide.writing_items.find(i => 
         i.name === defaultName || 
@@ -579,7 +573,7 @@ function getWritingItemLimit(defaultName) {
         (defaultName === '지원동기' && i.name.includes('지원동기')) ||
         (defaultName === '입사 후 포부' && i.name.includes('포부'))
     );
-    return item ? item.limit : (defaultName === '자기소개서' ? 2000 : 500);
+    return item ? item.limit : 2000;
 }
 
 // 상태 배너 업데이트
