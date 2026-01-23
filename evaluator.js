@@ -198,8 +198,7 @@ function checkAuth() {
     const evaluatorId = localStorage.getItem('currentEvaluator');
     if (evaluatorId && evaluators[evaluatorId]) {
         currentEvaluator = evaluatorId;
-        // 드롭다운 방식으로 변경되어 바로 mainPage로 이동
-        showMainPage();
+        showJobPostingPage();
     } else {
         showPage('loginPage');
     }
@@ -348,10 +347,12 @@ function showPage(pageId) {
 
 // 채용공고 페이지 표시
 function showJobPostingPage() {
-    // 드롭다운 방식으로 변경되어 바로 mainPage로 이동
-    selectedJobPosting = null;
-    selectedApplicantId = null;
-    showMainPage();
+    showPage('jobPostingPage');
+    const evaluatorName = evaluators[currentEvaluator].name;
+    document.getElementById('evaluatorNamePosting').textContent = evaluatorName;
+    renderJobPostings();
+    // right-panel이 항상 보이도록 active 클래스 추가
+    ensureRightPanelVisible();
 }
 
 // 채용공고 목록 렌더링 (리스트형)
@@ -400,123 +401,10 @@ function renderJobPostings() {
 // 채용공고 선택
 async function selectJobPosting(posting) {
     selectedJobPosting = posting;
-    selectedApplicantId = null; // 공고 변경 시 지원자 선택 초기화
     await loadData(); // 데이터 다시 로드
     showMainPage();
     // right-panel이 항상 보이도록
     ensureRightPanelVisible();
-}
-
-// 채용공고 드롭다운 업데이트
-function updateJobPostingDropdown() {
-    const select = document.getElementById('jobPostingSelect');
-    if (!select) return;
-    
-    select.innerHTML = '<option value="">채용공고를 선택하세요</option>';
-    
-    jobPostings.forEach(posting => {
-        const option = document.createElement('option');
-        option.value = posting;
-        option.textContent = posting;
-        if (selectedJobPosting === posting) {
-            option.selected = true;
-        }
-        select.appendChild(option);
-    });
-    
-    // 공고가 선택되어 있으면 드롭다운 활성화
-    select.disabled = false;
-}
-
-// 지원자 드롭다운 업데이트
-function updateApplicantDropdown() {
-    const select = document.getElementById('applicantSelect');
-    if (!select) return;
-    
-    select.innerHTML = '<option value="">지원자를 선택하세요</option>';
-    
-    if (!selectedJobPosting) {
-        select.disabled = true;
-        return;
-    }
-    
-    // 선택된 채용공고의 지원자만 필터링
-    const filteredApplicants = applicants.filter(a => a.job_posting === selectedJobPosting);
-    
-    if (filteredApplicants.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = '지원자가 없습니다';
-        option.disabled = true;
-        select.appendChild(option);
-        select.disabled = false;
-        return;
-    }
-    
-    filteredApplicants.forEach(applicant => {
-        const option = document.createElement('option');
-        option.value = applicant.id;
-        const myEval = hasMyEvaluation(applicant);
-        const status = myEval ? '✓' : '';
-        option.textContent = `${status} ${applicant.name} (${applicant.branch || '지점'} - ${applicant.position || '직무'})`;
-        if (selectedApplicantId === applicant.id) {
-            option.selected = true;
-        }
-        select.appendChild(option);
-    });
-    
-    select.disabled = false;
-}
-
-// 채용공고 드롭다운 변경 핸들러
-function onJobPostingChange() {
-    const select = document.getElementById('jobPostingSelect');
-    if (!select) return;
-    
-    const posting = select.value;
-    if (posting) {
-        selectJobPosting(posting);
-    } else {
-        selectedJobPosting = null;
-        selectedApplicantId = null;
-        updateApplicantDropdown();
-        // 지원자 정보 초기화
-        const header = document.getElementById('applicantInfoHeader');
-        const content = document.getElementById('coverLetterContent');
-        if (header) header.innerHTML = '';
-        if (content) {
-            content.innerHTML = `
-                <div class="empty-state">
-                    <p>채용공고를 선택하세요</p>
-                </div>
-            `;
-        }
-        // 평가 폼 초기화
-        const form = document.getElementById('evaluationForm');
-        if (form) {
-            form.reset();
-            const totalScoreEl = document.getElementById('totalScore');
-            if (totalScoreEl) totalScoreEl.textContent = '0';
-            const formInputs = form.querySelectorAll('select, textarea');
-            formInputs.forEach(input => {
-                input.disabled = true;
-            });
-            const submitBtn = form.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.6';
-            }
-        }
-    }
-}
-
-// 지원자 드롭다운 변경 핸들러
-function onApplicantChange() {
-    const select = document.getElementById('applicantSelect');
-    if (!select || !select.value) return;
-    
-    const applicantId = select.value;
-    selectApplicant(applicantId);
 }
 
 // 채용공고 목록으로 돌아가기
@@ -532,20 +420,6 @@ function showMainPage() {
     updateUI();
     // right-panel이 항상 보이도록
     ensureRightPanelVisible();
-    
-    // 공고가 선택되어 있지 않으면 공고 선택 안내
-    if (!selectedJobPosting) {
-        const header = document.getElementById('applicantInfoHeader');
-        const content = document.getElementById('coverLetterContent');
-        if (header) header.innerHTML = '';
-        if (content) {
-            content.innerHTML = `
-                <div class="empty-state">
-                    <p>위에서 채용공고를 선택하세요</p>
-                </div>
-            `;
-        }
-    }
 }
 
 // UI 업데이트
@@ -553,11 +427,18 @@ function updateUI() {
     const evaluatorName = evaluators[currentEvaluator].name;
     document.getElementById('evaluatorName').textContent = evaluatorName;
     
-    // 채용공고 드롭다운 업데이트
-    updateJobPostingDropdown();
+    // 현재 선택된 채용공고 표시
+    if (selectedJobPosting) {
+        document.getElementById('currentJobPosting').textContent = selectedJobPosting;
+    }
     
-    // 지원자 드롭다운 업데이트
-    updateApplicantDropdown();
+    // 해당 공고의 지원자만 필터링
+    const filteredApplicants = selectedJobPosting 
+        ? applicants.filter(a => a.job_posting === selectedJobPosting)
+        : applicants;
+    
+    document.getElementById('applicantCount').textContent = `${filteredApplicants.length}명`;
+    renderApplicantList();
     
     // 지원자를 선택하지 않은 경우 빈 상태 표시 (평가 폼은 항상 보이도록)
     if (!selectedApplicantId) {

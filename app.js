@@ -171,6 +171,7 @@ function renderJobPostings() {
 // 채용공고 선택
 async function selectJobPosting(posting) {
     selectedJobPosting = posting;
+    selectedApplicantId = null; // 공고 변경 시 지원자 선택 초기화
     await loadData(); // 데이터 다시 로드
     showMainPage();
 }
@@ -186,24 +187,142 @@ function backToJobPostings() {
 function showMainPage() {
     showPage('mainPage');
     updateUI();
+    
+    // 공고가 선택되어 있지 않으면 공고 선택 안내
+    if (!selectedJobPosting) {
+        const header = document.getElementById('applicantInfoHeader');
+        const content = document.getElementById('coverLetterContent');
+        if (header) header.innerHTML = '';
+        if (content) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <p>위에서 채용공고를 선택하세요</p>
+                </div>
+            `;
+        }
+    }
 }
 
 // UI 업데이트
 function updateUI() {
     document.getElementById('currentUser').textContent = `${currentUser}님`;
     
-    // 현재 선택된 채용공고 표시
-    if (selectedJobPosting) {
-        document.getElementById('currentJobPosting').textContent = selectedJobPosting;
+    // 채용공고 드롭다운 업데이트
+    updateJobPostingDropdown();
+    
+    // 지원자 드롭다운 업데이트
+    updateApplicantDropdown();
+}
+
+// 채용공고 드롭다운 업데이트
+function updateJobPostingDropdown() {
+    const select = document.getElementById('jobPostingSelect');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">채용공고를 선택하세요</option>';
+    
+    jobPostings.forEach(posting => {
+        const option = document.createElement('option');
+        option.value = posting;
+        option.textContent = posting;
+        if (selectedJobPosting === posting) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+    
+    // 공고가 선택되어 있으면 드롭다운 활성화
+    select.disabled = false;
+}
+
+// 지원자 드롭다운 업데이트
+function updateApplicantDropdown() {
+    const select = document.getElementById('applicantSelect');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">지원자를 선택하세요</option>';
+    
+    if (!selectedJobPosting) {
+        select.disabled = true;
+        return;
     }
     
-    // 해당 공고의 지원자만 필터링
-    const filteredApplicants = selectedJobPosting 
-        ? applicants.filter(a => a.job_posting === selectedJobPosting)
-        : applicants;
+    // 선택된 채용공고의 지원자만 필터링
+    const filteredApplicants = applicants.filter(a => a.job_posting === selectedJobPosting);
     
-    document.getElementById('applicantCount').textContent = `${filteredApplicants.length}명`;
-    renderApplicantList();
+    if (filteredApplicants.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '지원자가 없습니다';
+        option.disabled = true;
+        select.appendChild(option);
+        select.disabled = false;
+        return;
+    }
+    
+    filteredApplicants.forEach(applicant => {
+        const option = document.createElement('option');
+        option.value = applicant.id;
+        const evaluationCount = applicant.evaluations ? applicant.evaluations.length : 0;
+        const avgScore = applicant.evaluations && applicant.evaluations.length > 0
+            ? Math.round(applicant.evaluations.reduce((sum, e) => sum + (e.total_score || 0), 0) / applicant.evaluations.length)
+            : null;
+        const scoreText = avgScore !== null ? ` (평균 ${avgScore}점)` : '';
+        option.textContent = `${applicant.name} - ${applicant.branch || '지점'} ${applicant.position || '직무'}${scoreText}`;
+        if (selectedApplicantId === applicant.id) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+    
+    select.disabled = false;
+}
+
+// 채용공고 드롭다운 변경 핸들러
+function onJobPostingChange() {
+    const select = document.getElementById('jobPostingSelect');
+    if (!select) return;
+    
+    const posting = select.value;
+    if (posting) {
+        selectJobPosting(posting);
+    } else {
+        selectedJobPosting = null;
+        selectedApplicantId = null;
+        updateApplicantDropdown();
+        // 지원자 정보 초기화
+        const header = document.getElementById('applicantInfoHeader');
+        const content = document.getElementById('coverLetterContent');
+        if (header) header.innerHTML = '';
+        if (content) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <p>채용공고를 선택하세요</p>
+                </div>
+            `;
+        }
+        // 평가 결과 초기화
+        const evaluationContent = document.getElementById('evaluationContent');
+        if (evaluationContent) {
+            evaluationContent.innerHTML = `
+                <div class="empty-evaluation">
+                    <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                        <p style="font-size: 16px;">지원자를 선택하세요</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+}
+
+// 지원자 드롭다운 변경 핸들러
+function onApplicantChange() {
+    const select = document.getElementById('applicantSelect');
+    if (!select || !select.value) return;
+    
+    const applicantId = select.value;
+    selectApplicant(applicantId);
 }
 
 // 지원자 목록 렌더링
