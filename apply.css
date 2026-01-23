@@ -52,10 +52,14 @@ body {
 }
 
 .welcome-header {
-    color: white;
+    color: #0f172a;
     margin-bottom: 60px;
     position: relative;
     animation: fadeInDown 0.8s ease-out;
+}
+
+.welcome-header .subtitle {
+    color: #64748b;
 }
 
 @keyframes fadeInDown {
@@ -73,7 +77,8 @@ body {
     font-size: 48px;
     margin-bottom: 12px;
     font-weight: 800;
-    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    color: #0f172a;
+    text-shadow: none;
     letter-spacing: -0.5px;
 }
 
@@ -300,9 +305,9 @@ body {
     position: absolute;
     top: 20px;
     left: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
     font-size: 14px;
     cursor: pointer;
     padding: 8px 16px;
@@ -316,14 +321,13 @@ body {
 }
 
 .btn-logout-light {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
     font-size: 14px;
     cursor: pointer;
     padding: 8px 16px;
     border-radius: 6px;
-    backdrop-filter: blur(10px);
     transition: all 0.3s;
 }
 
@@ -345,7 +349,7 @@ body {
 .apply-header {
     grid-column: 1 / -1;
     text-align: center;
-    color: white;
+    color: #0f172a;
     margin-bottom: 20px;
     position: relative;
 }
@@ -365,18 +369,19 @@ body {
 .admin-link {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    color: #0f172a;
     text-decoration: none;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 600;
-    backdrop-filter: blur(10px);
+    border: 1px solid #e2e8f0;
     transition: all 0.3s;
 }
 
 .admin-link:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: #ffffff;
+    border-color: #6366f1;
     transform: translateY(-2px);
 }
 
@@ -384,11 +389,13 @@ body {
     font-size: 42px;
     margin-bottom: 8px;
     font-weight: 700;
+    color: #0f172a;
 }
 
 .subtitle {
     font-size: 18px;
-    opacity: 0.9;
+    color: #64748b;
+    opacity: 1;
 }
 
 /* 상태 배너 */
