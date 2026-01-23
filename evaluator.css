@@ -178,11 +178,19 @@ body {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    position: relative !important;
+    z-index: 100 !important;
+    min-height: 50px !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
 }
 
 .btn-submit:disabled {
-    opacity: 0.6;
+    opacity: 0.6 !important;
     cursor: not-allowed;
+    display: block !important;
+    visibility: visible !important;
 }
 
 /* 평가 폼 항상 표시 */
@@ -196,17 +204,53 @@ body {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    overflow: visible !important;
+    max-height: none !important;
 }
 
-/* 평가 저장 버튼 항상 표시 (모든 상태에서) */
+/* 평가 폼 내부 요소들이 항상 보이도록 */
+#evaluationForm > * {
+    display: block !important;
+    visibility: visible !important;
+}
+
+#evaluationForm button[type="submit"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* 평가 저장 버튼 항상 표시 (모든 상태에서) - 총점처럼 상시 표시 */
 #evaluationForm .btn-submit,
 .evaluation-form .btn-submit,
-button[type="submit"].btn-submit {
+button[type="submit"].btn-submit,
+button.btn-submit {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
     position: relative !important;
-    z-index: 10 !important;
+    z-index: 100 !important;
+    min-height: 50px !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin-top: 16px !important;
+    margin-bottom: 0 !important;
+}
+
+/* 모든 hover, focus, active 상태에서도 항상 보이도록 */
+#evaluationForm .btn-submit:hover,
+#evaluationForm .btn-submit:focus,
+#evaluationForm .btn-submit:active,
+.evaluation-form .btn-submit:hover,
+.evaluation-form .btn-submit:focus,
+.evaluation-form .btn-submit:active,
+button[type="submit"].btn-submit:hover,
+button[type="submit"].btn-submit:focus,
+button[type="submit"].btn-submit:active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* right-panel이 항상 보이도록 (모든 미디어 쿼리에서도) */

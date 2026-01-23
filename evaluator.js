@@ -49,28 +49,43 @@ function ensureRightPanelVisible() {
         evaluationForm.style.opacity = '1';
     }
     
-    // 평가 저장 버튼도 확인
+    // 평가 저장 버튼도 확인 및 강제 표시
     const submitBtn = document.querySelector('#evaluationForm button[type="submit"]');
     if (submitBtn) {
         submitBtn.style.display = 'block';
         submitBtn.style.visibility = 'visible';
         submitBtn.style.opacity = submitBtn.disabled ? '0.6' : '1';
+        submitBtn.style.position = 'relative';
+        submitBtn.style.zIndex = '100';
+        submitBtn.style.minHeight = '50px';
+        submitBtn.style.height = 'auto';
+        submitBtn.style.maxHeight = 'none';
+        submitBtn.style.overflow = 'visible';
     }
 }
 
-// 평가 저장 버튼이 항상 보이도록 보장
+// 평가 저장 버튼이 항상 보이도록 보장 (총점처럼 상시 표시)
 function ensureSubmitButtonVisible() {
     // right-panel도 먼저 보이도록
     ensureRightPanelVisible();
     
     const submitBtn = document.querySelector('#evaluationForm button[type="submit"]');
     if (submitBtn) {
+        // 강제로 표시
         submitBtn.style.display = 'block';
         submitBtn.style.visibility = 'visible';
-        submitBtn.style.opacity = '1';
+        submitBtn.style.opacity = submitBtn.disabled ? '0.6' : '1';
+        submitBtn.style.position = 'relative';
+        submitBtn.style.zIndex = '100';
+        submitBtn.style.minHeight = '50px';
+        submitBtn.style.height = 'auto';
+        submitBtn.style.maxHeight = 'none';
+        submitBtn.style.overflow = 'visible';
+        // 클래스도 추가하여 CSS 규칙 적용
+        submitBtn.classList.add('btn-submit');
     }
     
-    // 주기적으로 확인하여 항상 보이도록 유지
+    // 주기적으로 확인하여 항상 보이도록 유지 (더 자주 확인)
     setInterval(() => {
         // right-panel 확인
         const rightPanel = document.querySelector('.right-panel');
@@ -78,22 +93,72 @@ function ensureSubmitButtonVisible() {
             if (!rightPanel.classList.contains('active')) {
                 rightPanel.classList.add('active');
             }
-            if (window.getComputedStyle(rightPanel).display === 'none') {
+            const computedStyle = window.getComputedStyle(rightPanel);
+            if (computedStyle.display === 'none') {
                 rightPanel.style.display = 'flex';
+            }
+            if (computedStyle.visibility === 'hidden') {
+                rightPanel.style.visibility = 'visible';
+            }
+            if (computedStyle.opacity === '0') {
+                rightPanel.style.opacity = '1';
             }
         }
         
-        // 버튼 확인
-        const btn = document.querySelector('#evaluationForm button[type="submit"]');
-        if (btn) {
-            if (btn.style.display === 'none' || window.getComputedStyle(btn).display === 'none') {
-                btn.style.display = 'block';
+        // evaluationContent 확인
+        const evaluationContent = document.getElementById('evaluationContent');
+        if (evaluationContent) {
+            const computedStyle = window.getComputedStyle(evaluationContent);
+            if (computedStyle.display === 'none') {
+                evaluationContent.style.display = 'block';
             }
-            if (btn.style.visibility === 'hidden' || window.getComputedStyle(btn).visibility === 'hidden') {
-                btn.style.visibility = 'visible';
+            if (computedStyle.visibility === 'hidden') {
+                evaluationContent.style.visibility = 'visible';
             }
         }
-    }, 100);
+        
+        // evaluationForm 확인
+        const evaluationForm = document.getElementById('evaluationForm');
+        if (evaluationForm) {
+            const computedStyle = window.getComputedStyle(evaluationForm);
+            if (computedStyle.display === 'none') {
+                evaluationForm.style.display = 'block';
+            }
+            if (computedStyle.visibility === 'hidden') {
+                evaluationForm.style.visibility = 'visible';
+            }
+        }
+        
+        // 버튼 확인 및 강제 표시
+        const btn = document.querySelector('#evaluationForm button[type="submit"]');
+        if (btn) {
+            const computedStyle = window.getComputedStyle(btn);
+            
+            // display 확인
+            if (btn.style.display === 'none' || computedStyle.display === 'none') {
+                btn.style.display = 'block';
+            }
+            
+            // visibility 확인
+            if (btn.style.visibility === 'hidden' || computedStyle.visibility === 'hidden') {
+                btn.style.visibility = 'visible';
+            }
+            
+            // opacity 확인 (0이면 1로, disabled면 0.6으로)
+            const currentOpacity = parseFloat(computedStyle.opacity);
+            if (currentOpacity === 0 || isNaN(currentOpacity)) {
+                btn.style.opacity = btn.disabled ? '0.6' : '1';
+            }
+            
+            // position과 z-index 강제 설정
+            btn.style.position = 'relative';
+            btn.style.zIndex = '100';
+            btn.style.minHeight = '50px';
+            btn.style.height = 'auto';
+            btn.style.maxHeight = 'none';
+            btn.style.overflow = 'visible';
+        }
+    }, 50); // 100ms에서 50ms로 더 자주 확인
 }
 
 // 평가자 목록 로드
