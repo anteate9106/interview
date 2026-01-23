@@ -404,14 +404,29 @@ async function selectApplicant(id) {
     if (!applicant) {
         console.error('Applicant not found with id:', id);
         console.error('Available IDs:', applicants.map(a => a.id));
+        
+        // 지원자를 찾을 수 없을 때 평가 영역 초기화
+        const evaluationContent = document.getElementById('evaluationContent');
+        if (evaluationContent) {
+            evaluationContent.innerHTML = `
+                <div class="empty-evaluation">
+                    <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                        <p style="font-size: 16px;">지원자를 찾을 수 없습니다.</p>
+                    </div>
+                </div>
+            `;
+        }
         return;
     }
 
     // 평가 데이터가 없거나 최신 데이터를 확인하기 위해 다시 로드
     try {
+        console.log('Loading evaluations for applicant:', applicant.id);
         const evaluations = await getEvaluationsByApplicant(applicant.id);
         applicant.evaluations = evaluations;
         console.log('Loaded evaluations for applicant:', evaluations);
+        console.log('Evaluation count:', evaluations ? evaluations.length : 0);
         
         // applicants 배열도 업데이트
         const applicantIndex = applicants.findIndex(a => String(a.id) === searchId);
@@ -420,12 +435,17 @@ async function selectApplicant(id) {
         }
     } catch (error) {
         console.error('Error loading evaluations:', error);
+        // 에러가 발생해도 평가 데이터를 빈 배열로 설정하여 계속 진행
+        applicant.evaluations = [];
     }
 
     // 드롭다운 방식으로 변경되어 리스트 렌더링 불필요
     // renderApplicantList() 호출 제거 - 드롭다운 방식에서는 지원자 목록을 렌더링할 필요 없음
     
+    // 지원서 내용 표시
     showCoverLetter(applicant);
+    
+    // 평가 내용 표시 (항상 호출하여 평가 데이터가 없을 때도 적절한 메시지 표시)
     loadEvaluation(applicant);
 }
 
@@ -450,32 +470,91 @@ function showCoverLetter(applicant) {
         </div>
     `;
 
-    // 평가 정보 표시
+    // 평가 평균 점수 요약 (가운데 섹션 상단에 표시)
     let evaluationSummary = '';
     if (applicant.evaluations && applicant.evaluations.length > 0) {
-        const avgScore = Math.round(applicant.evaluations.reduce((sum, e) => sum + (e.total_score || 0), 0) / applicant.evaluations.length);
+        // total_score가 없으면 계산
+        const evaluationsWithTotal = applicant.evaluations.map(e => {
+            if (!e.total_score && e.score1 !== undefined) {
+                e.total_score = (e.score1 || 0) + (e.score2 || 0) + (e.score3 || 0) + (e.score4 || 0);
+            }
+            return e;
+        });
+        
+        const totalAvgScore = Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.total_score || 0), 0) / evaluationsWithTotal.length);
+        
+        const avgScores = {
+            score1: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score1 || 0), 0) / evaluationsWithTotal.length),
+            score2: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score2 || 0), 0) / evaluationsWithTotal.length),
+            score3: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score3 || 0), 0) / evaluationsWithTotal.length),
+            score4: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score4 || 0), 0) / evaluationsWithTotal.length)
+        };
         
         evaluationSummary = `
-            <div class="section-block" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left-color: #10b981;">
-                <h3>📊 평가 결과</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 12px;">
-                    <div style="background: white; padding: 16px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">평균 점수</div>
-                        <div style="font-size: 32px; font-weight: 800; color: #10b981;">${avgScore}점</div>
+            <div class="section-block" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 4px solid #10b981; margin-bottom: 24px;">
+                <h3 style="margin-bottom: 20px; color: #10b981; font-size: 20px;">📊 평가 평균 점수</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                    <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">전체 평균 점수</div>
+                        <div style="font-size: 42px; font-weight: 800; color: #10b981; line-height: 1;">${totalAvgScore}점</div>
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">/ 100점 만점</div>
                     </div>
-                    <div style="background: white; padding: 16px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">평가자 수</div>
-                        <div style="font-size: 32px; font-weight: 800; color: #6366f1;">${applicant.evaluations.length}명</div>
+                    <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">평가자 수</div>
+                        <div style="font-size: 42px; font-weight: 800; color: #6366f1; line-height: 1;">${evaluationsWithTotal.length}명</div>
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">평가 완료</div>
                     </div>
                 </div>
-                <div style="margin-top: 16px;">
-                    ${applicant.evaluations.map(e => `
-                        <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600; color: #0f172a;">${e.evaluator_name || e.evaluator_id}</span>
-                            <span style="font-size: 18px; font-weight: 700; color: #6366f1;">${e.total_score}점</span>
+                
+                <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h4 style="margin-bottom: 16px; color: var(--text-primary); font-size: 16px; font-weight: 600;">항목별 평균 점수</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                        <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">내용충실도</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden;">
+                                    <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${avgScores.score1 * 4}%;"></div>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: #6366f1; min-width: 50px; text-align: right;">${avgScores.score1}/25</div>
+                            </div>
                         </div>
-                    `).join('')}
+                        <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">경력 및 교육사항</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden;">
+                                    <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${avgScores.score2 * 4}%;"></div>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: #6366f1; min-width: 50px; text-align: right;">${avgScores.score2}/25</div>
+                            </div>
+                        </div>
+                        <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">조직적합성</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden;">
+                                    <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${avgScores.score3 * 4}%;"></div>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: #6366f1; min-width: 50px; text-align: right;">${avgScores.score3}/25</div>
+                            </div>
+                        </div>
+                        <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">직무적합성</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden;">
+                                    <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${avgScores.score4 * 4}%;"></div>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: #6366f1; min-width: 50px; text-align: right;">${avgScores.score4}/25</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        `;
+    } else {
+        evaluationSummary = `
+            <div class="section-block" style="background: #fef3c7; border-left: 4px solid #f59e0b; margin-bottom: 24px; padding: 20px;">
+                <h3 style="margin-bottom: 12px; color: #f59e0b; font-size: 18px;">⚠️ 평가 대기 중</h3>
+                <p style="color: #92400e; margin: 0;">아직 평가가 완료되지 않았습니다. 평가자가 평가를 완료하면 평균 점수가 여기에 표시됩니다.</p>
             </div>
         `;
     }
@@ -532,6 +611,7 @@ function showCoverLetter(applicant) {
 }
 
 // 평가 로드 (관리자는 평가하지 않고 조회만 가능)
+// 오른쪽 섹션에 각 평가자별 상세 평가 내용 표시
 function loadEvaluation(applicant) {
     const form = document.getElementById('evaluationForm');
     const evaluationContent = document.getElementById('evaluationContent');
@@ -544,7 +624,20 @@ function loadEvaluation(applicant) {
     console.log('loadEvaluation called for applicant:', applicant);
     console.log('Evaluations:', applicant.evaluations);
     
-    // 평가 내역이 있으면 표시
+    // 지원자 정보가 없으면 초기화
+    if (!applicant) {
+        evaluationContent.innerHTML = `
+            <div class="empty-evaluation">
+                <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <p style="font-size: 16px;">지원자를 선택하세요</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // 평가 내역이 있으면 각 평가자별 상세 평가 표시
     if (applicant.evaluations && applicant.evaluations.length > 0) {
         console.log('Displaying evaluations, count:', applicant.evaluations.length);
         console.log('Evaluation data:', applicant.evaluations);
@@ -556,76 +649,115 @@ function loadEvaluation(applicant) {
             }
             return e;
         });
-        
-        const avgScores = {
-            score1: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score1 || 0), 0) / evaluationsWithTotal.length),
-            score2: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score2 || 0), 0) / evaluationsWithTotal.length),
-            score3: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score3 || 0), 0) / evaluationsWithTotal.length),
-            score4: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score4 || 0), 0) / evaluationsWithTotal.length)
-        };
 
         evaluationContent.innerHTML = `
-            <div class="evaluation-summary">
-                <h3 style="margin-bottom: 20px; color: #10b981;">✅ 평가 완료</h3>
-                
-                <div class="avg-scores">
-                    <div class="score-item">
-                        <div class="score-label">내용충실도</div>
-                        <div class="score-bar">
-                            <div class="score-fill" style="width: ${avgScores.score1 * 4}%"></div>
-                        </div>
-                        <div class="score-value">${avgScores.score1}/25</div>
-                    </div>
-                    
-                    <div class="score-item">
-                        <div class="score-label">경력 및 교육사항</div>
-                        <div class="score-bar">
-                            <div class="score-fill" style="width: ${avgScores.score2 * 4}%"></div>
-                        </div>
-                        <div class="score-value">${avgScores.score2}/25</div>
-                    </div>
-                    
-                    <div class="score-item">
-                        <div class="score-label">조직적합성</div>
-                        <div class="score-bar">
-                            <div class="score-fill" style="width: ${avgScores.score3 * 4}%"></div>
-                        </div>
-                        <div class="score-value">${avgScores.score3}/25</div>
-                    </div>
-                    
-                    <div class="score-item">
-                        <div class="score-label">직무적합성</div>
-                        <div class="score-bar">
-                            <div class="score-fill" style="width: ${avgScores.score4 * 4}%"></div>
-                        </div>
-                        <div class="score-value">${avgScores.score4}/25</div>
-                    </div>
+            <div class="evaluation-summary" style="padding: 20px;">
+                <div style="margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 8px; color: var(--text-primary); font-size: 18px; font-weight: 600;">👥 평가자별 상세 평가</h3>
+                    <p style="font-size: 13px; color: #64748b; margin: 0;">총 ${evaluationsWithTotal.length}명의 평가자가 평가했습니다</p>
                 </div>
-
-                <div class="evaluators-detail" style="margin-top: 32px;">
-                    <h4 style="margin-bottom: 16px;">평가자별 상세</h4>
-                    ${evaluationsWithTotal.map(e => {
+                
+                <div class="evaluators-detail">
+                    ${evaluationsWithTotal.map((e, index) => {
                         const totalScore = e.total_score || ((e.score1 || 0) + (e.score2 || 0) + (e.score3 || 0) + (e.score4 || 0));
+                        const evaluationDate = e.evaluation_date || e.created_at || '';
+                        const dateText = evaluationDate ? new Date(evaluationDate).toLocaleDateString('ko-KR') : '';
                         return `
-                        <div class="evaluator-card">
-                            <div class="evaluator-header">
-                                <strong>${e.evaluator_name || e.evaluator_id}</strong>
-                                <span style="font-size: 20px; font-weight: 700; color: #6366f1;">${totalScore}점</span>
-                            </div>
-                            <div class="evaluator-scores">
-                                <div>내용충실도: ${e.score1 || 0}점</div>
-                                <div>경력·교육: ${e.score2 || 0}점</div>
-                                <div>조직적합성: ${e.score3 || 0}점</div>
-                                <div>직무적합성: ${e.score4 || 0}점</div>
-                            </div>
-                            ${e.comment1 || e.comment2 || e.comment3 || e.comment4 ? `
-                                <div class="evaluator-comments">
-                                    ${e.comment1 ? `<p><strong>내용충실도:</strong> ${e.comment1}</p>` : ''}
-                                    ${e.comment2 ? `<p><strong>경력·교육:</strong> ${e.comment2}</p>` : ''}
-                                    ${e.comment3 ? `<p><strong>조직적합성:</strong> ${e.comment3}</p>` : ''}
-                                    ${e.comment4 ? `<p><strong>직무적합성:</strong> ${e.comment4}</p>` : ''}
+                        <div class="evaluator-card" style="background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <div class="evaluator-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #f1f5f9;">
+                                <div>
+                                    <strong style="font-size: 18px; color: var(--text-primary);">${e.evaluator_name || e.evaluator_id || `평가자 ${index + 1}`}</strong>
+                                    ${dateText ? `<div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">평가일: ${dateText}</div>` : ''}
                                 </div>
-                            ` : ''}
+                                <div style="text-align: right;">
+                                    <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">총점</div>
+                                    <span style="font-size: 28px; font-weight: 700; color: #6366f1;">${totalScore}점</span>
+                                </div>
+                            </div>
+                            
+                            <div class="evaluator-scores" style="margin-bottom: ${e.comment1 || e.comment2 || e.comment3 || e.comment4 ? '20px' : '0'};">
+                                <h4 style="font-size: 14px; color: var(--text-primary); margin-bottom: 12px; font-weight: 600;">📊 항목별 점수</h4>
+                                <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+                                    <div style="padding: 14px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #6366f1;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <div style="font-size: 13px; color: #64748b; margin-bottom: 4px; font-weight: 600;">내용충실도</div>
+                                                <div style="font-size: 20px; font-weight: 700; color: #6366f1;">${e.score1 || 0}점 / 25점</div>
+                                            </div>
+                                            <div style="width: 100px; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                                                <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${((e.score1 || 0) / 25) * 100}%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 14px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #6366f1;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <div style="font-size: 13px; color: #64748b; margin-bottom: 4px; font-weight: 600;">경력 및 교육사항</div>
+                                                <div style="font-size: 20px; font-weight: 700; color: #6366f1;">${e.score2 || 0}점 / 25점</div>
+                                            </div>
+                                            <div style="width: 100px; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                                                <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${((e.score2 || 0) / 25) * 100}%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 14px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #6366f1;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <div style="font-size: 13px; color: #64748b; margin-bottom: 4px; font-weight: 600;">조직적합성</div>
+                                                <div style="font-size: 20px; font-weight: 700; color: #6366f1;">${e.score3 || 0}점 / 25점</div>
+                                            </div>
+                                            <div style="width: 100px; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                                                <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${((e.score3 || 0) / 25) * 100}%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 14px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #6366f1;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <div style="font-size: 13px; color: #64748b; margin-bottom: 4px; font-weight: 600;">직무적합성</div>
+                                                <div style="font-size: 20px; font-weight: 700; color: #6366f1;">${e.score4 || 0}점 / 25점</div>
+                                            </div>
+                                            <div style="width: 100px; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                                                <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${((e.score4 || 0) / 25) * 100}%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${e.comment1 || e.comment2 || e.comment3 || e.comment4 ? `
+                                <div class="evaluator-comments" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #f1f5f9;">
+                                    <h5 style="font-size: 15px; color: var(--text-primary); margin-bottom: 16px; font-weight: 600;">💬 평가 의견</h5>
+                                    ${e.comment1 ? `
+                                        <div style="margin-bottom: 14px; padding: 14px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #6366f1;">
+                                            <strong style="color: #6366f1; font-size: 13px; display: block; margin-bottom: 6px;">내용충실도</strong>
+                                            <p style="margin: 0; color: var(--text-primary); line-height: 1.7; font-size: 14px;">${e.comment1}</p>
+                                        </div>
+                                    ` : ''}
+                                    ${e.comment2 ? `
+                                        <div style="margin-bottom: 14px; padding: 14px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #6366f1;">
+                                            <strong style="color: #6366f1; font-size: 13px; display: block; margin-bottom: 6px;">경력 및 교육사항</strong>
+                                            <p style="margin: 0; color: var(--text-primary); line-height: 1.7; font-size: 14px;">${e.comment2}</p>
+                                        </div>
+                                    ` : ''}
+                                    ${e.comment3 ? `
+                                        <div style="margin-bottom: 14px; padding: 14px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #6366f1;">
+                                            <strong style="color: #6366f1; font-size: 13px; display: block; margin-bottom: 6px;">조직적합성</strong>
+                                            <p style="margin: 0; color: var(--text-primary); line-height: 1.7; font-size: 14px;">${e.comment3}</p>
+                                        </div>
+                                    ` : ''}
+                                    ${e.comment4 ? `
+                                        <div style="margin-bottom: 14px; padding: 14px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #6366f1;">
+                                            <strong style="color: #6366f1; font-size: 13px; display: block; margin-bottom: 6px;">직무적합성</strong>
+                                            <p style="margin: 0; color: var(--text-primary); line-height: 1.7; font-size: 14px;">${e.comment4}</p>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            ` : `
+                                <div style="margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 8px; text-align: center;">
+                                    <p style="margin: 0; color: #94a3b8; font-size: 13px;">평가 의견이 없습니다</p>
+                                </div>
+                            `}
                         </div>
                     `;
                     }).join('')}
@@ -637,8 +769,8 @@ function loadEvaluation(applicant) {
             <div class="empty-evaluation">
                 <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
                     <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
-                    <p style="font-size: 16px;">아직 평가가 완료되지 않았습니다.</p>
-                    <p style="font-size: 14px; margin-top: 8px;">평가자가 평가를 완료하면 여기에 표시됩니다.</p>
+                    <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">아직 평가가 완료되지 않았습니다.</p>
+                    <p style="font-size: 14px; color: #64748b;">평가자가 평가를 완료하면 여기에 표시됩니다.</p>
                 </div>
             </div>
         `;
