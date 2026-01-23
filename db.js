@@ -363,67 +363,6 @@ async function deleteJobPosting(id) {
     }
 }
 
-// ==================== 파일 업로드 관련 ====================
-
-// PDF 파일 업로드
-async function uploadResumePDF(file, applicantId) {
-    try {
-        // 파일명 생성: applicantId_timestamp.pdf
-        const timestamp = Date.now();
-        const fileName = `${applicantId}_${timestamp}.pdf`;
-        const filePath = `resumes/${fileName}`;
-        
-        // Supabase Storage에 업로드
-        const { data, error } = await supabase.storage
-            .from('resumes')
-            .upload(filePath, file, {
-                cacheControl: '3600',
-                upsert: false
-            });
-        
-        if (error) throw error;
-        
-        // 공개 URL 가져오기
-        const { data: urlData } = supabase.storage
-            .from('resumes')
-            .getPublicUrl(filePath);
-        
-        return {
-            file_path: filePath,
-            file_url: urlData.publicUrl,
-            file_name: file.name,
-            file_size: file.size
-        };
-    } catch (error) {
-        console.error('Error uploading resume PDF:', error);
-        throw error;
-    }
-}
-
-// PDF 파일 삭제
-async function deleteResumePDF(filePath) {
-    try {
-        const { error } = await supabase.storage
-            .from('resumes')
-            .remove([filePath]);
-        
-        if (error) throw error;
-        return true;
-    } catch (error) {
-        console.error('Error deleting resume PDF:', error);
-        throw error;
-    }
-}
-
-// PDF 파일 다운로드 URL 가져오기
-function getResumePDFUrl(filePath) {
-    if (!filePath) return null;
-    const { data } = supabase.storage
-        .from('resumes')
-        .getPublicUrl(filePath);
-    return data.publicUrl;
-}
-
 // ==================== 유틸리티 ====================
 
 // 비밀번호 검증 (클라이언트 측)

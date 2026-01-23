@@ -200,33 +200,6 @@
                         </div>
                     </div>
 
-                    <!-- 이력서 PDF 업로드 섹션 -->
-                    <div class="form-section">
-                        <h2 class="section-title">
-                            <span class="section-number">02-1</span>
-                            이력서 PDF (선택사항)
-                        </h2>
-                        
-                        <div class="form-field full-width">
-                            <label for="resumePDF">
-                                이력서 PDF 파일
-                                <span style="color: var(--text-secondary); font-size: 13px; font-weight: normal;"> (선택사항)</span>
-                            </label>
-                            <input 
-                                type="file" 
-                                id="resumePDF" 
-                                accept=".pdf"
-                                style="padding: 12px; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%; cursor: pointer; transition: all 0.3s;"
-                                onchange="handleFileSelect(event)"
-                            >
-                            <small class="field-hint">PDF 파일만 업로드 가능합니다. (최대 10MB)</small>
-                            <div id="fileInfo" style="margin-top: 8px; display: none;">
-                                <span id="fileName" style="color: var(--success-color); font-size: 13px;"></span>
-                                <button type="button" onclick="removeFile()" style="margin-left: 8px; padding: 4px 8px; background: var(--danger-color); color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">삭제</button>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- 경력기술서 섹션 -->
                     <div class="form-section">
                         <h2 class="section-title">
