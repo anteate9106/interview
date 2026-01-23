@@ -1,6 +1,19 @@
 /* styles.css의 스타일을 가져옴 */
 @import url('styles.css');
 
+/* 드롭다운 방식 레이아웃 조정 */
+#mainPage .main-layout {
+    grid-template-columns: 1fr 1fr !important;
+}
+
+#mainPage .left-panel {
+    display: none !important;
+}
+
+#mainPage .middle-panel {
+    margin-left: 0 !important;
+}
+
 /* 평가자 페이지 스크롤 허용 */
 body {
     overflow: auto !important;
