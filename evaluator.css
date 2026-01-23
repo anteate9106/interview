@@ -537,6 +537,13 @@ button[type="submit"].btn-submit:active {
     padding: 8px 16px;
     background: var(--primary-light);
     border-radius: 8px;
+    line-height: 1.5;
+    white-space: normal;
+    word-break: keep-all;
+    max-width: 300px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
 }
 
 @media (max-width: 768px) {
