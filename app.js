@@ -466,7 +466,13 @@ async function selectApplicant(id) {
         console.error('Error loading evaluations:', error);
     }
 
-    renderApplicantList();
+    // 드롭다운 방식으로 변경되어 리스트 렌더링 불필요
+    // renderApplicantList()는 리스트 컨테이너가 있을 때만 호출
+    const listContainer = document.getElementById('applicantList');
+    if (listContainer) {
+        renderApplicantList();
+    }
+    
     showCoverLetter(applicant);
     loadEvaluation(applicant);
 }
