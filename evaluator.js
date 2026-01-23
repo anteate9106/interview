@@ -169,6 +169,29 @@ async function loadData() {
     try {
         applicants = await getAllApplicants();
         console.log('Loaded applicants from Supabase:', applicants);
+        
+        // 필드명 정규화: snake_case와 camelCase 모두 지원
+        applicants = applicants.map(applicant => {
+            // self_introduction와 selfIntroduction 모두 확인
+            if (!applicant.self_introduction && applicant.selfIntroduction) {
+                applicant.self_introduction = applicant.selfIntroduction;
+            }
+            if (!applicant.selfIntroduction && applicant.self_introduction) {
+                applicant.selfIntroduction = applicant.self_introduction;
+            }
+            
+            // career_description와 careerDescription 모두 확인
+            if (!applicant.career_description && applicant.careerDescription) {
+                applicant.career_description = applicant.careerDescription;
+            }
+            if (!applicant.careerDescription && applicant.career_description) {
+                applicant.careerDescription = applicant.career_description;
+            }
+            
+            return applicant;
+        });
+        
+        console.log('Normalized applicants:', applicants);
     } catch (error) {
         console.error('Error loading applicants:', error);
         applicants = [];
@@ -687,10 +710,16 @@ function hasMyEvaluation(applicant) {
 
 // 지원자 선택
 function selectApplicant(id) {
+    console.log('selectApplicant called with id:', id);
     selectedApplicantId = id;
     const applicant = applicants.find(a => a.id === id);
     
-    if (!applicant) return;
+    console.log('Found applicant:', applicant);
+    
+    if (!applicant) {
+        console.error('Applicant not found with id:', id);
+        return;
+    }
 
     renderApplicantList();
     showApplication(applicant);
@@ -721,6 +750,30 @@ function selectApplicant(id) {
 function showApplication(applicant) {
     const header = document.getElementById('applicantInfoHeader');
     const content = document.getElementById('coverLetterContent');
+
+    if (!applicant) {
+        console.error('showApplication: applicant is null or undefined');
+        return;
+    }
+
+    if (!header || !content) {
+        console.error('showApplication: DOM elements not found', { header, content });
+        return;
+    }
+
+    // 디버깅: 지원자 데이터 확인
+    console.log('showApplication - applicant data:', applicant);
+    console.log('self_introduction:', applicant.self_introduction);
+    console.log('selfIntroduction:', applicant.selfIntroduction);
+    console.log('career_description:', applicant.career_description);
+    console.log('careerDescription:', applicant.careerDescription);
+
+    // 필드명 확인 및 값 추출
+    const selfIntro = applicant.self_introduction || applicant.selfIntroduction || applicant.coverLetter || '';
+    const careerDesc = applicant.career_description || applicant.careerDescription || '';
+
+    console.log('Extracted selfIntro:', selfIntro);
+    console.log('Extracted careerDesc:', careerDesc);
 
     header.innerHTML = `
         <div class="applicant-detail">
@@ -766,12 +819,12 @@ function showApplication(applicant) {
 
             <div class="section-block">
                 <h3>✍️ 자기소개서</h3>
-                <p class="pre-wrap">${applicant.self_introduction || applicant.selfIntroduction || applicant.coverLetter || '미입력'}</p>
+                <p class="pre-wrap">${selfIntro || '미입력'}</p>
             </div>
 
             <div class="section-block">
                 <h3>💻 경력기술서</h3>
-                <p class="pre-wrap">${applicant.career_description || applicant.careerDescription || '미입력'}</p>
+                <p class="pre-wrap">${careerDesc || '미입력'}</p>
             </div>
 
             <div class="section-block">
