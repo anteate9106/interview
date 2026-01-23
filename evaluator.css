@@ -24,6 +24,7 @@ body {
 }
 
 .help-section {
+    display: none !important; /* 테스트 계정 섹션 비표시 */
     margin-top: 24px;
     padding-top: 24px;
     border-top: 1px solid var(--border-color);
