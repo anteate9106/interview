@@ -367,12 +367,38 @@ function onJobPostingChange() {
 }
 
 // 지원자 드롭다운 변경 핸들러
-function onApplicantChange() {
+async function onApplicantChange() {
     const select = document.getElementById('applicantSelect');
-    if (!select || !select.value) return;
+    if (!select || !select.value) {
+        // 지원자 선택이 해제된 경우 초기화
+        const header = document.getElementById('applicantInfoHeader');
+        const content = document.getElementById('coverLetterContent');
+        const evaluationContent = document.getElementById('evaluationContent');
+        
+        if (header) header.innerHTML = '';
+        if (content) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <p>왼쪽에서 채용공고와 지원자를 선택하세요</p>
+                </div>
+            `;
+        }
+        if (evaluationContent) {
+            evaluationContent.innerHTML = `
+                <div class="empty-evaluation">
+                    <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                        <p style="font-size: 16px;">지원자를 선택하세요</p>
+                    </div>
+                </div>
+            `;
+        }
+        return;
+    }
     
     const applicantId = select.value;
-    selectApplicant(applicantId);
+    console.log('onApplicantChange: selecting applicant', applicantId);
+    await selectApplicant(applicantId);
 }
 
 // 지원자 목록 렌더링
@@ -430,11 +456,26 @@ async function selectApplicant(id) {
 
     // 평가 데이터가 없거나 최신 데이터를 확인하기 위해 다시 로드
     try {
-        console.log('Loading evaluations for applicant:', applicant.id);
+        console.log('Loading evaluations for applicant:', applicant.id, 'name:', applicant.name);
         const evaluations = await getEvaluationsByApplicant(applicant.id);
         applicant.evaluations = evaluations;
         console.log('Loaded evaluations for applicant:', evaluations);
         console.log('Evaluation count:', evaluations ? evaluations.length : 0);
+        
+        // 평가 데이터 상세 로그
+        if (evaluations && evaluations.length > 0) {
+            console.log('Evaluation details:', evaluations.map(e => ({
+                evaluator_id: e.evaluator_id,
+                evaluator_name: e.evaluator_name,
+                score1: e.score1,
+                score2: e.score2,
+                score3: e.score3,
+                score4: e.score4,
+                total_score: e.total_score
+            })));
+        } else {
+            console.warn('No evaluations found for applicant:', applicant.id, applicant.name);
+        }
         
         // applicants 배열도 업데이트
         const applicantIndex = applicants.findIndex(a => String(a.id) === searchId);
@@ -450,17 +491,48 @@ async function selectApplicant(id) {
     // 드롭다운 방식으로 변경되어 리스트 렌더링 불필요
     // renderApplicantList() 호출 제거 - 드롭다운 방식에서는 지원자 목록을 렌더링할 필요 없음
     
+    console.log('About to call showCoverLetter and loadEvaluation');
+    
     // 지원서 내용 표시
-    showCoverLetter(applicant);
+    try {
+        showCoverLetter(applicant);
+    } catch (error) {
+        console.error('Error in showCoverLetter:', error);
+    }
     
     // 평가 내용 표시 (항상 호출하여 평가 데이터가 없을 때도 적절한 메시지 표시)
-    loadEvaluation(applicant);
+    try {
+        loadEvaluation(applicant);
+    } catch (error) {
+        console.error('Error in loadEvaluation:', error);
+    }
+    
+    console.log('selectApplicant completed');
 }
 
 // 지원서 표시
 function showCoverLetter(applicant) {
     const header = document.getElementById('applicantInfoHeader');
     const content = document.getElementById('coverLetterContent');
+
+    if (!applicant) {
+        console.error('showCoverLetter: applicant is null or undefined');
+        if (content) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <p>지원자 정보를 불러올 수 없습니다.</p>
+                </div>
+            `;
+        }
+        return;
+    }
+
+    if (!header || !content) {
+        console.error('showCoverLetter: DOM elements not found', { header, content });
+        return;
+    }
+
+    console.log('showCoverLetter called for:', applicant.name, 'evaluations:', applicant.evaluations);
 
     header.innerHTML = `
         <div class="applicant-detail">
@@ -625,12 +697,26 @@ function loadEvaluation(applicant) {
     const evaluationContent = document.getElementById('evaluationContent');
     
     if (!evaluationContent) {
-        console.error('evaluationContent element not found');
+        console.error('loadEvaluation: evaluationContent element not found');
         return;
     }
     
-    console.log('loadEvaluation called for applicant:', applicant);
+    if (!applicant) {
+        console.error('loadEvaluation: applicant is null or undefined');
+        evaluationContent.innerHTML = `
+            <div class="empty-evaluation">
+                <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                    <p style="font-size: 16px;">지원자 정보를 불러올 수 없습니다.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    console.log('loadEvaluation called for applicant:', applicant.name, applicant.id);
     console.log('Evaluations:', applicant.evaluations);
+    console.log('Evaluation count:', applicant.evaluations ? applicant.evaluations.length : 0);
     
     // 지원자 정보가 없으면 초기화
     if (!applicant) {
@@ -648,15 +734,21 @@ function loadEvaluation(applicant) {
     // 평가 내역이 있으면 각 평가자별 상세 평가 표시
     if (applicant.evaluations && applicant.evaluations.length > 0) {
         console.log('Displaying evaluations, count:', applicant.evaluations.length);
-        console.log('Evaluation data:', applicant.evaluations);
+        console.log('Evaluation data:', JSON.stringify(applicant.evaluations, null, 2));
         
         // total_score가 없으면 계산
         const evaluationsWithTotal = applicant.evaluations.map(e => {
             if (!e.total_score && e.score1 !== undefined) {
                 e.total_score = (e.score1 || 0) + (e.score2 || 0) + (e.score3 || 0) + (e.score4 || 0);
             }
+            // 평가자 이름이 없으면 evaluator_id 사용
+            if (!e.evaluator_name && e.evaluator_id) {
+                e.evaluator_name = e.evaluator_id;
+            }
             return e;
         });
+        
+        console.log('Evaluations with total scores:', evaluationsWithTotal);
 
         evaluationContent.innerHTML = `
             <div class="evaluation-summary" style="padding: 20px;">
