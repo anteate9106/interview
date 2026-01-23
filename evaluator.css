@@ -1,6 +1,19 @@
 /* styles.css의 스타일을 가져옴 */
 @import url('styles.css');
 
+/* 평가자 페이지 레이아웃 - 3분할 유지 */
+#mainPage .main-layout {
+    grid-template-columns: 280px 1fr 400px !important;
+}
+
+#mainPage .left-panel {
+    display: flex !important;
+}
+
+#mainPage .middle-panel {
+    margin-left: 0 !important;
+}
+
 /* 평가자 페이지 스크롤 허용 */
 body {
     overflow: auto !important;

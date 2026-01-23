@@ -265,16 +265,16 @@ body {
     gap: 0;
 }
 
-/* 관리자 페이지 드롭다운 방식 레이아웃 조정 */
-#mainPage .main-layout {
+/* 관리자 페이지 드롭다운 방식 레이아웃 조정 (index.html의 mainPage만) */
+html[data-page="admin"] #mainPage .main-layout {
     grid-template-columns: 1fr 400px !important;
 }
 
-#mainPage .left-panel[style*="display: none"] {
+html[data-page="admin"] #mainPage .left-panel[style*="display: none"] {
     display: none !important;
 }
 
-#mainPage .middle-panel {
+html[data-page="admin"] #mainPage .middle-panel {
     margin-left: 0 !important;
 }
 
