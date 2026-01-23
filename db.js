@@ -220,7 +220,7 @@ async function getApplicationGuide() {
                     '제출 후 로그인하여 수정 가능합니다'
                 ],
                 writing_items: [
-                    { name: '자기소개서', limit: 800 },
+                    { name: '자기소개서', limit: 1000 },
                     { name: '경력기술서', limit: 500 },
                     { name: '지원동기', limit: 500 },
                     { name: '입사 후 포부', limit: 500 }
@@ -242,7 +242,7 @@ async function getApplicationGuide() {
                 '제출 후 로그인하여 수정 가능합니다'
             ],
             writing_items: [
-                { name: '자기소개서', limit: 800 },
+                { name: '자기소개서', limit: 1000 },
                 { name: '경력기술서', limit: 500 },
                 { name: '지원동기', limit: 500 },
                 { name: '입사 후 포부', limit: 500 }
