@@ -188,10 +188,16 @@ async function loadData() {
                 applicant.careerDescription = applicant.career_description;
             }
             
+            // ID 타입 정규화: 문자열로 통일
+            if (applicant.id !== undefined && applicant.id !== null) {
+                applicant.id = String(applicant.id);
+            }
+            
             return applicant;
         });
         
         console.log('Normalized applicants:', applicants);
+        console.log('Applicant IDs:', applicants.map(a => ({ id: a.id, type: typeof a.id, name: a.name })));
     } catch (error) {
         console.error('Error loading applicants:', error);
         applicants = [];
@@ -710,14 +716,24 @@ function hasMyEvaluation(applicant) {
 
 // 지원자 선택
 function selectApplicant(id) {
-    console.log('selectApplicant called with id:', id);
+    console.log('selectApplicant called with id:', id, 'type:', typeof id);
     selectedApplicantId = id;
-    const applicant = applicants.find(a => a.id === id);
+    
+    // ID 타입 정규화: 문자열로 변환
+    const searchId = String(id);
+    console.log('Searching for applicant with id:', searchId);
+    console.log('Available applicant IDs:', applicants.map(a => ({ id: a.id, type: typeof a.id, name: a.name })));
+    
+    const applicant = applicants.find(a => {
+        const applicantId = String(a.id);
+        return applicantId === searchId;
+    });
     
     console.log('Found applicant:', applicant);
     
     if (!applicant) {
         console.error('Applicant not found with id:', id);
+        console.error('Available IDs:', applicants.map(a => a.id));
         return;
     }
 
