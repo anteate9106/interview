@@ -540,12 +540,27 @@ function onJobPostingChange() {
 }
 
 // 지원자 드롭다운 변경 핸들러
-function onApplicantChange() {
+async function onApplicantChange() {
     const select = document.getElementById('applicantSelect');
-    if (!select || !select.value) return;
+    if (!select || !select.value) {
+        // 지원자 선택이 해제된 경우 초기화
+        const header = document.getElementById('applicantInfoHeader');
+        const content = document.getElementById('coverLetterContent');
+        
+        if (header) header.innerHTML = '';
+        if (content) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <p>왼쪽에서 채용공고와 지원자를 선택하세요</p>
+                </div>
+            `;
+        }
+        return;
+    }
     
     const applicantId = select.value;
-    selectApplicant(applicantId);
+    console.log('onApplicantChange: selecting applicant', applicantId);
+    await selectApplicant(applicantId);
 }
 
 // 채용공고 목록으로 돌아가기
@@ -722,7 +737,7 @@ function hasMyEvaluation(applicant) {
 }
 
 // 지원자 선택
-function selectApplicant(id) {
+async function selectApplicant(id) {
     console.log('selectApplicant called with id:', id, 'type:', typeof id);
     selectedApplicantId = id;
     
@@ -731,7 +746,7 @@ function selectApplicant(id) {
     console.log('Searching for applicant with id:', searchId);
     console.log('Available applicant IDs:', applicants.map(a => ({ id: a.id, type: typeof a.id, name: a.name })));
     
-    const applicant = applicants.find(a => {
+    let applicant = applicants.find(a => {
         const applicantId = String(a.id);
         return applicantId === searchId;
     });
@@ -742,6 +757,25 @@ function selectApplicant(id) {
         console.error('Applicant not found with id:', id);
         console.error('Available IDs:', applicants.map(a => a.id));
         return;
+    }
+
+    // 평가 데이터가 없거나 최신 데이터를 확인하기 위해 다시 로드
+    try {
+        console.log('Loading evaluations for applicant:', applicant.id, 'name:', applicant.name);
+        const evaluations = await getEvaluationsByApplicant(applicant.id);
+        applicant.evaluations = evaluations;
+        console.log('Loaded evaluations for applicant:', evaluations);
+        console.log('Evaluation count:', evaluations ? evaluations.length : 0);
+        
+        // applicants 배열도 업데이트
+        const applicantIndex = applicants.findIndex(a => String(a.id) === searchId);
+        if (applicantIndex !== -1) {
+            applicants[applicantIndex].evaluations = evaluations;
+        }
+    } catch (error) {
+        console.error('Error loading evaluations:', error);
+        // 에러가 발생해도 평가 데이터를 빈 배열로 설정하여 계속 진행
+        applicant.evaluations = [];
     }
 
     renderApplicantList();
@@ -814,8 +848,100 @@ function showApplication(applicant) {
         </div>
     `;
 
+    // 평가 평균 점수 요약 (가운데 섹션 상단에 표시)
+    let evaluationSummary = '';
+    
+    if (applicant.evaluations && applicant.evaluations.length > 0) {
+        // total_score가 없으면 계산
+        const evaluationsWithTotal = applicant.evaluations.map(e => {
+            if (!e.total_score && e.score1 !== undefined) {
+                e.total_score = (e.score1 || 0) + (e.score2 || 0) + (e.score3 || 0) + (e.score4 || 0);
+            }
+            return e;
+        });
+        
+        const totalAvgScore = Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.total_score || 0), 0) / evaluationsWithTotal.length);
+        
+        const avgScores = {
+            score1: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score1 || 0), 0) / evaluationsWithTotal.length),
+            score2: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score2 || 0), 0) / evaluationsWithTotal.length),
+            score3: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score3 || 0), 0) / evaluationsWithTotal.length),
+            score4: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score4 || 0), 0) / evaluationsWithTotal.length)
+        };
+        
+        evaluationSummary = `
+            <div class="section-block" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 4px solid #10b981; margin-bottom: 24px;">
+                <h3 style="margin-bottom: 20px; color: #10b981; font-size: 20px;">📊 평가 평균 점수</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                    <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">전체 평균 점수</div>
+                        <div style="font-size: 42px; font-weight: 800; color: #10b981; line-height: 1;">${totalAvgScore}점</div>
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">/ 100점 만점</div>
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">평가자 수</div>
+                        <div style="font-size: 42px; font-weight: 800; color: #6366f1; line-height: 1;">${evaluationsWithTotal.length}명</div>
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">평가 완료</div>
+                    </div>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h4 style="margin-bottom: 16px; color: var(--text-primary); font-size: 16px; font-weight: 600;">항목별 평균 점수</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                        <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">내용충실도</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden;">
+                                    <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${avgScores.score1 * 4}%;"></div>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: #6366f1; min-width: 50px; text-align: right;">${avgScores.score1}/25</div>
+                            </div>
+                        </div>
+                        <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">경력 및 교육사항</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden;">
+                                    <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${avgScores.score2 * 4}%;"></div>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: #6366f1; min-width: 50px; text-align: right;">${avgScores.score2}/25</div>
+                            </div>
+                        </div>
+                        <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">조직적합성</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden;">
+                                    <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${avgScores.score3 * 4}%;"></div>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: #6366f1; min-width: 50px; text-align: right;">${avgScores.score3}/25</div>
+                            </div>
+                        </div>
+                        <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">직무적합성</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden;">
+                                    <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${avgScores.score4 * 4}%;"></div>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: #6366f1; min-width: 50px; text-align: right;">${avgScores.score4}/25</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        evaluationSummary = `
+            <div class="section-block" style="background: #fef3c7; border-left: 4px solid #f59e0b; margin-bottom: 24px; padding: 20px;">
+                <h3 style="margin-bottom: 12px; color: #f59e0b; font-size: 18px;">⚠️ 평가 대기 중</h3>
+                <p style="color: #92400e; margin: 0;">아직 평가가 완료되지 않았습니다. 평가자가 평가를 완료하면 평균 점수가 여기에 표시됩니다.</p>
+            </div>
+        `;
+    }
+
     content.innerHTML = `
         <div class="application-sections">
+            ${evaluationSummary}
+            
             <div class="section-block">
                 <h3>📋 기본 정보</h3>
                 <p><strong>주소:</strong> ${applicant.address || '미입력'}</p>
