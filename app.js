@@ -530,7 +530,7 @@ async function saveGuide() {
             return;
         }
 
-        // 작성 항목 파싱 (이름:글자수 형식)
+        // 작성 항목 파싱 (자유형식)
         const writingTextarea = document.getElementById('writingItemsTextarea');
         const writingItems = [];
         const writingLines = writingTextarea.value.split('\n');
@@ -539,22 +539,73 @@ async function saveGuide() {
             const line = writingLines[i].trim();
             if (line.length === 0) continue;
             
-            const parts = line.split(':');
-            if (parts.length !== 2) {
-                alert(`작성 항목 ${i + 1}번째 줄의 형식이 올바르지 않습니다.\n"이름:글자수" 형식으로 입력해주세요. (예: 자기소개서:2000)`);
-                return;
+            let name = '';
+            let limit = 2000; // 기본값
+            
+            // 다양한 형식 파싱 시도
+            // 1. "이름:숫자" 형식 (예: 자기소개서:2000)
+            if (line.includes(':')) {
+                const parts = line.split(':');
+                name = parts[0].trim();
+                const limitStr = parts[1].trim();
+                const limitMatch = limitStr.match(/\d+/);
+                if (limitMatch) {
+                    limit = parseInt(limitMatch[0]);
+                }
+            }
+            // 2. "이름 숫자자" 형식 (예: 자기소개서 2000자)
+            else if (/\d+자/.test(line)) {
+                const match = line.match(/^(.+?)\s*(\d+)자/);
+                if (match) {
+                    name = match[1].trim();
+                    limit = parseInt(match[2]);
+                } else {
+                    name = line.replace(/\d+자/g, '').trim();
+                    const limitMatch = line.match(/(\d+)자/);
+                    if (limitMatch) {
+                        limit = parseInt(limitMatch[1]);
+                    }
+                }
+            }
+            // 3. "이름 (숫자자)" 형식 (예: 자기소개서 (2000자))
+            else if (/\(.*\d+.*자.*\)/.test(line)) {
+                const match = line.match(/^(.+?)\s*\(.*?(\d+).*?자.*?\)/);
+                if (match) {
+                    name = match[1].trim();
+                    limit = parseInt(match[2]);
+                } else {
+                    name = line.replace(/\(.*?\)/g, '').trim();
+                    const limitMatch = line.match(/(\d+)/);
+                    if (limitMatch) {
+                        limit = parseInt(limitMatch[1]);
+                    }
+                }
+            }
+            // 4. "이름 숫자" 형식 (예: 자기소개서 2000)
+            else if (/\d+/.test(line)) {
+                const match = line.match(/^(.+?)\s+(\d+)/);
+                if (match) {
+                    name = match[1].trim();
+                    limit = parseInt(match[2]);
+                } else {
+                    // 숫자가 포함되어 있지만 형식이 불명확한 경우
+                    const limitMatch = line.match(/(\d+)/);
+                    if (limitMatch) {
+                        limit = parseInt(limitMatch[1]);
+                        name = line.replace(/\d+/g, '').trim();
+                    } else {
+                        name = line;
+                    }
+                }
+            }
+            // 5. 이름만 있는 경우 (기본값 2000자 사용)
+            else {
+                name = line;
             }
             
-            const name = parts[0].trim();
-            const limit = parseInt(parts[1].trim());
-            
+            // 이름이 비어있으면 전체 라인을 이름으로 사용
             if (!name || name.length === 0) {
-                alert(`작성 항목 ${i + 1}번째 줄의 이름을 입력해주세요.`);
-                return;
-            }
-            if (isNaN(limit) || limit <= 0) {
-                alert(`작성 항목 ${i + 1}번째 줄의 글자수 제한을 올바르게 입력해주세요.`);
-                return;
+                name = line;
             }
             
             writingItems.push({ name, limit });
