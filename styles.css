@@ -48,31 +48,35 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #ffffff;
     padding: 20px;
 }
 
 .login-box {
     background: var(--surface);
-    padding: 40px;
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
+    padding: 48px 40px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     width: 100%;
     max-width: 400px;
+    border: 1px solid #f1f5f9;
 }
 
 .login-box h1 {
-    font-size: 28px;
+    font-size: 26px;
     margin-bottom: 8px;
     color: var(--text-primary);
     text-align: center;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 .subtitle {
     text-align: center;
     color: var(--text-secondary);
-    margin-bottom: 30px;
+    margin-bottom: 32px;
     font-size: 14px;
+    font-weight: 400;
 }
 
 .form-group {
@@ -145,10 +149,11 @@ body {
 }
 
 .help-text {
-    margin-top: 16px;
+    margin-top: 20px;
     text-align: center;
     font-size: 13px;
     color: var(--text-secondary);
+    font-weight: 400;
 }
 
 /* 네비게이션 */
