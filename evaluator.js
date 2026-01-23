@@ -15,7 +15,33 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadJobPostings();
     checkAuth();
     setupEventListeners();
+    
+    // 평가 저장 버튼이 항상 보이도록 강제 설정
+    ensureSubmitButtonVisible();
 });
+
+// 평가 저장 버튼이 항상 보이도록 보장
+function ensureSubmitButtonVisible() {
+    const submitBtn = document.querySelector('#evaluationForm button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.style.display = 'block';
+        submitBtn.style.visibility = 'visible';
+        submitBtn.style.opacity = '1';
+    }
+    
+    // 주기적으로 확인하여 항상 보이도록 유지
+    setInterval(() => {
+        const btn = document.querySelector('#evaluationForm button[type="submit"]');
+        if (btn) {
+            if (btn.style.display === 'none' || window.getComputedStyle(btn).display === 'none') {
+                btn.style.display = 'block';
+            }
+            if (btn.style.visibility === 'hidden' || window.getComputedStyle(btn).visibility === 'hidden') {
+                btn.style.visibility = 'visible';
+            }
+        }
+    }, 100);
+}
 
 // 평가자 목록 로드
 async function loadEvaluators() {
@@ -327,6 +353,8 @@ function updateUI() {
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.style.opacity = '0.6';
+                submitBtn.style.display = 'block';
+                submitBtn.style.visibility = 'visible';
             }
         }
     } else {
@@ -342,6 +370,8 @@ function updateUI() {
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.style.opacity = '1';
+                submitBtn.style.display = 'block';
+                submitBtn.style.visibility = 'visible';
             }
         }
     }

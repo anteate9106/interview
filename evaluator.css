@@ -188,11 +188,38 @@ body {
 /* 평가 폼 항상 표시 */
 #evaluationContent {
     display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 #evaluationForm {
     display: block !important;
     visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* 평가 저장 버튼 항상 표시 (모든 상태에서) */
+#evaluationForm .btn-submit,
+.evaluation-form .btn-submit,
+button[type="submit"].btn-submit {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+/* right-panel이 항상 보이도록 */
+.right-panel {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.right-panel .evaluation-content {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .btn-submit:hover {
