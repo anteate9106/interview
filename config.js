@@ -7,11 +7,34 @@ var supabase;
 
 // Supabase 스크립트가 로드될 때까지 대기
 function initSupabase() {
-    // window.supabase 또는 supabase 전역 객체 확인
-    const supabaseLib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    // Supabase v2 CDN: supabase 전역 객체에서 createClient를 destructure
+    let supabaseLib = null;
+    let createClientFn = null;
     
-    if (!supabaseLib) {
-        console.error('Supabase library not loaded. Make sure @supabase/supabase-js@2 script is loaded before config.js');
+    // window.supabase 또는 전역 supabase 객체 확인
+    if (typeof window !== 'undefined' && window.supabase) {
+        supabaseLib = window.supabase;
+        createClientFn = window.supabase.createClient;
+    } else if (typeof supabase !== 'undefined') {
+        supabaseLib = supabase;
+        createClientFn = supabase.createClient;
+    }
+    
+    // createClient가 함수가 아닌 경우 destructure 시도
+    if (!createClientFn && supabaseLib) {
+        if (typeof supabaseLib.createClient === 'function') {
+            createClientFn = supabaseLib.createClient;
+        } else if (supabaseLib.default && typeof supabaseLib.default.createClient === 'function') {
+            createClientFn = supabaseLib.default.createClient;
+        }
+    }
+    
+    if (!createClientFn) {
+        console.error('Supabase createClient not found. Make sure @supabase/supabase-js@2 script is loaded before config.js');
+        console.log('Available globals:', { 
+            windowSupabase: typeof window !== 'undefined' ? window.supabase : 'N/A',
+            globalSupabase: typeof supabase !== 'undefined' ? supabase : 'N/A'
+        });
         return null;
     }
     
@@ -23,7 +46,7 @@ function initSupabase() {
     
     // 새 클라이언트 생성
     try {
-        window.supabaseClient = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabaseClient = createClientFn(SUPABASE_URL, SUPABASE_ANON_KEY);
         supabase = window.supabaseClient;
         console.log('Supabase client initialized successfully');
         return supabase;
