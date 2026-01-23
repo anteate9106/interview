@@ -20,8 +20,34 @@ document.addEventListener('DOMContentLoaded', async function() {
     ensureSubmitButtonVisible();
 });
 
+// right-panel이 항상 보이도록 보장
+function ensureRightPanelVisible() {
+    const rightPanel = document.querySelector('.right-panel');
+    if (rightPanel) {
+        rightPanel.classList.add('active');
+        rightPanel.style.display = 'flex';
+        rightPanel.style.visibility = 'visible';
+        rightPanel.style.opacity = '1';
+    }
+    
+    const evaluationContent = document.getElementById('evaluationContent');
+    if (evaluationContent) {
+        evaluationContent.style.display = 'block';
+        evaluationContent.style.visibility = 'visible';
+    }
+    
+    const evaluationForm = document.getElementById('evaluationForm');
+    if (evaluationForm) {
+        evaluationForm.style.display = 'block';
+        evaluationForm.style.visibility = 'visible';
+    }
+}
+
 // 평가 저장 버튼이 항상 보이도록 보장
 function ensureSubmitButtonVisible() {
+    // right-panel도 먼저 보이도록
+    ensureRightPanelVisible();
+    
     const submitBtn = document.querySelector('#evaluationForm button[type="submit"]');
     if (submitBtn) {
         submitBtn.style.display = 'block';
@@ -31,6 +57,18 @@ function ensureSubmitButtonVisible() {
     
     // 주기적으로 확인하여 항상 보이도록 유지
     setInterval(() => {
+        // right-panel 확인
+        const rightPanel = document.querySelector('.right-panel');
+        if (rightPanel) {
+            if (!rightPanel.classList.contains('active')) {
+                rightPanel.classList.add('active');
+            }
+            if (window.getComputedStyle(rightPanel).display === 'none') {
+                rightPanel.style.display = 'flex';
+            }
+        }
+        
+        // 버튼 확인
         const btn = document.querySelector('#evaluationForm button[type="submit"]');
         if (btn) {
             if (btn.style.display === 'none' || window.getComputedStyle(btn).display === 'none') {
@@ -241,6 +279,8 @@ function showJobPostingPage() {
     const evaluatorName = evaluators[currentEvaluator].name;
     document.getElementById('evaluatorNamePosting').textContent = evaluatorName;
     renderJobPostings();
+    // right-panel이 항상 보이도록 active 클래스 추가
+    ensureRightPanelVisible();
 }
 
 // 채용공고 목록 렌더링 (리스트형)
@@ -291,6 +331,8 @@ async function selectJobPosting(posting) {
     selectedJobPosting = posting;
     await loadData(); // 데이터 다시 로드
     showMainPage();
+    // right-panel이 항상 보이도록
+    ensureRightPanelVisible();
 }
 
 // 채용공고 목록으로 돌아가기
@@ -304,6 +346,8 @@ function backToJobPostings() {
 function showMainPage() {
     showPage('mainPage');
     updateUI();
+    // right-panel이 항상 보이도록
+    ensureRightPanelVisible();
 }
 
 // UI 업데이트
@@ -375,6 +419,9 @@ function updateUI() {
             }
         }
     }
+    
+    // right-panel이 항상 보이도록 보장
+    ensureRightPanelVisible();
 }
 
 // 지원자 필터링

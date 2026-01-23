@@ -209,11 +209,24 @@ button[type="submit"].btn-submit {
     z-index: 10 !important;
 }
 
-/* right-panel이 항상 보이도록 */
+/* right-panel이 항상 보이도록 (모든 미디어 쿼리에서도) */
 .right-panel {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+}
+
+/* 미디어 쿼리 내에서도 right-panel이 항상 보이도록 강제 */
+@media (max-width: 1024px) {
+    .right-panel {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .right-panel.active {
+        display: flex !important;
+    }
 }
 
 .right-panel .evaluation-content {
