@@ -638,9 +638,23 @@ function updateApplicationStatus(applicant) {
     const statusDiv = document.getElementById('applicationStatus');
     const hasEvaluations = applicant.evaluations && applicant.evaluations.length > 0;
     
+    // 제출일 포맷팅
+    let submitDate = '미입력';
+    if (applicant.submit_date) {
+        const date = new Date(applicant.submit_date);
+        submitDate = date.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } else if (applicant.submitDate) {
+        // 하위 호환성
+        submitDate = applicant.submitDate;
+    }
+    
     statusDiv.innerHTML = `
         <p><strong>채용공고</strong> <span style="color: #6366f1; font-weight: 600;">${applicant.job_posting || '미선택'}</span></p>
-        <p><strong>제출일</strong> <span>${applicant.submitDate}</span></p>
+        <p><strong>제출일</strong> <span>${submitDate}</span></p>
         <p><strong>평가상태</strong> <span>${hasEvaluations ? '평가완료' : '평가대기'}</span></p>
         ${hasEvaluations ? `<p><strong>평가자 수</strong> <span>${applicant.evaluations.length}명</span></p>` : ''}
     `;
