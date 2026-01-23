@@ -158,15 +158,35 @@ async function loadContactInfo() {
     }
 }
 
-// 문의 정보 렌더링
+// 문의 정보 렌더링 (자유형식)
 function renderContactInfo(contactInfo) {
     const contactContent = document.getElementById('contactContent');
     if (contactContent && contactInfo) {
-        contactContent.innerHTML = `
-            <p>${contactInfo.title || '채용 관련 문의사항이 있으시면'}</p>
-            <p><strong>${contactInfo.email || 'recruit@company.com'}</strong></p>
-            <p>${contactInfo.description || '으로 연락 주시기 바랍니다.'}</p>
-        `;
+        // description에 전체 텍스트가 저장되어 있으면 그대로 표시
+        if (contactInfo.description && contactInfo.description.trim().length > 0) {
+            // 줄바꿈을 <br>로 변환하여 표시
+            const formattedText = contactInfo.description
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0)
+                .map(line => `<p>${line}</p>`)
+                .join('');
+            contactContent.innerHTML = formattedText || '<p>문의 내용이 없습니다.</p>';
+        } else if (contactInfo.title || contactInfo.email) {
+            // 기존 형식 호환성 (title, email이 있는 경우)
+            contactContent.innerHTML = `
+                <p>${contactInfo.title || ''}</p>
+                <p><strong>${contactInfo.email || ''}</strong></p>
+                <p>${contactInfo.description || ''}</p>
+            `;
+        } else {
+            // 기본값
+            contactContent.innerHTML = `
+                <p>채용 관련 문의사항이 있으시면</p>
+                <p><strong>recruit@company.com</strong></p>
+                <p>으로 연락 주시기 바랍니다.</p>
+            `;
+        }
     }
 }
 

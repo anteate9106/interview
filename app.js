@@ -487,10 +487,15 @@ function closeGuideEditor() {
 
 // 작성 안내 편집기 렌더링
 function renderGuideEditor() {
-    // 작성 안내 항목을 textarea에 표시
+    // 작성 안내 항목을 textarea에 표시 (자유형식)
     const guideTextarea = document.getElementById('guideItemsTextarea');
     if (guideTextarea && currentGuideData.guide_items) {
-        guideTextarea.value = currentGuideData.guide_items.join('\n');
+        // 배열인 경우 줄바꿈으로 조인, 문자열인 경우 그대로 사용
+        if (Array.isArray(currentGuideData.guide_items)) {
+            guideTextarea.value = currentGuideData.guide_items.join('\n');
+        } else {
+            guideTextarea.value = currentGuideData.guide_items || '';
+        }
     }
 
     // 작성 항목을 textarea에 표시 (이름:글자수 형식)
@@ -502,15 +507,20 @@ function renderGuideEditor() {
         writingTextarea.value = writingText;
     }
     
-    // 문의 정보 렌더링 (textarea에 3줄로 표시)
+    // 문의 정보 렌더링 (자유형식)
     const contactTextarea = document.getElementById('contactTextarea');
     if (contactTextarea && currentContactData) {
-        const contactLines = [
-            currentContactData.title || '',
-            currentContactData.email || '',
-            currentContactData.description || ''
-        ];
-        contactTextarea.value = contactLines.join('\n');
+        // content 필드가 있으면 사용, 없으면 기존 필드들을 조합
+        if (currentContactData.content) {
+            contactTextarea.value = currentContactData.content;
+        } else {
+            // 기존 데이터 호환성을 위해 조합
+            const parts = [];
+            if (currentContactData.title) parts.push(currentContactData.title);
+            if (currentContactData.email) parts.push(currentContactData.email);
+            if (currentContactData.description) parts.push(currentContactData.description);
+            contactTextarea.value = parts.join('\n');
+        }
     }
 }
 
@@ -518,17 +528,20 @@ function renderGuideEditor() {
 // 작성 안내 저장
 async function saveGuide() {
     try {
-        // 작성 안내 항목 파싱 (textarea에서 줄바꿈으로 구분)
+        // 작성 안내 항목 파싱 (자유형식 - 전체 텍스트 저장)
         const guideTextarea = document.getElementById('guideItemsTextarea');
-        const guideItems = guideTextarea.value
+        const guideContent = guideTextarea.value.trim();
+        
+        if (!guideContent || guideContent.length === 0) {
+            alert('작성 안내 내용을 입력해주세요.');
+            return;
+        }
+        
+        // 줄바꿈으로 구분하여 배열로 저장 (기존 호환성 유지)
+        const guideItems = guideContent
             .split('\n')
             .map(line => line.trim())
             .filter(line => line.length > 0);
-        
-        if (guideItems.length === 0) {
-            alert('작성 안내 항목이 최소 1개 이상 필요합니다.');
-            return;
-        }
 
         // 작성 항목 파싱 (자유형식)
         const writingTextarea = document.getElementById('writingItemsTextarea');
@@ -616,32 +629,13 @@ async function saveGuide() {
             return;
         }
 
-        // 문의 정보 파싱 (textarea에서 3줄로 구분)
+        // 문의 정보 파싱 (자유형식 - 전체 텍스트 저장)
         const contactTextarea = document.getElementById('contactTextarea');
-        const contactLines = contactTextarea.value.split('\n').map(line => line.trim());
+        const contactContent = contactTextarea.value.trim();
         
-        const title = contactLines[0] || '';
-        const email = contactLines[1] || '';
-        const description = contactLines[2] || '';
-        
-        // 문의 정보 유효성 검사
-        if (!title) {
-            alert('문의 제목을 입력해주세요. (첫 번째 줄)');
-            return;
-        }
-        if (!email) {
-            alert('문의 이메일을 입력해주세요. (두 번째 줄)');
-            return;
-        }
-        if (!description) {
-            alert('문의 설명을 입력해주세요. (세 번째 줄)');
-            return;
-        }
-        
-        // 이메일 형식 검증
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            alert('올바른 이메일 주소를 입력해주세요. (두 번째 줄)');
+        // 문의 정보 유효성 검사 (최소 1글자 이상)
+        if (!contactContent || contactContent.length === 0) {
+            alert('문의 내용을 입력해주세요.');
             return;
         }
         
@@ -650,10 +644,11 @@ async function saveGuide() {
         currentGuideData.writing_items = writingItems;
         
         await saveApplicationGuide(currentGuideData);
+        // 문의 정보를 자유 텍스트로 저장 (description 필드에 전체 텍스트 저장)
         await saveContactInfo({
-            title: title,
-            email: email,
-            description: description
+            title: '',
+            email: '',
+            description: contactContent
         });
         alert('작성 안내와 문의 정보가 저장되었습니다.');
         closeGuideEditor();
