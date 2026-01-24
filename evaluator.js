@@ -832,6 +832,10 @@ function showApplication(applicant) {
     console.log('Extracted selfIntro:', selfIntro);
     console.log('Extracted careerDesc:', careerDesc);
 
+    // 지원서 작성일 포맷
+    const submissionDate = applicant.created_at || applicant.submission_date || applicant.createdAt;
+    const formattedDate = submissionDate ? new Date(submissionDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : '미입력';
+
     header.innerHTML = `
         <div class="applicant-detail">
             <span><strong>${applicant.name}</strong></span>
@@ -845,6 +849,7 @@ function showApplication(applicant) {
         <div class="applicant-detail" style="margin-top: 4px;">
             <span><strong>지원 지점:</strong> ${applicant.branch || '미입력'}</span>
             <span><strong>지원 직무:</strong> ${applicant.position || '미입력'}</span>
+            <span><strong>지원서 작성일:</strong> ${formattedDate}</span>
         </div>
     `;
 
