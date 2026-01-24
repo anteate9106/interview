@@ -537,6 +537,23 @@ function showCoverLetter(applicant) {
 
     console.log('showCoverLetter called for:', applicant.name, 'evaluations:', applicant.evaluations);
 
+    // 지원서 작성일 포맷
+    const submissionDate = applicant.created_at || applicant.submission_date || applicant.createdAt;
+    const formattedSubmissionDate = submissionDate ? new Date(submissionDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : '미입력';
+
+    // 최종 평가일 (가장 최근 평가 날짜)
+    let lastEvaluationDate = '평가 없음';
+    if (applicant.evaluations && applicant.evaluations.length > 0) {
+        const dates = applicant.evaluations
+            .map(e => e.evaluation_date || e.created_at)
+            .filter(d => d)
+            .map(d => new Date(d));
+        if (dates.length > 0) {
+            const latestDate = new Date(Math.max(...dates));
+            lastEvaluationDate = latestDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+    }
+
     header.innerHTML = `
         <div class="applicant-detail">
             <span><strong>${applicant.name}</strong></span>
@@ -550,6 +567,10 @@ function showCoverLetter(applicant) {
         <div class="applicant-detail" style="margin-top: 4px;">
             <span><strong>지원 지점:</strong> ${applicant.branch || '미입력'}</span>
             <span><strong>지원 직무:</strong> ${applicant.position || '미입력'}</span>
+        </div>
+        <div class="applicant-detail" style="margin-top: 4px;">
+            <span><strong>지원서 작성일:</strong> ${formattedSubmissionDate}</span>
+            <span><strong>최종 평가일:</strong> ${lastEvaluationDate}</span>
         </div>
     `;
 
