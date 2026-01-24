@@ -957,8 +957,6 @@ async function handleEvaluation(e) {
         return;
     }
     
-    const totalScore = score1 + score2 + score3 + score4;
-    
     const evaluation = {
         applicant_id: selectedApplicantId,
         evaluator_id: currentEvaluator,
@@ -967,7 +965,6 @@ async function handleEvaluation(e) {
         score2,
         score3,
         score4,
-        total_score: totalScore,
         comment1: document.getElementById('comment1').value,
         comment2: document.getElementById('comment2').value,
         comment3: document.getElementById('comment3').value,
