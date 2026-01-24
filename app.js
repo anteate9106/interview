@@ -408,14 +408,16 @@ function renderApplicantList() {
     // 드롭다운 방식으로 변경되어 리스트 렌더링 불필요
     // 이 함수는 호환성을 위해 유지하되 아무 작업도 수행하지 않음
     // 더 이상 사용하지 않는 함수이므로 안전하게 처리
-    try {
-        // 아무 작업도 수행하지 않음
-        return;
-    } catch (error) {
-        // 에러가 발생해도 무시
-        console.warn('renderApplicantList is deprecated:', error);
+    
+    // applicantList 요소가 존재하는지 확인 (드롭다운 방식에서는 없을 수 있음)
+    const listContainer = document.getElementById('applicantList');
+    if (!listContainer) {
+        // 요소가 없으면 정상 (드롭다운 방식 사용 중)
         return;
     }
+    
+    // 요소가 있어도 아무 작업도 수행하지 않음 (드롭다운 방식 사용 중)
+    return;
 }
 
 // 지원자 선택
@@ -490,6 +492,7 @@ async function selectApplicant(id) {
 
     // 드롭다운 방식으로 변경되어 리스트 렌더링 불필요
     // renderApplicantList() 호출 제거 - 드롭다운 방식에서는 지원자 목록을 렌더링할 필요 없음
+    // renderApplicantList()는 더 이상 호출하지 않음
     
     console.log('About to call showCoverLetter and loadEvaluation');
     
