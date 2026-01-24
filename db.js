@@ -209,9 +209,12 @@ async function getEvaluation(applicantId, evaluatorId) {
 // 새 평가 추가
 async function createEvaluation(evaluationData) {
     try {
+        // total_score는 DB에서 자동 계산되는 GENERATED 컬럼이므로 제외
+        const { total_score, ...dataWithoutTotal } = evaluationData;
+        
         const { data, error } = await supabase
             .from('evaluations')
-            .insert([evaluationData])
+            .insert([dataWithoutTotal])
             .select()
             .single();
         
@@ -226,9 +229,12 @@ async function createEvaluation(evaluationData) {
 // 평가 수정
 async function updateEvaluation(applicantId, evaluatorId, updates) {
     try {
+        // total_score는 DB에서 자동 계산되는 GENERATED 컬럼이므로 제외
+        const { total_score, ...updatesWithoutTotal } = updates;
+        
         const { data, error } = await supabase
             .from('evaluations')
-            .update(updates)
+            .update(updatesWithoutTotal)
             .eq('applicant_id', applicantId)
             .eq('evaluator_id', evaluatorId)
             .select()
