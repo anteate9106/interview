@@ -778,45 +778,22 @@ function loadEvaluation(applicant) {
                                 </div>
                             </div>
                             
-                            <div class="evaluator-scores" style="margin-bottom: ${e.comment1 || e.comment2 || e.comment3 || e.comment4 ? '16px' : '0'};">
-                                <h4 style="font-size: 13px; color: var(--text-primary); margin-bottom: 10px; font-weight: 600;">📊 항목별 점수</h4>
-                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-                                    <div style="padding: 10px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #6366f1;">
-                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">내용충실도</div>
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div style="font-size: 14px; font-weight: 700; color: #6366f1;">${e.score1 || 0}/25</div>
-                                            <div style="flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
-                                                <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${((e.score1 || 0) / 25) * 100}%;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div style="padding: 10px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #6366f1;">
-                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">경력 및 교육</div>
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div style="font-size: 14px; font-weight: 700; color: #6366f1;">${e.score2 || 0}/25</div>
-                                            <div style="flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
-                                                <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${((e.score2 || 0) / 25) * 100}%;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div style="padding: 10px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #6366f1;">
-                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">조직적합성</div>
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div style="font-size: 14px; font-weight: 700; color: #6366f1;">${e.score3 || 0}/25</div>
-                                            <div style="flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
-                                                <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${((e.score3 || 0) / 25) * 100}%;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div style="padding: 10px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #6366f1;">
-                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">직무적합성</div>
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div style="font-size: 14px; font-weight: 700; color: #6366f1;">${e.score4 || 0}/25</div>
-                                            <div style="flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
-                                                <div style="height: 100%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); width: ${((e.score4 || 0) / 25) * 100}%;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
+                            <div class="evaluator-scores" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: ${e.comment1 || e.comment2 || e.comment3 || e.comment4 ? '12px' : '0'};">
+                                <div style="flex: 1; min-width: 70px; padding: 8px 10px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 10px; color: #0369a1; font-weight: 600; margin-bottom: 2px;">내용충실도</div>
+                                    <div style="font-size: 16px; font-weight: 800; color: #0284c7;">${e.score1 || 0}<span style="font-size: 11px; font-weight: 500; color: #64748b;">/25</span></div>
+                                </div>
+                                <div style="flex: 1; min-width: 70px; padding: 8px 10px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 10px; color: #15803d; font-weight: 600; margin-bottom: 2px;">경력/교육</div>
+                                    <div style="font-size: 16px; font-weight: 800; color: #16a34a;">${e.score2 || 0}<span style="font-size: 11px; font-weight: 500; color: #64748b;">/25</span></div>
+                                </div>
+                                <div style="flex: 1; min-width: 70px; padding: 8px 10px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 10px; color: #a16207; font-weight: 600; margin-bottom: 2px;">조직적합성</div>
+                                    <div style="font-size: 16px; font-weight: 800; color: #ca8a04;">${e.score3 || 0}<span style="font-size: 11px; font-weight: 500; color: #64748b;">/25</span></div>
+                                </div>
+                                <div style="flex: 1; min-width: 70px; padding: 8px 10px; background: linear-gradient(135deg, #fae8ff 0%, #f5d0fe 100%); border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 10px; color: #86198f; font-weight: 600; margin-bottom: 2px;">직무적합성</div>
+                                    <div style="font-size: 16px; font-weight: 800; color: #a21caf;">${e.score4 || 0}<span style="font-size: 11px; font-weight: 500; color: #64748b;">/25</span></div>
                                 </div>
                             </div>
                             
