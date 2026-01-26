@@ -48,10 +48,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 저장 상태 초기화
     isSavingSurvey = false;
     
-    await loadData();
-    await loadJobPostings();
-    checkAuth();
     setupEventListeners();
+    
+    // 인증 확인 (내부에서 데이터 로드)
+    await checkAuth();
     
     // 저장 버튼 상태 복구 (이전에 저장 중이었던 경우 대비)
     const saveBtn = document.getElementById('saveSurveyBtn');
@@ -143,11 +143,14 @@ async function loadJobPostings() {
 }
 
 // 인증 확인
-function checkAuth() {
+async function checkAuth() {
     const user = localStorage.getItem('currentUser');
     if (user) {
         currentUser = user;
-        showJobPostingPage();
+        // 데이터 로드 후 페이지 표시
+        await loadData();
+        await loadJobPostings();
+        await showJobPostingPage();
     } else {
         showPage('loginPage');
     }
@@ -211,9 +214,15 @@ function showPage(pageId) {
 }
 
 // 채용공고 페이지 표시
-function showJobPostingPage() {
+async function showJobPostingPage() {
     showPage('jobPostingPage');
     document.getElementById('currentUserPosting').textContent = currentUser;
+    
+    // 데이터가 없으면 다시 로드
+    if (!applicants || applicants.length === 0) {
+        await loadData();
+    }
+    
     renderJobPostings();
 }
 
