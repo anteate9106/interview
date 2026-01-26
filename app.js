@@ -1570,10 +1570,13 @@ async function sendResultEmail(applicantId) {
     }
 
     // 로딩 표시
-    const button = event.target;
-    const originalText = button.textContent;
-    button.textContent = '발송 중...';
-    button.disabled = true;
+    const button = document.querySelector(`button[onclick*="sendResultEmail(${applicantId})"]`);
+    let originalText = '';
+    if (button) {
+        originalText = button.textContent;
+        button.textContent = '발송 중...';
+        button.disabled = true;
+    }
 
     try {
         // API로 이메일 발송
@@ -1595,14 +1598,16 @@ async function sendResultEmail(applicantId) {
         if (response.ok) {
             alert(`✅ ${applicant.name}님에게 ${statusText} 이메일이 발송되었습니다.`);
         } else {
-            throw new Error(result.error || '이메일 발송 실패');
+            throw new Error(result.error || result.details?.message || '이메일 발송 실패');
         }
     } catch (error) {
         console.error('Email send error:', error);
         alert(`❌ 이메일 발송 실패: ${error.message}\n\n관리자에게 문의하세요.`);
     } finally {
-        button.textContent = originalText;
-        button.disabled = false;
+        if (button) {
+            button.textContent = originalText;
+            button.disabled = false;
+        }
     }
 }
 
