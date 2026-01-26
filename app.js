@@ -7,22 +7,40 @@ let jobPostings = []; // 동적으로 로드
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', async function() {
-    // db.js 함수들이 로드될 때까지 대기
+    // db.js 함수들이 로드될 때까지 대기 (더 긴 대기 시간)
     let retryCount = 0;
-    const maxRetries = 50; // 5초 대기
+    const maxRetries = 100; // 10초 대기
     
     const checkDbFunctions = setInterval(() => {
-        if (typeof getAllApplicants === 'function' && 
-            typeof getAllJobPostings === 'function' &&
-            typeof getApplicationGuide === 'function' &&
-            typeof getContactInfo === 'function') {
+        // 모든 필수 함수 확인
+        const requiredFunctions = [
+            'getAllApplicants',
+            'getAllJobPostings', 
+            'getApplicationGuide',
+            'getContactInfo',
+            'getAllEvaluators',
+            'getAllSurveyQuestions',
+            'getSupabase'
+        ];
+        
+        const allLoaded = requiredFunctions.every(funcName => typeof window[funcName] === 'function' || typeof eval(funcName) === 'function');
+        
+        if (allLoaded) {
             console.log('[app.js] db.js 함수들 확인 완료');
             clearInterval(checkDbFunctions);
             initializeApp();
         } else {
             retryCount++;
+            if (retryCount % 10 === 0) {
+                console.log(`[app.js] 함수 로딩 대기 중... (${retryCount}/100)`);
+                console.log('[app.js] 함수 상태:', requiredFunctions.map(f => ({
+                    name: f,
+                    loaded: typeof window[f] === 'function' || typeof eval(f) === 'function'
+                })));
+            }
             if (retryCount >= maxRetries) {
                 console.error('[app.js] db.js 함수들을 찾을 수 없습니다.');
+                console.error('[app.js] 사용 가능한 함수:', Object.keys(window).filter(k => k.startsWith('get')));
                 clearInterval(checkDbFunctions);
                 alert('데이터베이스 함수를 로드할 수 없습니다. 페이지를 새로고침해주세요.');
             }
@@ -57,6 +75,11 @@ async function initializeApp() {
 // 데이터 로드 (Supabase에서)
 async function loadData() {
     try {
+        // 함수 존재 확인
+        if (typeof getAllApplicants !== 'function') {
+            console.error('[loadData] getAllApplicants 함수를 찾을 수 없습니다.');
+            throw new Error('getAllApplicants 함수를 찾을 수 없습니다. db.js가 제대로 로드되었는지 확인하세요.');
+        }
         applicants = await getAllApplicants();
         console.log('Loaded applicants from Supabase:', applicants);
         
@@ -121,6 +144,7 @@ async function loadJobPostings() {
         // getAllJobPostings 함수 확인
         if (typeof getAllJobPostings !== 'function') {
             console.error('[loadJobPostings] getAllJobPostings 함수를 찾을 수 없습니다.');
+            console.error('[loadJobPostings] 사용 가능한 함수:', Object.keys(window).filter(k => k.includes('Job') || k.includes('getAll')));
             // 기본값 사용
             jobPostings = [
                 '2026년 상반기 신입사원 공채',
