@@ -107,7 +107,11 @@ async function testSupabaseConnection() {
         console.log('[db.js] Supabase URL:', supabaseClient?.supabaseUrl || 'N/A');
         
         // 간단한 쿼리로 연결 테스트
-        const { data, error } = await supabaseClient
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClientClient
             .from('survey_questions')
             .select('id')
             .limit(1);
@@ -159,7 +163,11 @@ async function getAllApplicants() {
         if (!supabaseClient) {
             throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
         }
-        const { data, error } = await supabaseClient
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClientClient
             .from('applicants')
             .select('*')
             .order('created_at', { ascending: false });
@@ -187,7 +195,15 @@ async function getAllApplicants() {
 // 이메일로 지원자 찾기
 async function getApplicantByEmail(email) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClientClient
             .from('applicants')
             .select('*')
             .eq('email', email)
@@ -218,7 +234,15 @@ async function getApplicantByEmail(email) {
 // 새 지원자 추가
 async function createApplicant(applicantData) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClientClient
             .from('applicants')
             .insert([applicantData])
             .select()
@@ -235,7 +259,15 @@ async function createApplicant(applicantData) {
 // 지원자 정보 수정
 async function updateApplicant(email, updates) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClientClient
             .from('applicants')
             .update(updates)
             .eq('email', email)
@@ -253,7 +285,15 @@ async function updateApplicant(email, updates) {
 // 지원자 합격/불합격 상태 업데이트
 async function updateApplicantStatus(applicantId, status) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClientClient
             .from('applicants')
             .update({ status: status })
             .eq('id', applicantId)
@@ -272,7 +312,11 @@ async function updateApplicantStatus(applicantId, status) {
 // 지원자 결과 통보 상태 업데이트
 async function updateNotificationStatus(applicantId, notificationSent) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
+        const { data, error } = await supabaseClient
             .from('applicants')
             .update({ notification_sent: notificationSent })
             .eq('id', applicantId)
@@ -301,8 +345,13 @@ async function getEvaluationsByApplicant(applicantId) {
         console.log('getEvaluationsByApplicant called with id:', originalId, 'type:', typeof originalId);
         console.log('Trying stringId:', stringId, 'numberId:', numberId);
         
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
+        
         // 먼저 원본 ID로 시도
-        let { data, error } = await supabase
+        let { data, error } = await supabaseClient
             .from('evaluations')
             .select('*')
             .eq('applicant_id', originalId)
@@ -311,7 +360,7 @@ async function getEvaluationsByApplicant(applicantId) {
         // 실패하면 문자열로 시도
         if (error || !data || data.length === 0) {
             console.log('Trying with stringId:', stringId);
-            const result = await supabase
+            const result = await supabaseClient
                 .from('evaluations')
                 .select('*')
                 .eq('applicant_id', stringId)
@@ -327,7 +376,7 @@ async function getEvaluationsByApplicant(applicantId) {
         if (error || !data || data.length === 0) {
             if (!isNaN(numberId)) {
                 console.log('Trying with numberId:', numberId);
-                const result = await supabase
+                const result = await supabaseClient
                     .from('evaluations')
                     .select('*')
                     .eq('applicant_id', numberId)
@@ -383,7 +432,11 @@ async function getEvaluationsByApplicant(applicantId) {
 // 특정 평가자의 특정 지원자 평가 가져오기
 async function getEvaluation(applicantId, evaluatorId) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('evaluations')
             .select('*')
             .eq('applicant_id', applicantId)
@@ -404,7 +457,13 @@ async function createEvaluation(evaluationData) {
         // total_score는 DB에서 자동 계산되는 GENERATED 컬럼이므로 제외
         const { total_score, ...dataWithoutTotal } = evaluationData;
         
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        
+        const { data, error } = await supabaseClient
             .from('evaluations')
             .insert([dataWithoutTotal])
             .select()
@@ -424,7 +483,13 @@ async function updateEvaluation(applicantId, evaluatorId, updates) {
         // total_score는 DB에서 자동 계산되는 GENERATED 컬럼이므로 제외
         const { total_score, ...updatesWithoutTotal } = updates;
         
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        
+        const { data, error } = await supabaseClient
             .from('evaluations')
             .update(updatesWithoutTotal)
             .eq('applicant_id', applicantId)
@@ -471,7 +536,11 @@ async function saveEvaluation(evaluationData) {
 // 작성 안내 가져오기
 async function getApplicationGuide() {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('application_guide')
             .select('*')
             .eq('id', 'default')
@@ -525,7 +594,11 @@ async function getApplicationGuide() {
 // 작성 안내 저장 (upsert)
 async function saveApplicationGuide(guideData) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('application_guide')
             .upsert({
                 id: 'default',
@@ -551,7 +624,11 @@ async function saveApplicationGuide(guideData) {
 // 모든 평가자 가져오기
 async function getAllEvaluators() {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('evaluators')
             .select('*')
             .order('created_at', { ascending: false });
@@ -567,7 +644,11 @@ async function getAllEvaluators() {
 // 평가자 생성
 async function createEvaluator(evaluatorId, password, name) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('evaluators')
             .insert({
                 id: evaluatorId,
@@ -590,7 +671,11 @@ async function createEvaluator(evaluatorId, password, name) {
 // 평가자 삭제
 async function deleteEvaluator(evaluatorId) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('evaluators')
             .delete()
             .eq('id', evaluatorId)
@@ -608,7 +693,11 @@ async function deleteEvaluator(evaluatorId) {
 // 평가자 인증 (로그인용)
 async function authenticateEvaluator(evaluatorId, password) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('evaluators')
             .select('*')
             .eq('id', evaluatorId)
@@ -626,7 +715,11 @@ async function authenticateEvaluator(evaluatorId, password) {
 // 평가자 정보 가져오기
 async function getEvaluatorById(evaluatorId) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('evaluators')
             .select('*')
             .eq('id', evaluatorId)
@@ -650,7 +743,11 @@ async function updateEvaluatorPassword(evaluatorId, currentPassword, newPassword
         }
         
         // 새 비밀번호로 업데이트
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('evaluators')
             .update({ password: newPassword })
             .eq('id', evaluatorId)
@@ -669,7 +766,11 @@ async function updateEvaluatorPassword(evaluatorId, currentPassword, newPassword
 async function updateEvaluatorPasswordByAdmin(evaluatorId, newPassword) {
     try {
         // 관리자는 현재 비밀번호 확인 없이 직접 변경 가능
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('evaluators')
             .update({ password: newPassword })
             .eq('id', evaluatorId)
@@ -687,7 +788,11 @@ async function updateEvaluatorPasswordByAdmin(evaluatorId, newPassword) {
 // 평가자 관리자 권한 업데이트
 async function updateEvaluatorAdminStatus(evaluatorId, isAdmin) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('evaluators')
             .update({ is_admin: isAdmin })
             .eq('id', evaluatorId)
@@ -707,7 +812,11 @@ async function updateEvaluatorAdminStatus(evaluatorId, isAdmin) {
 // 문의 정보 가져오기
 async function getContactInfo() {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('contact_info')
             .select('*')
             .eq('id', 'default')
@@ -741,7 +850,11 @@ async function getContactInfo() {
 // 문의 정보 저장 (upsert)
 async function saveContactInfo(contactData) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('contact_info')
             .upsert({
                 id: 'default',
@@ -768,7 +881,11 @@ async function saveContactInfo(contactData) {
 // 모든 채용공고 가져오기
 async function getAllJobPostings() {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('job_postings')
             .select('*')
             .order('created_at', { ascending: false });
@@ -801,7 +918,11 @@ async function getAllJobPostings() {
 // 채용공고 추가
 async function createJobPosting(title) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('job_postings')
             .insert([{ title: title }])
             .select()
@@ -818,7 +939,11 @@ async function createJobPosting(title) {
 // 채용공고 수정
 async function updateJobPosting(id, title) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('job_postings')
             .update({ title: title, updated_at: new Date().toISOString() })
             .eq('id', id)
@@ -836,7 +961,11 @@ async function updateJobPosting(id, title) {
 // 채용공고 삭제
 async function deleteJobPosting(id) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('job_postings')
             .delete()
             .eq('id', id)
@@ -856,7 +985,11 @@ async function deleteJobPosting(id) {
 // 이메일 템플릿 가져오기
 async function getEmailTemplate(templateId) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('email_templates')
             .select('*')
             .eq('id', templateId)
@@ -873,7 +1006,11 @@ async function getEmailTemplate(templateId) {
 // 모든 이메일 템플릿 가져오기
 async function getAllEmailTemplates() {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('email_templates')
             .select('*');
         
@@ -888,7 +1025,11 @@ async function getAllEmailTemplates() {
 // 이메일 템플릿 저장
 async function saveEmailTemplate(templateId, subject, body) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('email_templates')
             .upsert({
                 id: templateId,
@@ -948,7 +1089,11 @@ async function getJobPostingStats() {
 // 지원자 이메일로 지원자 정보 가져오기
 async function getApplicantByEmail(email) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('applicants')
             .select('*')
             .eq('email', email)
@@ -965,7 +1110,11 @@ async function getApplicantByEmail(email) {
 // 지원자 ID로 설문조사 데이터 가져오기
 async function getSurveyByApplicantId(applicantId) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('surveys')
             .select('*')
             .eq('applicant_id', applicantId)
@@ -987,7 +1136,11 @@ async function saveSurvey(surveyData) {
         
         if (existing) {
             // 업데이트
-            const { data, error } = await supabase
+            const supabaseClient = getSupabase();
+
+            if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+            const { data, error } = await supabaseClient
                 .from('surveys')
                 .update({
                     ...surveyData,
@@ -1001,7 +1154,11 @@ async function saveSurvey(surveyData) {
             return data;
         } else {
             // 새로 생성
-            const { data, error } = await supabase
+            const supabaseClient = getSupabase();
+
+            if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+            const { data, error } = await supabaseClient
                 .from('surveys')
                 .insert(surveyData)
                 .select()
@@ -1025,7 +1182,11 @@ async function getAllSurveyQuestions() {
         if (!supabaseClient) {
             throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
         }
-        const { data, error } = await supabaseClient
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClientClient
             .from('survey_questions')
             .select('*')
             .eq('is_active', true)
@@ -1042,7 +1203,11 @@ async function getAllSurveyQuestions() {
 // 설문조사 항목 저장
 async function saveSurveyQuestion(questionData) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('survey_questions')
             .upsert({
                 ...questionData,
@@ -1133,7 +1298,11 @@ async function saveAllSurveyQuestions(questions) {
                         throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
                     }
                     console.log(`[db.js] 항목 ${i + 1} 업데이트 시도:`, { id: q.id, question_number: q.question_number });
-                    const { data, error } = await supabaseClient
+                    const supabaseClient = getSupabase();
+
+                    if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+                    const { data, error } = await supabaseClientClient
                         .from('survey_questions')
                         .update(questionData)
                         .eq('id', q.id)
@@ -1155,7 +1324,11 @@ async function saveAllSurveyQuestions(questions) {
                         throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
                     }
                     console.log(`[db.js] 항목 ${i + 1} 생성 시도:`, { question_number: q.question_number });
-                    const { data, error } = await supabaseClient
+                    const supabaseClient = getSupabase();
+
+                    if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+                    const { data, error } = await supabaseClientClient
                         .from('survey_questions')
                         .insert(questionData)
                         .select()
@@ -1218,7 +1391,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 // 설문조사 항목 삭제 (비활성화)
 async function deleteSurveyQuestion(questionId) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('survey_questions')
             .update({ is_active: false })
             .eq('id', questionId)
@@ -1236,7 +1413,11 @@ async function deleteSurveyQuestion(questionId) {
 // 설문조사 안내문 가져오기
 async function getSurveyIntro() {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('survey_intro')
             .select('*')
             .eq('id', 'survey_intro')
@@ -1253,7 +1434,11 @@ async function getSurveyIntro() {
 // 설문조사 안내문 저장
 async function saveSurveyIntro(introText) {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
             .from('survey_intro')
             .upsert({
                 id: 'survey_intro',
