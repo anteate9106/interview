@@ -1946,11 +1946,24 @@ async function handleSaveAllSurveyQuestions(event) {
         }
         
         // db.js의 saveAllSurveyQuestions 함수를 호출
-        if (typeof window.dbSaveAllSurveyQuestions !== 'function') {
-            throw new Error('db.js의 saveAllSurveyQuestions 함수를 찾을 수 없습니다. db.js가 먼저 로드되었는지 확인하세요.');
+        // 함수가 로드될 때까지 최대 2초 대기
+        let saveFunction = window.dbSaveAllSurveyQuestions;
+        if (typeof saveFunction !== 'function') {
+            // 함수가 아직 로드되지 않았을 수 있으므로 잠시 대기
+            for (let i = 0; i < 20; i++) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                saveFunction = window.dbSaveAllSurveyQuestions;
+                if (typeof saveFunction === 'function') {
+                    break;
+                }
+            }
         }
         
-        const savePromise = window.dbSaveAllSurveyQuestions(questionsToSave);
+        if (typeof saveFunction !== 'function') {
+            throw new Error('저장 함수를 찾을 수 없습니다. db.js가 제대로 로드되었는지 확인하고 페이지를 새로고침해주세요.');
+        }
+        
+        const savePromise = saveFunction(questionsToSave);
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('저장 작업이 30초를 초과했습니다. 네트워크 연결을 확인해주세요.')), 30000);
         });
