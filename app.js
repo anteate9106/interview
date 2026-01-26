@@ -313,12 +313,14 @@ function updateApplicantDropdown() {
     filteredApplicants.forEach(applicant => {
         const option = document.createElement('option');
         option.value = applicant.id;
-        const evaluationCount = applicant.evaluations ? applicant.evaluations.length : 0;
-        const avgScore = applicant.evaluations && applicant.evaluations.length > 0
-            ? Math.round(applicant.evaluations.reduce((sum, e) => sum + (e.total_score || 0), 0) / applicant.evaluations.length)
-            : null;
-        const scoreText = avgScore !== null ? ` (평균 ${avgScore}점)` : '';
-        option.textContent = `${applicant.name} - ${applicant.branch || '지점'} ${applicant.position || '직무'}${scoreText}`;
+        // 합격/불합격 상태 표시
+        let statusText = '';
+        if (applicant.status === 'passed') {
+            statusText = ' (합격)';
+        } else if (applicant.status === 'failed') {
+            statusText = ' (불합격)';
+        }
+        option.textContent = `${applicant.name}${statusText}`;
         if (selectedApplicantId === applicant.id) {
             option.selected = true;
         }
