@@ -96,15 +96,42 @@ async function loadSurveyQuestions() {
     }
 }
 
+// URL을 링크로 변환하는 함수
+function convertUrlsToLinks(text) {
+    if (!text) return '';
+    
+    // URL 패턴 매칭 (http://, https://, www.로 시작하는 URL)
+    const urlPattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+    
+    return text.replace(urlPattern, (url) => {
+        // www.로 시작하는 경우 http:// 추가
+        let href = url;
+        if (url.startsWith('www.')) {
+            href = 'http://' + url;
+        }
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color: #6366f1; text-decoration: underline;">${url}</a>`;
+    });
+}
+
+// 줄바꿈을 <br>로 변환
+function convertNewlinesToBreaks(text) {
+    return text.replace(/\n/g, '<br>');
+}
+
 // 설문조사 안내문 로드
 async function loadSurveyIntro() {
     try {
         const intro = await getSurveyIntro();
         const introSection = document.getElementById('surveyIntroText');
         if (introSection && intro && intro.intro_text) {
-            introSection.textContent = intro.intro_text;
+            let introText = intro.intro_text;
+            // 줄바꿈 변환
+            introText = convertNewlinesToBreaks(introText);
+            // URL을 링크로 변환
+            introText = convertUrlsToLinks(introText);
+            introSection.innerHTML = introText;
         } else if (introSection) {
-            introSection.textContent = '1차 서류전형에 합격하신 것을 진심으로 축하드립니다.\n\n다음 단계로 설문조사를 진행해주시기 바랍니다.';
+            introSection.innerHTML = '1차 서류전형에 합격하신 것을 진심으로 축하드립니다.<br><br>다음 단계로 설문조사를 진행해주시기 바랍니다.';
         }
     } catch (error) {
         console.error('Error loading survey intro:', error);
