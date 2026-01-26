@@ -7,6 +7,17 @@ let jobPostings = []; // 동적으로 로드
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', async function() {
+    // Supabase 연결 확인
+    if (typeof window.testSupabaseConnection === 'function') {
+        const connectionTest = await window.testSupabaseConnection();
+        if (!connectionTest.success) {
+            console.error('[app.js] Supabase 연결 실패:', connectionTest.error);
+            alert(`Supabase 연결 실패: ${connectionTest.error}\n\n페이지를 새로고침해주세요.`);
+        } else {
+            console.log('[app.js] ✅ Supabase 연결 정상');
+        }
+    }
+    
     await loadData();
     await loadJobPostings();
     checkAuth();

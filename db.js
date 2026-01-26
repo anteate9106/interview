@@ -546,10 +546,15 @@ async function saveEvaluation(evaluationData) {
 // 작성 안내 가져오기
 async function getApplicationGuide() {
     try {
-        const supabaseClient = getSupabase();
-
-        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
+        let supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            initSupabaseForDb();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            supabaseClient = getSupabase();
+        }
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
         const { data, error } = await supabaseClient
             .from('application_guide')
             .select('*')
@@ -822,10 +827,15 @@ async function updateEvaluatorAdminStatus(evaluatorId, isAdmin) {
 // 문의 정보 가져오기
 async function getContactInfo() {
     try {
-        const supabaseClient = getSupabase();
-
-        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
+        let supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            initSupabaseForDb();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            supabaseClient = getSupabase();
+        }
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
         const { data, error } = await supabaseClient
             .from('contact_info')
             .select('*')
@@ -891,10 +901,17 @@ async function saveContactInfo(contactData) {
 // 모든 채용공고 가져오기
 async function getAllJobPostings() {
     try {
-        const supabaseClient = getSupabase();
-
-        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
+        let supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            console.log('[getAllJobPostings] Supabase 클라이언트가 없어서 초기화 시도...');
+            initSupabaseForDb();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            supabaseClient = getSupabase();
+        }
+        if (!supabaseClient) {
+            console.error('[getAllJobPostings] Supabase 클라이언트를 사용할 수 없습니다.');
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
         const { data, error } = await supabaseClient
             .from('job_postings')
             .select('*')
@@ -1188,14 +1205,17 @@ async function saveSurvey(surveyData) {
 // 모든 설문조사 항목 가져오기
 async function getAllSurveyQuestions() {
     try {
-        const supabaseClient = getSupabase() || supabase;
+        let supabaseClient = getSupabase();
         if (!supabaseClient) {
+            console.log('[getAllSurveyQuestions] Supabase 클라이언트가 없어서 초기화 시도...');
+            initSupabaseForDb();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            supabaseClient = getSupabase();
+        }
+        if (!supabaseClient) {
+            console.error('[getAllSurveyQuestions] Supabase 클라이언트를 사용할 수 없습니다.');
             throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
         }
-        const supabaseClient = getSupabase();
-
-        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
         const { data, error } = await supabaseClient
             .from('survey_questions')
             .select('*')
