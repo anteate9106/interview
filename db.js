@@ -941,3 +941,41 @@ async function deleteSurveyQuestion(questionId) {
         throw error;
     }
 }
+
+// 설문조사 안내문 가져오기
+async function getSurveyIntro() {
+    try {
+        const { data, error } = await supabase
+            .from('survey_intro')
+            .select('*')
+            .eq('id', 'survey_intro')
+            .single();
+        
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+        return data;
+    } catch (error) {
+        console.error('Error fetching survey intro:', error);
+        return null;
+    }
+}
+
+// 설문조사 안내문 저장
+async function saveSurveyIntro(introText) {
+    try {
+        const { data, error } = await supabase
+            .from('survey_intro')
+            .upsert({
+                id: 'survey_intro',
+                intro_text: introText,
+                updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving survey intro:', error);
+        throw error;
+    }
+}

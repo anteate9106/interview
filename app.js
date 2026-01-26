@@ -1671,9 +1671,25 @@ async function loadSurveyQuestions() {
     try {
         surveyQuestions = await getAllSurveyQuestions();
         renderSurveyQuestions();
+        
+        // 안내문도 함께 로드
+        await loadSurveyIntro();
     } catch (error) {
         console.error('Error loading survey questions:', error);
         alert('설문조사 항목을 불러오는 중 오류가 발생했습니다.');
+    }
+}
+
+// 설문조사 안내문 로드
+async function loadSurveyIntro() {
+    try {
+        const intro = await getSurveyIntro();
+        const introTextarea = document.getElementById('surveyIntroText');
+        if (introTextarea && intro) {
+            introTextarea.value = intro.intro_text || '';
+        }
+    } catch (error) {
+        console.error('Error loading survey intro:', error);
     }
 }
 
@@ -1753,6 +1769,10 @@ function deleteSurveyQuestionItem(questionId) {
 // 모든 설문조사 항목 저장
 async function saveAllSurveyQuestions() {
     try {
+        // 안내문 저장
+        const introText = document.getElementById('surveyIntroText')?.value.trim() || '';
+        await saveSurveyIntro(introText);
+        
         // 입력값 수집
         const questionsToSave = surveyQuestions.map(q => {
             const item = document.querySelector(`[data-id="${q.id}"]`);
@@ -1794,12 +1814,12 @@ async function saveAllSurveyQuestions() {
         // 저장
         await saveAllSurveyQuestions(questionsToSave);
         
-        alert('✅ 설문조사 항목이 저장되었습니다.');
+        alert('✅ 설문조사 안내문과 항목이 저장되었습니다.');
         await loadSurveyQuestions();
         
     } catch (error) {
         console.error('Error saving survey questions:', error);
-        alert('설문조사 항목 저장 중 오류가 발생했습니다.');
+        alert('설문조사 저장 중 오류가 발생했습니다.');
     }
 }
 

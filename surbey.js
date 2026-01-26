@@ -88,8 +88,26 @@ async function loadSurveyQuestions() {
     try {
         surveyQuestions = await getAllSurveyQuestions();
         renderSurveyQuestions();
+        
+        // 안내문도 함께 로드
+        await loadSurveyIntro();
     } catch (error) {
         console.error('Error loading survey questions:', error);
+    }
+}
+
+// 설문조사 안내문 로드
+async function loadSurveyIntro() {
+    try {
+        const intro = await getSurveyIntro();
+        const introSection = document.getElementById('surveyIntroText');
+        if (introSection && intro && intro.intro_text) {
+            introSection.textContent = intro.intro_text;
+        } else if (introSection) {
+            introSection.textContent = '1차 서류전형에 합격하신 것을 진심으로 축하드립니다.\n\n다음 단계로 설문조사를 진행해주시기 바랍니다.';
+        }
+    } catch (error) {
+        console.error('Error loading survey intro:', error);
     }
 }
 
