@@ -632,12 +632,20 @@ function updateStatusBanner(applicant) {
     
     if (hasEvaluations) {
         banner.className = 'status-banner evaluated';
+        // 합격/불합격 상태 확인
+        let resultText = '심사중';
+        if (applicant.status === 'passed') {
+            resultText = '합격';
+        } else if (applicant.status === 'failed') {
+            resultText = '불합격';
+        }
+        
         banner.innerHTML = `
             <div class="status-info">
                 <div class="status-icon">🔒</div>
                 <div class="status-text">
                     <h4>평가 완료 - 수정 불가</h4>
-                    <p>서류 전형이 완료되었습니다. (평가자 ${applicant.evaluations.length}명)</p>
+                    <p>서류 전형이 완료되었습니다. (결과: ${resultText})</p>
                     <p style="margin-top: 8px; color: #ef4444; font-weight: 600; font-size: 15px;">
                         ⚠️ 평가가 완료되어 지원서를 수정할 수 없습니다.<br>
                         수정이 필요한 경우 담당자에게 문의하시기 바랍니다.
