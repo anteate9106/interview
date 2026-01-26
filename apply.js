@@ -626,33 +626,73 @@ function getWritingItemLimit(defaultName) {
 }
 
 // 상태 배너 업데이트
-function updateStatusBanner(applicant) {
+async function updateStatusBanner(applicant) {
     const banner = document.getElementById('statusBanner');
     const hasEvaluations = applicant.evaluations && applicant.evaluations.length > 0;
+    const notificationSent = applicant.notification_sent;
     
     if (hasEvaluations) {
         banner.className = 'status-banner evaluated';
         // 합격/불합격 상태 확인
         let resultText = '심사중';
+        let resultIcon = '🔒';
+        let resultMessage = '';
+        
         if (applicant.status === 'passed') {
             resultText = '합격';
+            resultIcon = '🎉';
         } else if (applicant.status === 'failed') {
             resultText = '불합격';
+            resultIcon = '📋';
         }
         
-        banner.innerHTML = `
-            <div class="status-info">
-                <div class="status-icon">🔒</div>
-                <div class="status-text">
-                    <h4>평가 완료 - 수정 불가</h4>
-                    <p>서류 전형이 완료되었습니다. (결과: ${resultText})</p>
-                    <p style="margin-top: 8px; color: #ef4444; font-weight: 600; font-size: 15px;">
-                        ⚠️ 평가가 완료되어 지원서를 수정할 수 없습니다.<br>
-                        수정이 필요한 경우 담당자에게 문의하시기 바랍니다.
-                    </p>
+        // 결과 통보가 된 경우 메시지 표시
+        if (notificationSent && (applicant.status === 'passed' || applicant.status === 'failed')) {
+            const templateId = applicant.status === 'passed' ? 'passed' : 'failed';
+            const template = await getEmailTemplate(templateId);
+            
+            if (template) {
+                const jobPosting = applicant.job_posting || '채용공고';
+                resultMessage = template.body
+                    .replace(/{이름}/g, applicant.name)
+                    .replace(/{채용공고}/g, jobPosting)
+                    .replace(/\n/g, '<br>');
+            }
+        }
+        
+        if (notificationSent && (applicant.status === 'passed' || applicant.status === 'failed')) {
+            // 결과 통보된 경우
+            banner.innerHTML = `
+                <div class="status-info">
+                    <div class="status-icon">${resultIcon}</div>
+                    <div class="status-text">
+                        <h4 style="color: ${applicant.status === 'passed' ? '#10b981' : '#ef4444'};">
+                            서류전형 결과: ${resultText}
+                        </h4>
+                        ${resultMessage ? `
+                        <div style="margin-top: 16px; padding: 20px; background: ${applicant.status === 'passed' ? '#ecfdf5' : '#fef2f2'}; border-radius: 12px; border: 1px solid ${applicant.status === 'passed' ? '#a7f3d0' : '#fecaca'};">
+                            <p style="line-height: 1.8; color: #374151; white-space: pre-wrap;">${resultMessage}</p>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            // 평가 완료되었지만 결과 통보 전
+            banner.innerHTML = `
+                <div class="status-info">
+                    <div class="status-icon">🔒</div>
+                    <div class="status-text">
+                        <h4>평가 완료 - 수정 불가</h4>
+                        <p>서류 전형이 완료되었습니다. 결과는 별도로 안내될 예정입니다.</p>
+                        <p style="margin-top: 8px; color: #ef4444; font-weight: 600; font-size: 15px;">
+                            ⚠️ 평가가 완료되어 지원서를 수정할 수 없습니다.<br>
+                            수정이 필요한 경우 담당자에게 문의하시기 바랍니다.
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
         
         // 수정 버튼 숨기고 취소 버튼을 "확인" 버튼으로 변경
         const submitBtn = document.querySelector('#editForm .btn-submit');
@@ -694,6 +734,7 @@ function updateStatusBanner(applicant) {
 function updateApplicationStatus(applicant) {
     const statusDiv = document.getElementById('applicationStatus');
     const hasEvaluations = applicant.evaluations && applicant.evaluations.length > 0;
+    const notificationSent = applicant.notification_sent;
     
     // 제출일 포맷팅
     let submitDate = '미입력';
@@ -712,12 +753,15 @@ function updateApplicationStatus(applicant) {
     // 합격/불합격 상태
     let resultText = '';
     let resultStyle = '';
-    if (applicant.status === 'passed') {
-        resultText = '합격';
-        resultStyle = 'color: #10b981; font-weight: 700;';
-    } else if (applicant.status === 'failed') {
+    if (notificationSent && applicant.status === 'passed') {
+        resultText = '🎉 합격';
+        resultStyle = 'color: #10b981; font-weight: 700; font-size: 16px;';
+    } else if (notificationSent && applicant.status === 'failed') {
         resultText = '불합격';
         resultStyle = 'color: #ef4444; font-weight: 700;';
+    } else if (applicant.status === 'passed' || applicant.status === 'failed') {
+        resultText = '결과 확인 중';
+        resultStyle = 'color: #f59e0b; font-weight: 600;';
     } else {
         resultText = hasEvaluations ? '심사중' : '평가대기';
         resultStyle = 'color: #64748b;';

@@ -115,6 +115,25 @@ async function updateApplicantStatus(applicantId, status) {
     }
 }
 
+// 지원자 결과 통보 상태 업데이트
+async function updateNotificationStatus(applicantId, notificationSent) {
+    try {
+        const { data, error } = await supabase
+            .from('applicants')
+            .update({ notification_sent: notificationSent })
+            .eq('id', applicantId)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        console.log('Updated notification status:', applicantId, notificationSent);
+        return data;
+    } catch (error) {
+        console.error('Error updating notification status:', error);
+        throw error;
+    }
+}
+
 // ==================== 평가 관련 ====================
 
 // 특정 지원자의 모든 평가 가져오기

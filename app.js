@@ -636,10 +636,11 @@ function showCoverLetter(applicant) {
                         </div>
                         ${currentStatus === 'passed' || currentStatus === 'failed' ? `
                         <div style="margin-top: 12px;">
-                            <button onclick="sendResultEmail(${applicant.id})" 
+                            <button onclick="sendNotification(${applicant.id})" 
                                 style="padding: 8px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;
-                                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; display: flex; align-items: center; gap: 6px; margin: 0 auto;">
-                                📧 결과 이메일 발송
+                                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; display: flex; align-items: center; gap: 6px; margin: 0 auto;
+                                ${applicant.notification_sent ? 'opacity: 0.6;' : ''}">
+                                📢 ${applicant.notification_sent ? '결과 통보 완료' : '결과 통보'}
                             </button>
                         </div>
                         ` : ''}
@@ -1528,86 +1529,42 @@ async function setApplicantStatus(applicantId, status) {
     }
 }
 
-// 결과 이메일 발송
-async function sendResultEmail(applicantId) {
+// 결과 통보
+async function sendNotification(applicantId) {
     const applicant = applicants.find(a => a.id == applicantId);
     if (!applicant) {
         alert('지원자를 찾을 수 없습니다.');
         return;
     }
 
-    if (!applicant.email) {
-        alert('지원자의 이메일 주소가 없습니다.');
-        return;
-    }
-
     const isPassed = applicant.status === 'passed';
-    const templateId = isPassed ? 'passed' : 'failed';
     const statusText = isPassed ? '합격' : '불합격';
-    const jobPosting = applicant.job_posting || '채용공고';
     
-    // 발송 확인
-    if (!confirm(`${applicant.name}님에게 ${statusText} 이메일을 발송하시겠습니까?\n\n수신자: ${applicant.email}`)) {
-        return;
-    }
-    
-    // 저장된 템플릿 가져오기
-    const template = await getEmailTemplate(templateId);
-    
-    let subject, body;
-    if (template) {
-        // 템플릿의 변수 치환
-        subject = template.subject
-            .replace(/{이름}/g, applicant.name)
-            .replace(/{채용공고}/g, jobPosting);
-        body = template.body
-            .replace(/{이름}/g, applicant.name)
-            .replace(/{채용공고}/g, jobPosting);
+    // 이미 통보된 경우
+    if (applicant.notification_sent) {
+        if (!confirm(`${applicant.name}님에게 이미 결과가 통보되었습니다.\n다시 통보하시겠습니까?`)) {
+            return;
+        }
     } else {
-        // 기본 템플릿 사용
-        subject = `[청년들] ${jobPosting} 서류전형 ${statusText} 안내`;
-        body = `안녕하세요, ${applicant.name}님.\n\n서류전형 결과: ${statusText}\n\n청년들 채용담당자 드림`;
-    }
-
-    // 로딩 표시
-    const button = document.querySelector(`button[onclick*="sendResultEmail(${applicantId})"]`);
-    let originalText = '';
-    if (button) {
-        originalText = button.textContent;
-        button.textContent = '발송 중...';
-        button.disabled = true;
+        if (!confirm(`${applicant.name}님에게 ${statusText} 결과를 통보하시겠습니까?\n\n지원자가 로그인하면 결과 메시지를 확인할 수 있습니다.`)) {
+            return;
+        }
     }
 
     try {
-        // API로 이메일 발송
-        const response = await fetch('/api/send-email', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                to: applicant.email,
-                subject: subject,
-                body: body,
-                applicantName: applicant.name
-            })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            alert(`✅ ${applicant.name}님에게 ${statusText} 이메일이 발송되었습니다.`);
-        } else {
-            throw new Error(result.error || result.details?.message || '이메일 발송 실패');
-        }
+        // 결과 통보 상태 업데이트
+        await updateNotificationStatus(applicantId, true);
+        
+        // 로컬 데이터 업데이트
+        applicant.notification_sent = true;
+        
+        alert(`✅ ${applicant.name}님에게 ${statusText} 결과가 통보되었습니다.\n\n지원자가 로그인하면 결과를 확인할 수 있습니다.`);
+        
+        // UI 새로고침
+        await selectApplicant(applicantId);
     } catch (error) {
-        console.error('Email send error:', error);
-        alert(`❌ 이메일 발송 실패: ${error.message}\n\n관리자에게 문의하세요.`);
-    } finally {
-        if (button) {
-            button.textContent = originalText;
-            button.disabled = false;
-        }
+        console.error('Notification error:', error);
+        alert(`❌ 결과 통보 실패: ${error.message}`);
     }
 }
 
