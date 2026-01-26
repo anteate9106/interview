@@ -664,13 +664,12 @@ async function updateStatusBanner(applicant) {
             // 결과 통보된 경우
             banner.innerHTML = `
                 <div class="status-info">
-                    <div class="status-icon">${resultIcon}</div>
-                    <div class="status-text">
+                    <div class="status-text" style="width: 100%;">
                         <h4 style="color: ${applicant.status === 'passed' ? '#10b981' : '#ef4444'};">
                             서류전형 결과: ${resultText}
                         </h4>
                         ${resultMessage ? `
-                        <div style="margin-top: 16px; padding: 20px; background: ${applicant.status === 'passed' ? '#ecfdf5' : '#fef2f2'}; border-radius: 12px; border: 1px solid ${applicant.status === 'passed' ? '#a7f3d0' : '#fecaca'};">
+                        <div style="margin-top: 16px; padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb;">
                             <p style="line-height: 1.8; color: #374151; white-space: pre-wrap;">${resultMessage}</p>
                         </div>
                         ` : ''}
