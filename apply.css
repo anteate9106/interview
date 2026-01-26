@@ -397,9 +397,9 @@ body {
 }
 
 .status-banner.evaluated {
-    border-left-color: #ef4444;
-    background: #fef2f2;
-    border: 2px solid #fecaca;
+    border-left: none;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
 }
 
 .status-banner.pending {
