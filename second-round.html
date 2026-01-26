@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2차 서류전형 - 청년들 입사지원 시스템</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+    <link rel="stylesheet" href="apply.css">
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="db.js"></script>
+</head>
+<body>
+    <!-- 로그인 페이지 -->
+    <div id="loginPage" class="page active">
+        <div class="login-container">
+            <div class="login-box">
+                <h2>2차 서류전형 로그인</h2>
+                <p class="login-subtitle">합격하신 지원자님, 2차 서류전형을 진행해주세요</p>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">이메일</label>
+                        <input type="email" id="loginEmail" placeholder="이메일을 입력하세요" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">비밀번호</label>
+                        <input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요" required>
+                    </div>
+                    <button type="submit" class="btn-login">로그인</button>
+                </form>
+                <p class="login-help">* 합격하신 지원자만 접근 가능합니다</p>
+                <p style="margin-top: 12px; text-align: center;">
+                    <a href="apply.html" style="color: var(--primary-color); text-decoration: none; font-size: 14px;">← 지원자 페이지로 돌아가기</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2차 서류전형 질문지 페이지 -->
+    <div id="questionPage" class="page">
+        <div class="apply-container">
+            <div class="apply-header">
+                <h1>🎯 2차 서류전형 질문지</h1>
+                <p class="subtitle">축하합니다! 1차 서류전형에 합격하셨습니다</p>
+            </div>
+
+            <div class="apply-content">
+                <!-- 합격 안내 배너 -->
+                <div id="statusBanner" style="margin-bottom: 24px; padding: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; border: 2px solid #10b981;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="font-size: 32px;">🎉</div>
+                        <div>
+                            <h3 style="margin: 0 0 8px 0; color: #065f46; font-size: 18px;">1차 서류전형 합격</h3>
+                            <p id="applicantWelcome" style="margin: 0; color: #047857; font-size: 14px;">지원자님, 환영합니다!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="secondRoundForm" class="apply-form">
+                    <!-- 안내문 -->
+                    <div id="introContainer" style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; border: 1px solid #10b981;">
+                        <p id="introText" style="margin: 0; color: #065f46; font-size: 14px; line-height: 1.8; white-space: pre-wrap; font-weight: 500;"></p>
+                    </div>
+
+                    <!-- 질문지 항목 목록 -->
+                    <div id="questionsContainer">
+                        <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+                            <p style="font-size: 16px;">질문지를 불러오는 중...</p>
+                        </div>
+                    </div>
+
+                    <!-- 제출 버튼 -->
+                    <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid var(--border-color);">
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button type="button" onclick="handleLogout()" class="btn-secondary" style="padding: 14px 32px; font-size: 16px;">로그아웃</button>
+                            <button type="button" onclick="saveDraft()" class="btn-secondary" style="padding: 14px 32px; font-size: 16px;">💾 임시 저장</button>
+                            <button type="submit" class="btn-primary" style="padding: 14px 32px; font-size: 16px; background: var(--gradient-success);">제출하기</button>
+                        </div>
+                        <p style="text-align: center; margin-top: 16px; color: var(--text-secondary); font-size: 13px;">
+                            💡 임시 저장을 하시면 나중에 다시 로그인하여 수정할 수 있습니다
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 제출 완료 모달 -->
+    <div id="successModal" class="modal">
+        <div class="modal-content success-modal">
+            <div class="success-icon">✓</div>
+            <h2>제출 완료</h2>
+            <p>2차 서류전형 질문지가 성공적으로 제출되었습니다.</p>
+            <p class="success-detail">다음 전형 일정은 별도로 안내될 예정입니다.</p>
+            <button onclick="handleLogout(true)" class="btn-close-modal">확인</button>
+        </div>
+    </div>
+
+    <script src="second-round.js"></script>
+</body>
+</html>

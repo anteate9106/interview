@@ -7,12 +7,160 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadApplicationGuide(); // 작성 안내 로드
     await loadJobPostingOptions(); // 채용공고 옵션 로드
     await loadContactInfo(); // 문의 정보 로드
-    await loadSurveyQuestions(); // 설문조사 항목 로드
     checkLoginStatus();
     setupEventListeners();
     loadDraft(); // 임시 저장 데이터 불러오기
     setupAutoSave(); // 자동 저장 설정
 });
+
+// 2차 서류전형 질문지 로드
+async function loadSecondRoundQuestions() {
+    try {
+        // 합격한 지원자인지 확인
+        if (!currentApplicant || currentApplicant.status !== 'passed') {
+            const secondRoundSection = document.getElementById('secondRoundSection');
+            if (secondRoundSection) {
+                secondRoundSection.style.display = 'none';
+            }
+            return;
+        }
+
+        // 2차 서류전형 안내문 로드
+        const intro = await getSecondRoundIntro();
+        const introContainer = document.getElementById('secondRoundIntroContainer');
+        const introText = document.getElementById('secondRoundIntroText');
+        if (introContainer && introText && intro) {
+            introText.textContent = intro.intro_text || '';
+        } else if (introContainer && introText) {
+            introText.textContent = '축하합니다! 1차 서류전형에 합격하셨습니다.\n\n2차 서류전형을 위해 아래 질문에 답변해주시기 바랍니다.';
+        }
+
+        // 2차 서류전형 질문지 항목 로드
+        const questions = await getAllSecondRoundQuestions();
+        renderSecondRoundQuestions(questions);
+
+        // 기존 답변 로드
+        if (currentApplicant && currentApplicant.id) {
+            const existingResponse = await getSecondRoundResponseByApplicantId(currentApplicant.id);
+            if (existingResponse && existingResponse.answers) {
+                loadSecondRoundAnswers(existingResponse.answers);
+            }
+        }
+
+        // 2차 서류전형 섹션 표시
+        const secondRoundSection = document.getElementById('secondRoundSection');
+        if (secondRoundSection) {
+            secondRoundSection.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading second round questions:', error);
+        // 에러 시 2차 서류전형 섹션 숨기기
+        const secondRoundSection = document.getElementById('secondRoundSection');
+        if (secondRoundSection) {
+            secondRoundSection.style.display = 'none';
+        }
+    }
+}
+
+// 2차 서류전형 질문지 렌더링
+function renderSecondRoundQuestions(questions) {
+    const container = document.getElementById('secondRoundQuestionsContainer');
+    const secondRoundSection = document.getElementById('secondRoundSection');
+
+    if (!container || !secondRoundSection) return;
+
+    if (!questions || questions.length === 0) {
+        // 2차 서류전형 질문지가 없으면 섹션 숨기기
+        secondRoundSection.style.display = 'none';
+        return;
+    }
+
+    // 2차 서류전형 섹션 표시
+    secondRoundSection.style.display = 'block';
+
+    // 2차 서류전형 질문지 항목 렌더링
+    container.innerHTML = questions.map((q, index) => {
+        const questionId = `second_round_question_${q.id || index}`;
+        return `
+            <div class="form-field full-width" style="margin-bottom: 24px;">
+                <label for="${questionId}">
+                    ${q.question_number}. ${q.question_text}
+                    ${q.is_required ? '<span class="required">*</span>' : ''}
+                </label>
+                ${q.hint_text ? `<small class="field-hint">${q.hint_text}</small>` : ''}
+                <textarea 
+                    id="${questionId}"
+                    data-question-id="${q.id}"
+                    data-question-number="${q.question_number}"
+                    rows="6"
+                    style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;"
+                    placeholder="답변을 입력하세요"
+                    ${q.is_required ? 'required' : ''}
+                ></textarea>
+            </div>
+        `;
+    }).join('');
+}
+
+// 2차 서류전형 답변 로드
+function loadSecondRoundAnswers(answers) {
+    if (!answers || typeof answers !== 'object') return;
+
+    Object.keys(answers).forEach(questionNumber => {
+        const questionId = `second_round_question_${questionNumber}`;
+        const textarea = document.querySelector(`[data-question-number="${questionNumber}"]`);
+        if (textarea) {
+            textarea.value = answers[questionNumber] || '';
+        }
+    });
+}
+
+// 2차 서류전형 답변 수집
+function collectSecondRoundAnswers() {
+    const answers = {};
+    const textareas = document.querySelectorAll('#secondRoundQuestionsContainer textarea[data-question-number]');
+    
+    textareas.forEach(textarea => {
+        const questionNumber = textarea.getAttribute('data-question-number');
+        if (questionNumber && textarea.value.trim()) {
+            answers[questionNumber] = textarea.value.trim();
+        }
+    });
+    
+    return answers;
+}
+
+// 2차 서류전형 답변 저장
+async function saveSecondRoundAnswers(applicantId) {
+    try {
+        if (!currentApplicant || currentApplicant.status !== 'passed') {
+            return; // 합격한 지원자가 아니면 저장하지 않음
+        }
+
+        const answers = collectSecondRoundAnswers();
+        
+        if (Object.keys(answers).length === 0) {
+            console.log('2차 서류전형 답변이 없습니다.');
+            return;
+        }
+
+        // 2차 서류전형 답변 데이터 형식으로 변환
+        const responseData = {
+            applicant_id: applicantId,
+            applicant_name: currentApplicant.name,
+            applicant_email: currentApplicant.email,
+            answers: answers,
+            submitted_at: new Date().toISOString()
+        };
+
+        await saveSecondRoundResponse(responseData);
+        console.log('2차 서류전형 답변 저장 완료');
+    } catch (error) {
+        console.error('2차 서류전형 답변 저장 중 오류:', error);
+        // 2차 서류전형 답변 저장 실패는 치명적이지 않으므로 경고만 표시
+        console.warn('2차 서류전형 답변 저장에 실패했지만 지원서는 제출되었습니다.');
+    }
+}
 
 // 로그인 상태 확인
 async function checkLoginStatus() {
@@ -191,8 +339,14 @@ function renderContactInfo(contactInfo) {
     }
 }
 
-// 설문조사 항목 로드
+// 설문조사 항목 로드 (수정 페이지에서만 사용)
 async function loadSurveyQuestions() {
+    // 신규 지원서 페이지에서는 설문조사 로드하지 않음
+    const newApplicationPage = document.getElementById('newApplicationPage');
+    if (newApplicationPage && newApplicationPage.classList.contains('active')) {
+        return;
+    }
+    
     try {
         // 설문조사 안내문 로드
         const intro = await getSurveyIntro();
@@ -226,7 +380,14 @@ function renderSurveyQuestions(questions) {
     const container = document.getElementById('surveyQuestionsContainer');
     const surveySection = document.getElementById('surveySection');
     
+    // 신규 지원서 페이지에서는 설문조사 섹션이 없으므로 제거됨
     if (!container || !surveySection) return;
+    
+    // 신규 지원서 페이지가 활성화되어 있으면 설문조사 표시하지 않음
+    const newApplicationPage = document.getElementById('newApplicationPage');
+    if (newApplicationPage && newApplicationPage.classList.contains('active')) {
+        return;
+    }
     
     // 활성화된 항목만 필터링
     const activeQuestions = (questions || []).filter(q => q.is_active !== false);
@@ -522,6 +683,12 @@ async function loadApplicantData(email) {
 
         // 수정 폼 생성
         createEditForm(applicant);
+        
+        // 설문조사 로드 (수정 페이지에서만)
+        await loadSurveyQuestions();
+        
+        // 2차 서류전형 질문지 로드 (합격한 지원자인 경우)
+        await loadSecondRoundQuestions();
     } catch (error) {
         console.error('Error loading applicant data:', error);
         alert('지원자 정보를 불러오는 중 오류가 발생했습니다.\n' + error.message);
@@ -713,10 +880,28 @@ function createEditForm(applicant) {
             </div>
         </div>
 
+        <!-- 설문조사 섹션 (수정 페이지에서만 표시) -->
+        <div class="form-section" id="surveySection">
+            <h2 class="section-title">
+                <span class="section-number">06</span>
+                설문조사
+            </h2>
+            
+            <!-- 설문조사 안내문 -->
+            <div id="surveyIntroContainer" style="margin-bottom: 24px; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; display: none;">
+                <p id="surveyIntroText" style="margin: 0; color: #64748b; font-size: 14px; line-height: 1.6; white-space: pre-wrap;"></p>
+            </div>
+            
+            <!-- 설문조사 항목 목록 -->
+            <div id="surveyQuestionsContainer">
+                <!-- 동적으로 로드됨 -->
+            </div>
+        </div>
+
         <!-- 비밀번호 변경 섹션 -->
         <div class="form-section">
             <h2 class="section-title">
-                <span class="section-number">06</span>
+                <span class="section-number">07</span>
                 비밀번호 변경 (선택)
             </h2>
             
@@ -811,8 +996,19 @@ async function updateStatusBanner(applicant) {
                             서류전형 결과: ${resultText}
                         </h4>
                         ${resultMessage ? `
-                        <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+                        <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 16px;">
                             <p style="line-height: 1.8; color: #374151; white-space: pre-wrap;">${resultMessage}</p>
+                        </div>
+                        ` : ''}
+                        ${isPassed ? `
+                        <div style="padding: 16px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; border: 2px solid #10b981;">
+                            <p style="margin: 0 0 12px 0; color: #065f46; font-weight: 600; font-size: 15px;">🎯 2차 서류전형 안내</p>
+                            <p style="margin: 0 0 16px 0; color: #047857; font-size: 14px; line-height: 1.6;">
+                                2차 서류전형을 진행해주세요. 아래 버튼을 클릭하여 2차 서류전형 질문지 페이지로 이동할 수 있습니다.
+                            </p>
+                            <a href="second-round.html" target="_blank" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; transition: transform 0.2s;">
+                                🎯 2차 서류전형 질문지 작성하기 →
+                            </a>
                         </div>
                         ` : ''}
                     </div>
@@ -1015,9 +1211,6 @@ async function handleSubmit(e) {
         // currentApplicant 설정 (설문조사 답변 저장을 위해)
         currentApplicant = newApplicant;
         
-        // 설문조사 답변 저장
-        await saveSurveyAnswers(newApplicant.id);
-
         // 임시 저장 데이터 삭제
         localStorage.removeItem('applicationDraft');
         updateDraftInfo();
@@ -1110,6 +1303,11 @@ async function handleEdit(e) {
     try {
         // 설문조사 답변 저장
         await saveSurveyAnswers(currentApplicant.id);
+        
+        // 2차 서류전형 답변 저장 (합격한 지원자인 경우)
+        if (currentApplicant.status === 'passed') {
+            await saveSecondRoundAnswers(currentApplicant.id);
+        }
         
         // 비밀번호 변경이 있는 경우
         if (formData.newPassword) {

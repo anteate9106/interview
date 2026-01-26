@@ -568,6 +568,16 @@ async function selectApplicant(id) {
         console.log('Loaded evaluations for applicant:', evaluations);
         console.log('Evaluation count:', evaluations ? evaluations.length : 0);
         
+        // 2차 서류전형 답변도 함께 로드 (합격한 지원자인 경우)
+        if (applicant.status === 'passed') {
+            try {
+                const secondRoundResponse = await getSecondRoundResponseByApplicantId(applicant.id);
+                applicant.secondRoundResponse = secondRoundResponse;
+            } catch (error) {
+                console.error('Error loading second round response:', error);
+            }
+        }
+        
         // 평가 데이터 상세 로그
         if (evaluations && evaluations.length > 0) {
             console.log('Evaluation details:', evaluations.map(e => ({
@@ -851,6 +861,79 @@ function showCoverLetter(applicant) {
             </div>
         </div>
     `;
+    
+    // 2차 서류전형 답변 표시 (합격한 지원자인 경우)
+    if (applicant.status === 'passed') {
+        loadSecondRoundResponse(applicant.id).then(secondRoundHtml => {
+            if (secondRoundHtml) {
+                content.innerHTML += secondRoundHtml;
+            }
+        }).catch(error => {
+            console.error('Error loading second round response:', error);
+        });
+    }
+}
+
+// 2차 서류전형 답변 로드 및 표시
+async function loadSecondRoundResponse(applicantId) {
+    try {
+        const response = await getSecondRoundResponseByApplicantId(applicantId);
+        if (!response || !response.answers) {
+            return ''; // 답변이 없으면 빈 문자열 반환
+        }
+
+        // 질문지 가져오기
+        const questions = await getAllSecondRoundQuestions();
+        const questionMap = {};
+        questions.forEach(q => {
+            questionMap[q.question_number] = q;
+        });
+
+        // 답변 HTML 생성
+        let answersHtml = `
+            <div class="section-block" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); margin-top: 24px; border: 2px solid #10b981;">
+                <h3 style="margin-bottom: 20px; color: #065f46; font-size: 20px;">🎯 2차 서류전형 답변</h3>
+        `;
+
+        const submittedDate = response.submitted_at ? new Date(response.submitted_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+        if (submittedDate) {
+            answersHtml += `
+                <div style="margin-bottom: 20px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #10b981;">
+                    <p style="margin: 0; color: #047857; font-size: 14px; font-weight: 600;">
+                        📅 제출일: ${submittedDate}
+                    </p>
+                </div>
+            `;
+        }
+
+        // 질문 번호 순서대로 정렬
+        const sortedQuestionNumbers = Object.keys(response.answers)
+            .map(n => parseInt(n))
+            .filter(n => !isNaN(n))
+            .sort((a, b) => a - b);
+
+        sortedQuestionNumbers.forEach(questionNumber => {
+            const question = questionMap[questionNumber];
+            const answer = response.answers[questionNumber];
+            
+            if (answer) {
+                answersHtml += `
+                    <div style="margin-bottom: 20px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #10b981;">
+                        <h4 style="margin: 0 0 12px 0; color: #065f46; font-size: 16px; font-weight: 600;">
+                            ${questionNumber}. ${question ? question.question_text : '질문'}
+                        </h4>
+                        <p class="pre-wrap" style="margin: 0; color: var(--text-primary); line-height: 1.8; white-space: pre-wrap;">${answer}</p>
+                    </div>
+                `;
+            }
+        });
+
+        answersHtml += `</div>`;
+        return answersHtml;
+    } catch (error) {
+        console.error('Error loading second round response:', error);
+        return ''; // 에러 발생 시 빈 문자열 반환
+    }
 }
 
 // 평가 로드 (관리자는 평가하지 않고 조회만 가능)
@@ -2185,3 +2268,308 @@ async function saveAllSurveyQuestions(event) {
 
 // ==================== 문의 관리 ====================
 // (작성 안내 관리에 통합됨)
+
+// ==================== 2차 서류전형 질문지 관리 ====================
+
+let secondRoundQuestions = [];
+let isSavingSecondRound = false; // 저장 중 플래그
+
+// 2차 서류전형 질문지 에디터 열기
+async function openSecondRoundEditor() {
+    const modal = document.getElementById('secondRoundModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        await loadSecondRoundQuestions();
+    }
+}
+
+// 2차 서류전형 질문지 에디터 닫기
+function closeSecondRoundModal() {
+    const modal = document.getElementById('secondRoundModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 2차 서류전형 질문지 항목 로드
+async function loadSecondRoundQuestions() {
+    try {
+        secondRoundQuestions = await getAllSecondRoundQuestions();
+        renderSecondRoundQuestions();
+        
+        // 안내문도 함께 로드
+        await loadSecondRoundIntro();
+    } catch (error) {
+        console.error('Error loading second round questions:', error);
+        alert('2차 서류전형 질문지를 불러오는 중 오류가 발생했습니다.');
+    }
+}
+
+// 2차 서류전형 안내문 로드
+async function loadSecondRoundIntro() {
+    try {
+        const intro = await getSecondRoundIntro();
+        const introTextarea = document.getElementById('secondRoundIntroText');
+        if (introTextarea && intro) {
+            introTextarea.value = intro.intro_text || '';
+        }
+    } catch (error) {
+        console.error('Error loading second round intro:', error);
+    }
+}
+
+// 2차 서류전형 질문지 항목 렌더링
+function renderSecondRoundQuestions() {
+    // 저장 중이면 렌더링하지 않음
+    if (isSavingSecondRound) {
+        return;
+    }
+    
+    const container = document.getElementById('secondRoundQuestionsList');
+    if (!container) {
+        return;
+    }
+
+    if (secondRoundQuestions.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">2차 서류전형 질문지 항목이 없습니다. 새 항목을 추가해주세요.</p>';
+        return;
+    }
+    
+    container.innerHTML = secondRoundQuestions.map((q, index) => `
+        <div class="survey-question-item" data-id="${q.id}" style="margin-bottom: 20px; padding: 20px; background: white; border: 1px solid #10b981; border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                <h3 style="margin: 0; color: #065f46; font-size: 16px;">항목 ${q.question_number}</h3>
+                <button onclick="deleteSecondRoundQuestionItem('${q.id}')" style="padding: 6px 12px; border: 1px solid #ef4444; border-radius: 6px; background: white; color: #ef4444; cursor: pointer; font-size: 12px;">삭제</button>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px;">질문 내용</label>
+                <textarea class="second-round-question-text" data-id="${q.id}" rows="5" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="질문 내용을 입력하세요">${(q.question_text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}</textarea>
+            </div>
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" class="second-round-question-required" data-id="${q.id}" ${q.is_required ? 'checked' : ''} style="width: 18px; height: 18px;">
+                    <span style="font-size: 14px;">필수 항목</span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-size: 14px;">항목 번호:</label>
+                    <input type="number" class="second-round-question-number" data-id="${q.id}" value="${q.question_number}" min="1" style="width: 80px; padding: 6px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 새 2차 서류전형 질문지 항목 추가
+function addNewSecondRoundQuestion() {
+    const newQuestion = {
+        id: `temp_${Date.now()}`,
+        question_number: secondRoundQuestions.length > 0 ? Math.max(...secondRoundQuestions.map(q => q.question_number)) + 1 : 1,
+        question_text: '',
+        hint_text: '',
+        is_required: true,
+        is_active: true
+    };
+    
+    secondRoundQuestions.push(newQuestion);
+    renderSecondRoundQuestions();
+    
+    // 새로 추가된 항목으로 스크롤
+    setTimeout(() => {
+        const newItem = document.querySelector(`[data-id="${newQuestion.id}"]`);
+        if (newItem) {
+            newItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const textarea = newItem.querySelector('.second-round-question-text');
+            if (textarea) textarea.focus();
+        }
+    }, 100);
+}
+
+// 2차 서류전형 질문지 항목 삭제
+function deleteSecondRoundQuestionItem(questionId) {
+    if (!confirm('이 2차 서류전형 질문 항목을 삭제하시겠습니까?')) {
+        return;
+    }
+    
+    secondRoundQuestions = secondRoundQuestions.filter(q => q.id !== questionId);
+    renderSecondRoundQuestions();
+}
+
+// 모든 2차 서류전형 질문지 항목 저장
+async function saveAllSecondRoundQuestions(event) {
+    // 이벤트가 있고 preventDefault 메서드가 있으면 기본 동작 방지
+    if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    }
+    
+    // 이미 저장 중이면 중복 실행 방지
+    if (isSavingSecondRound) {
+        console.log('[중복 방지] 이미 저장 중입니다. 중복 실행을 방지합니다.');
+        return;
+    }
+    
+    // 저장 중 플래그 설정
+    isSavingSecondRound = true;
+    
+    // 저장 버튼 비활성화
+    const saveBtn = document.getElementById('saveSecondRoundBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.6';
+        saveBtn.style.pointerEvents = 'none';
+        saveBtn.style.cursor = 'not-allowed';
+        saveBtn.textContent = '저장 중...';
+    }
+    
+    try {
+        // 안내문 저장
+        const introText = document.getElementById('secondRoundIntroText')?.value.trim() || '';
+        await saveSecondRoundIntro(introText);
+        
+        // 입력값 수집
+        const questionsToSave = secondRoundQuestions.map((q, index) => {
+            const item = document.querySelector(`[data-id="${q.id}"]`);
+            if (!item) {
+                return null;
+            }
+            
+            const questionText = item.querySelector('.second-round-question-text')?.value.trim();
+            const isRequired = item.querySelector('.second-round-question-required')?.checked || false;
+            const questionNumber = parseInt(item.querySelector('.second-round-question-number')?.value) || 1;
+            
+            if (!questionText) {
+                alert(`항목 ${questionNumber}의 질문 내용을 입력해주세요.`);
+                return null;
+            }
+            
+            return {
+                id: q.id.startsWith('temp_') ? undefined : q.id,
+                question_number: questionNumber,
+                question_text: questionText,
+                hint_text: null,
+                is_required: isRequired,
+                is_active: true
+            };
+        }).filter(q => q !== null);
+        
+        if (questionsToSave.length === 0) {
+            isSavingSecondRound = false;
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.pointerEvents = 'auto';
+                saveBtn.textContent = '저장';
+            }
+            alert('저장할 질문 항목이 없습니다.');
+            return;
+        }
+        
+        // 항목 번호 중복 확인
+        const numbers = questionsToSave.map(q => q.question_number);
+        const duplicates = numbers.filter((n, i) => numbers.indexOf(n) !== i);
+        if (duplicates.length > 0) {
+            isSavingSecondRound = false;
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.pointerEvents = 'auto';
+                saveBtn.textContent = '저장';
+            }
+            alert(`항목 번호가 중복됩니다: ${[...new Set(duplicates)].join(', ')}`);
+            return;
+        }
+        
+        // 저장 (db.js의 함수 호출)
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
+        
+        const results = [];
+        for (const q of questionsToSave) {
+            const questionData = {
+                question_number: q.question_number,
+                question_text: q.question_text,
+                hint_text: q.hint_text || null,
+                is_required: q.is_required !== undefined ? q.is_required : true,
+                is_active: q.is_active !== undefined ? q.is_active : true,
+                updated_at: new Date().toISOString()
+            };
+            
+            if (q.id && !q.id.startsWith('temp_')) {
+                const { data, error } = await supabaseClient
+                    .from('second_round_questions')
+                    .update(questionData)
+                    .eq('id', q.id)
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                results.push(data);
+            } else {
+                const { data, error } = await supabaseClient
+                    .from('second_round_questions')
+                    .insert(questionData)
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                results.push(data);
+            }
+        }
+        
+        // 저장 완료
+        secondRoundQuestions = results.map((result) => {
+            const original = questionsToSave.find(q => 
+                (q.id && q.id === result.id) || 
+                (q.question_number === result.question_number)
+            );
+            
+            return {
+                id: result.id,
+                question_number: result.question_number,
+                question_text: result.question_text,
+                hint_text: result.hint_text || null,
+                is_required: result.is_required,
+                is_active: result.is_active,
+                ...(original || {})
+            };
+        });
+        
+        isSavingSecondRound = false;
+        
+        // 저장 버튼 복원
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = '1';
+            saveBtn.style.pointerEvents = 'auto';
+            saveBtn.style.cursor = 'pointer';
+            saveBtn.textContent = '저장';
+        }
+        
+        setTimeout(() => {
+            alert('✅ 2차 서류전형 안내문과 질문지가 저장되었습니다.');
+        }, 100);
+        
+    } catch (error) {
+        console.error('=== 2차 서류전형 질문지 저장 에러 ===');
+        console.error('Error object:', error);
+        
+        isSavingSecondRound = false;
+        
+        // 저장 버튼 복원
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = '1';
+            saveBtn.style.pointerEvents = 'auto';
+            saveBtn.style.cursor = 'pointer';
+            saveBtn.textContent = '저장';
+        }
+        
+        const errorMessage = error.message || '알 수 없는 오류';
+        setTimeout(() => {
+            alert(`2차 서류전형 질문지 저장 중 오류가 발생했습니다.\n\n오류 내용: ${errorMessage}\n\n자세한 내용은 브라우저 콘솔(F12)을 확인해주세요.`);
+        }, 100);
+    }
+}

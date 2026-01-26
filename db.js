@@ -1513,6 +1513,236 @@ async function saveSurveyIntro(introText) {
     }
 }
 
+// ==================== 2차 서류전형 관련 ====================
+
+// 모든 2차 서류전형 질문지 가져오기
+async function getAllSecondRoundQuestions() {
+    try {
+        let supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            initSupabaseForDb();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            supabaseClient = getSupabase();
+        }
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
+        const { data, error } = await supabaseClient
+            .from('second_round_questions')
+            .select('*')
+            .eq('is_active', true)
+            .order('question_number', { ascending: true });
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching second round questions:', error);
+        return [];
+    }
+}
+
+// 2차 서류전형 질문지 저장
+async function saveSecondRoundQuestion(questionData) {
+    try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
+            .from('second_round_questions')
+            .upsert({
+                ...questionData,
+                updated_at: new Date().toISOString()
+            }, {
+                onConflict: 'question_number'
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving second round question:', error);
+        throw error;
+    }
+}
+
+// 여러 2차 서류전형 질문지 일괄 저장
+async function saveAllSecondRoundQuestions(questions) {
+    try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const results = [];
+        for (const q of questions) {
+            const questionData = {
+                question_number: q.question_number,
+                question_text: q.question_text,
+                hint_text: q.hint_text || null,
+                is_required: q.is_required !== undefined ? q.is_required : true,
+                is_active: q.is_active !== undefined ? q.is_active : true,
+                updated_at: new Date().toISOString()
+            };
+            
+            if (q.id && !q.id.startsWith('temp_')) {
+                const { data, error } = await supabaseClient
+                    .from('second_round_questions')
+                    .update(questionData)
+                    .eq('id', q.id)
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                results.push(data);
+            } else {
+                const { data, error } = await supabaseClient
+                    .from('second_round_questions')
+                    .insert(questionData)
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                results.push(data);
+            }
+        }
+        
+        return results;
+    } catch (error) {
+        console.error('Error saving all second round questions:', error);
+        throw error;
+    }
+}
+
+// 2차 서류전형 질문지 삭제 (비활성화)
+async function deleteSecondRoundQuestion(questionId) {
+    try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
+            .from('second_round_questions')
+            .update({ is_active: false })
+            .eq('id', questionId)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error deleting second round question:', error);
+        throw error;
+    }
+}
+
+// 2차 서류전형 안내문 가져오기
+async function getSecondRoundIntro() {
+    try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
+            .from('second_round_intro')
+            .select('*')
+            .eq('id', 'second_round_intro')
+            .single();
+        
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+        return data;
+    } catch (error) {
+        console.error('Error fetching second round intro:', error);
+        return null;
+    }
+}
+
+// 2차 서류전형 안내문 저장
+async function saveSecondRoundIntro(introText) {
+    try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
+            .from('second_round_intro')
+            .upsert({
+                id: 'second_round_intro',
+                intro_text: introText,
+                updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving second round intro:', error);
+        throw error;
+    }
+}
+
+// 지원자 ID로 2차 서류전형 답변 가져오기
+async function getSecondRoundResponseByApplicantId(applicantId) {
+    try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
+            .from('second_round_responses')
+            .select('*')
+            .eq('applicant_id', applicantId)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+        return data;
+    } catch (error) {
+        console.error('Error fetching second round response:', error);
+        return null;
+    }
+}
+
+// 2차 서류전형 답변 저장
+async function saveSecondRoundResponse(responseData) {
+    try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const dataToSave = {
+            applicant_id: responseData.applicant_id,
+            applicant_name: responseData.applicant_name || responseData.applicantName,
+            applicant_email: responseData.applicant_email || responseData.applicantEmail,
+            answers: responseData.answers || {},
+            submitted_at: responseData.submitted_at || responseData.submittedAt || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+        
+        // 기존 답변이 있는지 확인
+        const existing = await getSecondRoundResponseByApplicantId(responseData.applicant_id);
+        
+        if (existing) {
+            // 업데이트
+            const { data, error } = await supabaseClient
+                .from('second_round_responses')
+                .update(dataToSave)
+                .eq('applicant_id', responseData.applicant_id)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return data;
+        } else {
+            // 새로 생성
+            const { data, error } = await supabaseClient
+                .from('second_round_responses')
+                .insert(dataToSave)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return data;
+        }
+    } catch (error) {
+        console.error('Error saving second round response:', error);
+        throw error;
+    }
+}
+
 // 전역 스코프에 함수 노출 (app.js에서 사용할 수 있도록)
 if (typeof window !== 'undefined') {
     // 주요 함수들을 window 객체에 할당
@@ -1549,6 +1779,15 @@ if (typeof window !== 'undefined') {
     window.getSurveyByApplicantId = getSurveyByApplicantId;
     window.saveSurvey = saveSurvey;
     window.deleteSurveyQuestion = deleteSurveyQuestion;
+    // 2차 서류전형 관련 함수들
+    window.getAllSecondRoundQuestions = getAllSecondRoundQuestions;
+    window.saveSecondRoundQuestion = saveSecondRoundQuestion;
+    window.saveAllSecondRoundQuestions = saveAllSecondRoundQuestions;
+    window.deleteSecondRoundQuestion = deleteSecondRoundQuestion;
+    window.getSecondRoundIntro = getSecondRoundIntro;
+    window.saveSecondRoundIntro = saveSecondRoundIntro;
+    window.getSecondRoundResponseByApplicantId = getSecondRoundResponseByApplicantId;
+    window.saveSecondRoundResponse = saveSecondRoundResponse;
     
     console.log('[db.js] 모든 함수를 window 객체에 할당 완료');
 }
