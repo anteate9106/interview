@@ -604,7 +604,7 @@ function showCoverLetter(applicant) {
         const statusBg = currentStatus === 'passed' ? '#dcfce7' : currentStatus === 'failed' ? '#fee2e2' : '#f1f5f9';
         
         evaluationSummary = `
-            <div class="section-block" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 4px solid #10b981; margin-bottom: 24px;">
+            <div class="section-block" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); margin-bottom: 24px;">
                 <h3 style="margin-bottom: 20px; color: #10b981; font-size: 20px;">📊 평가 평균 점수</h3>
                 
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
@@ -683,7 +683,7 @@ function showCoverLetter(applicant) {
         `;
     } else {
         evaluationSummary = `
-            <div class="section-block" style="background: #fef3c7; border-left: 4px solid #f59e0b; margin-bottom: 24px; padding: 20px;">
+            <div class="section-block" style="background: #fef3c7; margin-bottom: 24px; padding: 20px;">
                 <h3 style="margin-bottom: 12px; color: #f59e0b; font-size: 18px;">⚠️ 평가 대기 중</h3>
                 <p style="color: #92400e; margin: 0;">아직 평가가 완료되지 않았습니다. 평가자가 평가를 완료하면 평균 점수가 여기에 표시됩니다.</p>
             </div>
