@@ -1765,18 +1765,35 @@ function deleteSurveyQuestionItem(questionId) {
 // 모든 설문조사 항목 저장
 async function saveAllSurveyQuestions() {
     try {
+        console.log('=== 설문조사 저장 시작 ===');
+        console.log('설문 항목 개수:', surveyQuestions.length);
+        
         // 안내문 저장
         const introText = document.getElementById('surveyIntroText')?.value.trim() || '';
+        console.log('안내문 저장 중...');
         await saveSurveyIntro(introText);
+        console.log('안내문 저장 완료');
         
         // 입력값 수집
-        const questionsToSave = surveyQuestions.map(q => {
+        console.log('입력값 수집 중...');
+        const questionsToSave = surveyQuestions.map((q, index) => {
             const item = document.querySelector(`[data-id="${q.id}"]`);
-            if (!item) return null;
+            if (!item) {
+                console.warn(`항목 ${index + 1}의 DOM 요소를 찾을 수 없습니다. id: ${q.id}`);
+                return null;
+            }
             
             const questionText = item.querySelector('.survey-question-text')?.value.trim();
             const isRequired = item.querySelector('.survey-question-required')?.checked || false;
             const questionNumber = parseInt(item.querySelector('.survey-question-number')?.value) || 1;
+            
+            console.log(`항목 ${questionNumber}:`, {
+                id: q.id,
+                questionText: questionText ? questionText.substring(0, 50) + '...' : '(비어있음)',
+                questionTextLength: questionText?.length || 0,
+                isRequired,
+                questionNumber
+            });
             
             if (!questionText) {
                 alert(`항목 ${questionNumber}의 질문 내용을 입력해주세요.`);
@@ -1793,6 +1810,8 @@ async function saveAllSurveyQuestions() {
             };
         }).filter(q => q !== null);
         
+        console.log('수집된 항목:', questionsToSave.length, '개');
+        
         if (questionsToSave.length === 0) {
             alert('저장할 설문 항목이 없습니다.');
             return;
@@ -1807,15 +1826,26 @@ async function saveAllSurveyQuestions() {
         }
         
         // 저장
-        await saveAllSurveyQuestions(questionsToSave);
+        console.log('데이터베이스에 저장 중...');
+        console.log('저장할 데이터:', JSON.stringify(questionsToSave, null, 2));
+        const result = await saveAllSurveyQuestions(questionsToSave);
+        console.log('저장 결과:', result);
         
         alert('✅ 설문조사 안내문과 항목이 저장되었습니다.');
         await loadSurveyQuestions();
+        console.log('=== 설문조사 저장 완료 ===');
         
     } catch (error) {
-        console.error('Error saving survey questions:', error);
-        const errorMessage = error.message || error.error?.message || '알 수 없는 오류';
-        alert(`설문조사 저장 중 오류가 발생했습니다.\n\n오류 내용: ${errorMessage}\n\n콘솔을 확인해주세요.`);
+        console.error('=== 설문조사 저장 에러 ===');
+        console.error('Error object:', error);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.error || error.details);
+        console.error('Full error:', JSON.stringify(error, null, 2));
+        
+        const errorMessage = error.message || error.error?.message || error.details?.message || '알 수 없는 오류';
+        const errorDetails = error.error || error.details || {};
+        
+        alert(`설문조사 저장 중 오류가 발생했습니다.\n\n오류 내용: ${errorMessage}\n\n자세한 내용은 브라우저 콘솔(F12)을 확인해주세요.`);
     }
 }
 
