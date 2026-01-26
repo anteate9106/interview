@@ -1711,7 +1711,7 @@ function renderSurveyQuestions() {
             </div>
             <div style="margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px;">질문 내용</label>
-                <textarea class="survey-question-text" data-id="${q.id}" rows="3" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit;">${q.question_text || ''}</textarea>
+                <textarea class="survey-question-text" data-id="${q.id}" rows="5" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="질문 내용을 입력하세요">${(q.question_text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
             </div>
             <div style="display: flex; gap: 16px; align-items: center;">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
@@ -1763,7 +1763,21 @@ function deleteSurveyQuestionItem(questionId) {
 }
 
 // 모든 설문조사 항목 저장
-async function saveAllSurveyQuestions() {
+async function saveAllSurveyQuestions(event) {
+    // 이벤트가 있으면 기본 동작 방지
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    // 저장 버튼 비활성화
+    const saveBtn = document.getElementById('saveSurveyBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.6';
+        saveBtn.textContent = '저장 중...';
+    }
+    
     try {
         console.log('=== 설문조사 저장 시작 ===');
         console.log('설문 항목 개수:', surveyQuestions.length);
@@ -1846,6 +1860,14 @@ async function saveAllSurveyQuestions() {
         const errorDetails = error.error || error.details || {};
         
         alert(`설문조사 저장 중 오류가 발생했습니다.\n\n오류 내용: ${errorMessage}\n\n자세한 내용은 브라우저 콘솔(F12)을 확인해주세요.`);
+    } finally {
+        // 저장 버튼 다시 활성화
+        const saveBtn = document.getElementById('saveSurveyBtn');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = '1';
+            saveBtn.textContent = '저장';
+        }
     }
 }
 
