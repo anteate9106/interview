@@ -53,7 +53,15 @@ async function initializeApp() {
         // 로그인 상태 확인
         const loggedInEmail = localStorage.getItem('secondRoundLoggedIn');
         if (loggedInEmail) {
-            await loadApplicantData(loggedInEmail);
+            try {
+                await loadApplicantData(loggedInEmail);
+                showQuestionPage();
+            } catch (error) {
+                console.error('[second-round.js] 로그인 상태 복원 실패:', error);
+                // 로그인 상태 복원 실패 시 로그인 페이지로 이동
+                localStorage.removeItem('secondRoundLoggedIn');
+                showLoginPage();
+            }
         } else {
             showLoginPage();
         }
@@ -199,39 +207,35 @@ function updateApplicationStatus(applicant) {
 
 // 지원자 데이터 로드
 async function loadApplicantData(email) {
-    try {
-        const applicant = await getApplicantByEmail(email);
-        
-        if (!applicant) {
-            console.error('Applicant not found:', email);
-            alert('지원자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
-            handleLogout();
-            return;
-        }
-
-        // 합격 여부 재확인
-        if (applicant.status !== 'passed') {
-            alert('⚠️ 2차 서류전형은 합격하신 지원자만 접근할 수 있습니다.');
-            handleLogout();
-            return;
-        }
-        
-        currentApplicant = applicant;
-
-        document.getElementById('applicantWelcome').textContent = `${applicant.name}님, 환영합니다!`;
-
-        // 지원 현황 업데이트
-        updateApplicationStatus(applicant);
-
-        // 질문지 로드
-        await loadQuestions();
-        
-        // 기존 답변 로드
-        await loadExistingResponse();
-    } catch (error) {
-        console.error('Error loading applicant data:', error);
-        alert('지원자 정보를 불러오는 중 오류가 발생했습니다.\n' + error.message);
+    const applicant = await getApplicantByEmail(email);
+    
+    if (!applicant) {
+        console.error('Applicant not found:', email);
+        localStorage.removeItem('secondRoundLoggedIn');
+        throw new Error('지원자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
     }
+
+    // 합격 여부 재확인
+    if (applicant.status !== 'passed') {
+        localStorage.removeItem('secondRoundLoggedIn');
+        throw new Error('⚠️ 2차 서류전형은 합격하신 지원자만 접근할 수 있습니다.');
+    }
+    
+    currentApplicant = applicant;
+
+    const welcomeElement = document.getElementById('applicantWelcome');
+    if (welcomeElement) {
+        welcomeElement.textContent = `${applicant.name}님, 환영합니다!`;
+    }
+
+    // 지원 현황 업데이트
+    updateApplicationStatus(applicant);
+
+    // 질문지 로드
+    await loadQuestions();
+    
+    // 기존 답변 로드
+    await loadExistingResponse();
 }
 
 // 질문지 로드
