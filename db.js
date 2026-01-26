@@ -1,10 +1,157 @@
 // Supabase 데이터베이스 헬퍼 함수
 
+// Supabase 클라이언트 참조 함수 (전역 변수 또는 window 객체에서 가져오기)
+function getSupabaseClient() {
+    // window.supabaseClient 우선 사용
+    if (typeof window !== 'undefined' && window.supabaseClient) {
+        return window.supabaseClient;
+    }
+    // 전역 supabase 변수 사용
+    if (typeof supabase !== 'undefined' && supabase) {
+        return supabase;
+    }
+    // config.js에서 초기화된 supabase 사용
+    if (typeof window !== 'undefined' && window.supabase) {
+        return window.supabase;
+    }
+    console.error('[db.js] Supabase 클라이언트를 찾을 수 없습니다.');
+    console.error('[db.js] 사용 가능한 객체:', {
+        windowSupabaseClient: typeof window !== 'undefined' ? !!window.supabaseClient : 'N/A',
+        globalSupabase: typeof supabase !== 'undefined' ? !!supabase : 'N/A',
+        windowSupabase: typeof window !== 'undefined' ? !!window.supabase : 'N/A'
+    });
+    throw new Error('Supabase 클라이언트를 찾을 수 없습니다. config.js가 먼저 로드되었는지 확인하세요.');
+}
+
+// db.js에서 사용할 supabase 변수를 전역에서 가져오기
+// 모든 함수에서 사용할 수 있도록 전역 변수로 설정
+let supabase;
+
+// Supabase 클라이언트 참조 함수 (매번 최신 클라이언트 가져오기)
+function getSupabase() {
+    // window.supabaseClient 우선 사용 (config.js에서 설정)
+    if (typeof window !== 'undefined' && window.supabaseClient) {
+        return window.supabaseClient;
+    }
+    // 전역 supabase 변수 사용 (config.js에서 선언된 var supabase)
+    if (typeof supabase !== 'undefined' && supabase) {
+        return supabase;
+    }
+    // window.supabase 사용
+    if (typeof window !== 'undefined' && window.supabase) {
+        return window.supabase;
+    }
+    return null;
+}
+
+// Supabase 클라이언트 초기화 함수
+function initSupabaseForDb() {
+    try {
+        const client = getSupabase();
+        if (client) {
+            supabase = client;
+            console.log('[db.js] Supabase 클라이언트 초기화 완료');
+            return true;
+        }
+        console.error('[db.js] Supabase 클라이언트를 찾을 수 없습니다.');
+        return false;
+    } catch (error) {
+        console.error('[db.js] Supabase 클라이언트 초기화 중 오류:', error);
+        return false;
+    }
+}
+
+// 즉시 초기화 시도
+if (typeof window !== 'undefined') {
+    // DOMContentLoaded 이벤트에서 초기화
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initSupabaseForDb, 200); // config.js 초기화 대기
+        });
+    } else {
+        setTimeout(initSupabaseForDb, 200); // config.js 초기화 대기
+    }
+}
+
+// Supabase 연결 상태 테스트 함수
+async function testSupabaseConnection() {
+    try {
+        console.log('[db.js] Supabase 연결 테스트 시작...');
+        
+        // 클라이언트 초기화 확인
+        if (!supabase) {
+            const initialized = initSupabaseForDb();
+            if (!initialized) {
+                return {
+                    success: false,
+                    error: 'Supabase 클라이언트를 초기화할 수 없습니다.',
+                    details: 'config.js가 먼저 로드되었는지 확인하세요.'
+                };
+            }
+        }
+        
+        if (!supabase) {
+            return {
+                success: false,
+                error: 'Supabase 클라이언트가 null입니다.',
+                details: 'config.js의 초기화를 확인하세요.'
+            };
+        }
+        
+        console.log('[db.js] Supabase 클라이언트 확인됨:', !!supabase);
+        console.log('[db.js] Supabase URL:', supabase.supabaseUrl || 'N/A');
+        
+        // 간단한 쿼리로 연결 테스트
+        const { data, error } = await supabase
+            .from('survey_questions')
+            .select('id')
+            .limit(1);
+        
+        if (error) {
+            console.error('[db.js] Supabase 연결 테스트 실패:', error);
+            return {
+                success: false,
+                error: error.message || '알 수 없는 오류',
+                code: error.code,
+                details: error,
+                hint: error.hint
+            };
+        }
+        
+        console.log('[db.js] Supabase 연결 테스트 성공');
+        return {
+            success: true,
+            message: 'Supabase 연결 정상',
+            data: data
+        };
+    } catch (error) {
+        console.error('[db.js] Supabase 연결 테스트 중 예외 발생:', error);
+        return {
+            success: false,
+            error: error.message || '알 수 없는 오류',
+            details: error,
+            stack: error.stack
+        };
+    }
+}
+
+// 전역에서 접근 가능하도록 함수 export
+if (typeof window !== 'undefined') {
+    window.testSupabaseConnection = testSupabaseConnection;
+    window.initSupabaseForDb = initSupabaseForDb;
+}
+
 // ==================== 지원자 관련 ====================
 
 // 모든 지원자 가져오기
 async function getAllApplicants() {
     try {
+        if (!supabase) {
+            initSupabaseForDb();
+        }
+        if (!supabase) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
         const { data, error } = await supabase
             .from('applicants')
             .select('*')
@@ -867,7 +1014,11 @@ async function saveSurvey(surveyData) {
 // 모든 설문조사 항목 가져오기
 async function getAllSurveyQuestions() {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase() || supabase;
+        if (!supabaseClient) {
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
+        const { data, error } = await supabaseClient
             .from('survey_questions')
             .select('*')
             .eq('is_active', true)
@@ -905,13 +1056,44 @@ async function saveSurveyQuestion(questionData) {
 
 // 여러 설문조사 항목 일괄 저장
 async function saveAllSurveyQuestions(questions) {
+    const timeout = 30000; // 30초 타임아웃
+    const startTime = Date.now();
+    
     try {
-        console.log('saveAllSurveyQuestions 호출됨, 항목 개수:', questions.length);
+        console.log('[db.js] saveAllSurveyQuestions 함수 호출됨, 항목 개수:', questions.length);
+        
+        // Supabase 클라이언트 확인 및 초기화 (매번 최신 클라이언트 가져오기)
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            console.log('[db.js] Supabase 클라이언트가 없어서 초기화 시도...');
+            initSupabaseForDb();
+            const retryClient = getSupabase();
+            if (!retryClient) {
+                const errorMsg = 'Supabase 클라이언트를 사용할 수 없습니다. config.js가 먼저 로드되었는지 확인하세요.';
+                console.error('[db.js]', errorMsg);
+                throw new Error(errorMsg);
+            }
+            supabase = retryClient;
+        } else {
+            supabase = supabaseClient;
+        }
+        
+        console.log('[db.js] Supabase 클라이언트 확인 완료:', !!supabase);
+        console.log('[db.js] Supabase URL:', supabase?.supabaseUrl || 'N/A');
+        
+        // 타임아웃 체크 함수
+        const checkTimeout = () => {
+            if (Date.now() - startTime > timeout) {
+                throw new Error(`저장 작업이 타임아웃되었습니다. (${timeout/1000}초 초과)`);
+            }
+        };
         
         // 각 항목을 개별적으로 저장 (id가 없는 경우와 있는 경우 모두 처리)
         const results = [];
         
         for (let i = 0; i < questions.length; i++) {
+            checkTimeout();
+            
             const q = questions[i];
             console.log(`항목 ${i + 1}/${questions.length} 저장 중:`, {
                 id: q.id,
@@ -928,37 +1110,54 @@ async function saveAllSurveyQuestions(questions) {
                 updated_at: new Date().toISOString()
             };
             
-            if (q.id && !q.id.startsWith('temp_')) {
-                // 기존 항목 업데이트
-                console.log(`기존 항목 업데이트: id=${q.id}`);
-                const { data, error } = await supabase
-                    .from('survey_questions')
-                    .update(questionData)
-                    .eq('id', q.id)
-                    .select()
-                    .single();
-                
-                if (error) {
-                    console.error(`항목 ${i + 1} 업데이트 실패:`, error);
-                    throw error;
+            try {
+                if (q.id && !q.id.startsWith('temp_')) {
+                    // 기존 항목 업데이트
+                    console.log(`기존 항목 업데이트: id=${q.id}`);
+                    // supabase 클라이언트 확인 (매번 최신 클라이언트 가져오기)
+                    const supabaseClient = getSupabase() || supabase;
+                    if (!supabaseClient) {
+                        throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+                    }
+                    console.log(`[db.js] 항목 ${i + 1} 업데이트 시도:`, { id: q.id, question_number: q.question_number });
+                    const { data, error } = await supabaseClient
+                        .from('survey_questions')
+                        .update(questionData)
+                        .eq('id', q.id)
+                        .select()
+                        .single();
+                    
+                    if (error) {
+                        console.error(`항목 ${i + 1} 업데이트 실패:`, error);
+                        throw new Error(`항목 ${i + 1} 업데이트 실패: ${error.message || '알 수 없는 오류'}`);
+                    }
+                    console.log(`항목 ${i + 1} 업데이트 성공:`, data);
+                    results.push(data);
+                } else {
+                    // 새 항목 생성
+                    console.log(`새 항목 생성: question_number=${q.question_number}`);
+                    // supabase 클라이언트 확인 (매번 최신 클라이언트 가져오기)
+                    const supabaseClient = getSupabase() || supabase;
+                    if (!supabaseClient) {
+                        throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+                    }
+                    console.log(`[db.js] 항목 ${i + 1} 생성 시도:`, { question_number: q.question_number });
+                    const { data, error } = await supabaseClient
+                        .from('survey_questions')
+                        .insert(questionData)
+                        .select()
+                        .single();
+                    
+                    if (error) {
+                        console.error(`항목 ${i + 1} 생성 실패:`, error);
+                        throw new Error(`항목 ${i + 1} 생성 실패: ${error.message || '알 수 없는 오류'}`);
+                    }
+                    console.log(`항목 ${i + 1} 생성 성공:`, data);
+                    results.push(data);
                 }
-                console.log(`항목 ${i + 1} 업데이트 성공:`, data);
-                results.push(data);
-            } else {
-                // 새 항목 생성
-                console.log(`새 항목 생성: question_number=${q.question_number}`);
-                const { data, error } = await supabase
-                    .from('survey_questions')
-                    .insert(questionData)
-                    .select()
-                    .single();
-                
-                if (error) {
-                    console.error(`항목 ${i + 1} 생성 실패:`, error);
-                    throw error;
-                }
-                console.log(`항목 ${i + 1} 생성 성공:`, data);
-                results.push(data);
+            } catch (itemError) {
+                console.error(`항목 ${i + 1} 저장 중 오류:`, itemError);
+                throw itemError;
             }
         }
         
@@ -970,9 +1169,36 @@ async function saveAllSurveyQuestions(questions) {
             message: error.message,
             details: error.details,
             hint: error.hint,
-            code: error.code
+            code: error.code,
+            stack: error.stack
         });
         throw error;
+    }
+}
+
+// app.js에서 명시적으로 참조할 수 있도록 window 객체에 할당
+// 함수 이름 충돌을 방지하기 위함
+// 함수 정의 직후 즉시 할당
+if (typeof window !== 'undefined') {
+    window.dbSaveAllSurveyQuestions = saveAllSurveyQuestions;
+    console.log('[db.js] window.dbSaveAllSurveyQuestions 함수 할당 완료');
+}
+
+// DOMContentLoaded에서도 할당 확인 (이중 안전장치)
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!window.dbSaveAllSurveyQuestions) {
+                window.dbSaveAllSurveyQuestions = saveAllSurveyQuestions;
+                console.log('[db.js] DOMContentLoaded에서 window.dbSaveAllSurveyQuestions 함수 재할당 완료');
+            }
+        });
+    } else {
+        // 이미 로드된 경우 즉시 확인
+        if (!window.dbSaveAllSurveyQuestions) {
+            window.dbSaveAllSurveyQuestions = saveAllSurveyQuestions;
+            console.log('[db.js] 이미 로드된 상태에서 window.dbSaveAllSurveyQuestions 함수 재할당 완료');
+        }
     }
 }
 

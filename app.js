@@ -8,12 +8,22 @@ let jobPostings = []; // 동적으로 로드
 // db.js의 saveAllSurveyQuestions 함수는 window.dbSaveAllSurveyQuestions로 접근 가능
 // 페이지 로드 시 함수가 할당되었는지 확인 및 Supabase 연결 테스트
 document.addEventListener('DOMContentLoaded', async function() {
-    // db.js 함수 확인
-    if (typeof window.dbSaveAllSurveyQuestions === 'function') {
-        console.log('[app.js] db.js 함수 확인 완료: window.dbSaveAllSurveyQuestions 사용 가능');
-    } else {
-        console.warn('[app.js] db.js 함수를 찾을 수 없습니다. db.js가 먼저 로드되었는지 확인하세요.');
-    }
+    // db.js 함수 확인 (최대 3초 대기)
+    let retryCount = 0;
+    const maxRetries = 30; // 3초 (100ms * 30)
+    
+    const checkDbFunction = setInterval(() => {
+        if (typeof window.dbSaveAllSurveyQuestions === 'function') {
+            console.log('[app.js] db.js 함수 확인 완료: window.dbSaveAllSurveyQuestions 사용 가능');
+            clearInterval(checkDbFunction);
+        } else {
+            retryCount++;
+            if (retryCount >= maxRetries) {
+                console.warn('[app.js] db.js 함수를 찾을 수 없습니다. db.js가 먼저 로드되었는지 확인하세요.');
+                clearInterval(checkDbFunction);
+            }
+        }
+    }, 100);
     
     // Supabase 연결 테스트
     if (typeof window.testSupabaseConnection === 'function') {
