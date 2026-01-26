@@ -701,11 +701,24 @@ function updateApplicationStatus(applicant) {
         submitDate = applicant.submitDate;
     }
     
+    // 합격/불합격 상태
+    let resultText = '';
+    let resultStyle = '';
+    if (applicant.status === 'passed') {
+        resultText = '합격';
+        resultStyle = 'color: #10b981; font-weight: 700;';
+    } else if (applicant.status === 'failed') {
+        resultText = '불합격';
+        resultStyle = 'color: #ef4444; font-weight: 700;';
+    } else {
+        resultText = hasEvaluations ? '심사중' : '평가대기';
+        resultStyle = 'color: #64748b;';
+    }
+
     statusDiv.innerHTML = `
         <p><strong>채용공고</strong> <span style="color: #6366f1; font-weight: 600;">${applicant.job_posting || '미선택'}</span></p>
         <p><strong>제출일</strong> <span>${submitDate}</span></p>
-        <p><strong>평가상태</strong> <span>${hasEvaluations ? '평가완료' : '평가대기'}</span></p>
-        ${hasEvaluations ? `<p><strong>평가자 수</strong> <span>${applicant.evaluations.length}명</span></p>` : ''}
+        <p><strong>평가결과</strong> <span style="${resultStyle}">${resultText}</span></p>
     `;
 }
 
@@ -828,7 +841,7 @@ async function handleEdit(e) {
     
     // evaluations 배열 확인
     if (latestApplicant.evaluations && latestApplicant.evaluations.length > 0) {
-        alert('⚠️ 평가가 완료된 지원서는 수정할 수 없습니다.\n\n평가자 수: ' + latestApplicant.evaluations.length + '명\n\n수정이 필요한 경우 담당자에게 문의하시기 바랍니다.');
+        alert('⚠️ 평가가 완료된 지원서는 수정할 수 없습니다.\n\n수정이 필요한 경우 담당자에게 문의하시기 바랍니다.');
         // 최신 데이터로 화면 갱신
         currentApplicant = latestApplicant;
         await loadApplicantData(currentApplicant.email);
