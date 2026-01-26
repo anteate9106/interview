@@ -23,9 +23,8 @@ function getSupabaseClient() {
     throw new Error('Supabase 클라이언트를 찾을 수 없습니다. config.js가 먼저 로드되었는지 확인하세요.');
 }
 
-// db.js에서 사용할 supabase 변수를 전역에서 가져오기
-// 모든 함수에서 사용할 수 있도록 전역 변수로 설정
-let supabase;
+// db.js에서 사용할 supabase 변수는 config.js에서 선언된 것을 사용
+// let supabase; 제거 - config.js의 var supabase 사용
 
 // Supabase 클라이언트 참조 함수 (매번 최신 클라이언트 가져오기)
 function getSupabase() {
@@ -49,7 +48,10 @@ function initSupabaseForDb() {
     try {
         const client = getSupabase();
         if (client) {
-            supabase = client;
+            // config.js의 var supabase에 할당 (전역 변수)
+            if (typeof window !== 'undefined') {
+                window.supabaseClient = client;
+            }
             console.log('[db.js] Supabase 클라이언트 초기화 완료');
             return true;
         }
@@ -79,7 +81,8 @@ async function testSupabaseConnection() {
         console.log('[db.js] Supabase 연결 테스트 시작...');
         
         // 클라이언트 초기화 확인
-        if (!supabase) {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
             const initialized = initSupabaseForDb();
             if (!initialized) {
                 return {
@@ -90,7 +93,8 @@ async function testSupabaseConnection() {
             }
         }
         
-        if (!supabase) {
+        const finalClient = getSupabase();
+        if (!finalClient) {
             return {
                 success: false,
                 error: 'Supabase 클라이언트가 null입니다.',
@@ -98,11 +102,12 @@ async function testSupabaseConnection() {
             };
         }
         
-        console.log('[db.js] Supabase 클라이언트 확인됨:', !!supabase);
-        console.log('[db.js] Supabase URL:', supabase.supabaseUrl || 'N/A');
+        const supabaseClient = getSupabase();
+        console.log('[db.js] Supabase 클라이언트 확인됨:', !!supabaseClient);
+        console.log('[db.js] Supabase URL:', supabaseClient?.supabaseUrl || 'N/A');
         
         // 간단한 쿼리로 연결 테스트
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('survey_questions')
             .select('id')
             .limit(1);
@@ -146,13 +151,15 @@ if (typeof window !== 'undefined') {
 // 모든 지원자 가져오기
 async function getAllApplicants() {
     try {
-        if (!supabase) {
+        let supabaseClient = getSupabase();
+        if (!supabaseClient) {
             initSupabaseForDb();
+            supabaseClient = getSupabase();
         }
-        if (!supabase) {
+        if (!supabaseClient) {
             throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('applicants')
             .select('*')
             .order('created_at', { ascending: false });
@@ -1073,9 +1080,15 @@ async function saveAllSurveyQuestions(questions) {
                 console.error('[db.js]', errorMsg);
                 throw new Error(errorMsg);
             }
-            supabase = retryClient;
+            // window.supabaseClient에 할당
+            if (typeof window !== 'undefined') {
+                window.supabaseClient = retryClient;
+            }
         } else {
-            supabase = supabaseClient;
+            // window.supabaseClient에 할당
+            if (typeof window !== 'undefined') {
+                window.supabaseClient = supabaseClient;
+            }
         }
         
         console.log('[db.js] Supabase 클라이언트 확인 완료:', !!supabase);
