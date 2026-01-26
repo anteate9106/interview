@@ -111,7 +111,7 @@ async function testSupabaseConnection() {
 
         if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
 
-        const { data, error } = await supabaseClientClient
+        const { data, error } = await supabaseClient
             .from('survey_questions')
             .select('id')
             .limit(1);
@@ -163,11 +163,7 @@ async function getAllApplicants() {
         if (!supabaseClient) {
             throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
         }
-        const supabaseClient = getSupabase();
-
-        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
-        const { data, error } = await supabaseClientClient
+        const { data, error } = await supabaseClient
             .from('applicants')
             .select('*')
             .order('created_at', { ascending: false });
@@ -199,11 +195,7 @@ async function getApplicantByEmail(email) {
         if (!supabaseClient) {
             throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
         }
-        const supabaseClient = getSupabase();
-
-        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
-        const { data, error } = await supabaseClientClient
+        const { data, error } = await supabaseClient
             .from('applicants')
             .select('*')
             .eq('email', email)
@@ -238,11 +230,7 @@ async function createApplicant(applicantData) {
         if (!supabaseClient) {
             throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
         }
-        const supabaseClient = getSupabase();
-
-        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
-        const { data, error } = await supabaseClientClient
+        const { data, error } = await supabaseClient
             .from('applicants')
             .insert([applicantData])
             .select()
@@ -263,11 +251,7 @@ async function updateApplicant(email, updates) {
         if (!supabaseClient) {
             throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
         }
-        const supabaseClient = getSupabase();
-
-        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
-        const { data, error } = await supabaseClientClient
+        const { data, error } = await supabaseClient
             .from('applicants')
             .update(updates)
             .eq('email', email)
@@ -289,11 +273,7 @@ async function updateApplicantStatus(applicantId, status) {
         if (!supabaseClient) {
             throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
         }
-        const supabaseClient = getSupabase();
-
-        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
-        const { data, error } = await supabaseClientClient
+        const { data, error } = await supabaseClient
             .from('applicants')
             .update({ status: status })
             .eq('id', applicantId)
@@ -1186,7 +1166,7 @@ async function getAllSurveyQuestions() {
 
         if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
 
-        const { data, error } = await supabaseClientClient
+        const { data, error } = await supabaseClient
             .from('survey_questions')
             .select('*')
             .eq('is_active', true)
@@ -1302,7 +1282,7 @@ async function saveAllSurveyQuestions(questions) {
 
                     if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
 
-                    const { data, error } = await supabaseClientClient
+                    const { data, error } = await supabaseClient
                         .from('survey_questions')
                         .update(questionData)
                         .eq('id', q.id)
@@ -1328,7 +1308,7 @@ async function saveAllSurveyQuestions(questions) {
 
                     if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
 
-                    const { data, error } = await supabaseClientClient
+                    const { data, error } = await supabaseClient
                         .from('survey_questions')
                         .insert(questionData)
                         .select()
