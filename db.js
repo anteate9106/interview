@@ -906,22 +906,31 @@ async function saveSurveyQuestion(questionData) {
 // 여러 설문조사 항목 일괄 저장
 async function saveAllSurveyQuestions(questions) {
     try {
+        console.log('saveAllSurveyQuestions 호출됨, 항목 개수:', questions.length);
+        
         // 각 항목을 개별적으로 저장 (id가 없는 경우와 있는 경우 모두 처리)
         const results = [];
         
-        for (const q of questions) {
+        for (let i = 0; i < questions.length; i++) {
+            const q = questions[i];
+            console.log(`항목 ${i + 1}/${questions.length} 저장 중:`, {
+                id: q.id,
+                question_number: q.question_number,
+                question_text_length: q.question_text?.length || 0
+            });
+            
             const questionData = {
                 question_number: q.question_number,
                 question_text: q.question_text,
-                hint_text: q.hint_text,
-                is_required: q.is_required,
-                is_active: q.is_active,
+                hint_text: q.hint_text || null,
+                is_required: q.is_required !== undefined ? q.is_required : true,
+                is_active: q.is_active !== undefined ? q.is_active : true,
                 updated_at: new Date().toISOString()
             };
             
             if (q.id && !q.id.startsWith('temp_')) {
                 // 기존 항목 업데이트
-                questionData.id = q.id;
+                console.log(`기존 항목 업데이트: id=${q.id}`);
                 const { data, error } = await supabase
                     .from('survey_questions')
                     .update(questionData)
@@ -929,24 +938,40 @@ async function saveAllSurveyQuestions(questions) {
                     .select()
                     .single();
                 
-                if (error) throw error;
+                if (error) {
+                    console.error(`항목 ${i + 1} 업데이트 실패:`, error);
+                    throw error;
+                }
+                console.log(`항목 ${i + 1} 업데이트 성공:`, data);
                 results.push(data);
             } else {
                 // 새 항목 생성
+                console.log(`새 항목 생성: question_number=${q.question_number}`);
                 const { data, error } = await supabase
                     .from('survey_questions')
                     .insert(questionData)
                     .select()
                     .single();
                 
-                if (error) throw error;
+                if (error) {
+                    console.error(`항목 ${i + 1} 생성 실패:`, error);
+                    throw error;
+                }
+                console.log(`항목 ${i + 1} 생성 성공:`, data);
                 results.push(data);
             }
         }
         
+        console.log('모든 항목 저장 완료:', results.length, '개');
         return results;
     } catch (error) {
         console.error('Error saving all survey questions:', error);
+        console.error('Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+        });
         throw error;
     }
 }
