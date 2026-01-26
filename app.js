@@ -1543,7 +1543,13 @@ async function sendResultEmail(applicantId) {
 
     const isPassed = applicant.status === 'passed';
     const templateId = isPassed ? 'passed' : 'failed';
+    const statusText = isPassed ? '합격' : '불합격';
     const jobPosting = applicant.job_posting || '채용공고';
+    
+    // 발송 확인
+    if (!confirm(`${applicant.name}님에게 ${statusText} 이메일을 발송하시겠습니까?\n\n수신자: ${applicant.email}`)) {
+        return;
+    }
     
     // 저장된 템플릿 가져오기
     const template = await getEmailTemplate(templateId);
@@ -1559,16 +1565,45 @@ async function sendResultEmail(applicantId) {
             .replace(/{채용공고}/g, jobPosting);
     } else {
         // 기본 템플릿 사용
-        const statusText = isPassed ? '합격' : '불합격';
         subject = `[청년들] ${jobPosting} 서류전형 ${statusText} 안내`;
         body = `안녕하세요, ${applicant.name}님.\n\n서류전형 결과: ${statusText}\n\n청년들 채용담당자 드림`;
     }
 
-    // mailto 링크 생성
-    const mailtoLink = `mailto:${applicant.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    // 이메일 클라이언트 열기
-    window.location.href = mailtoLink;
+    // 로딩 표시
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = '발송 중...';
+    button.disabled = true;
+
+    try {
+        // API로 이메일 발송
+        const response = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                to: applicant.email,
+                subject: subject,
+                body: body,
+                applicantName: applicant.name
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(`✅ ${applicant.name}님에게 ${statusText} 이메일이 발송되었습니다.`);
+        } else {
+            throw new Error(result.error || '이메일 발송 실패');
+        }
+    } catch (error) {
+        console.error('Email send error:', error);
+        alert(`❌ 이메일 발송 실패: ${error.message}\n\n관리자에게 문의하세요.`);
+    } finally {
+        button.textContent = originalText;
+        button.disabled = false;
+    }
 }
 
 // ==================== 이메일 템플릿 관리 ====================
