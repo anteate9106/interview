@@ -678,6 +678,62 @@ async function deleteJobPosting(id) {
     }
 }
 
+// ==================== 이메일 템플릿 관련 ====================
+
+// 이메일 템플릿 가져오기
+async function getEmailTemplate(templateId) {
+    try {
+        const { data, error } = await supabase
+            .from('email_templates')
+            .select('*')
+            .eq('id', templateId)
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error fetching email template:', error);
+        return null;
+    }
+}
+
+// 모든 이메일 템플릿 가져오기
+async function getAllEmailTemplates() {
+    try {
+        const { data, error } = await supabase
+            .from('email_templates')
+            .select('*');
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching email templates:', error);
+        return [];
+    }
+}
+
+// 이메일 템플릿 저장
+async function saveEmailTemplate(templateId, subject, body) {
+    try {
+        const { data, error } = await supabase
+            .from('email_templates')
+            .upsert({
+                id: templateId,
+                subject: subject,
+                body: body,
+                updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving email template:', error);
+        throw error;
+    }
+}
+
 // ==================== 유틸리티 ====================
 
 // 비밀번호 검증 (클라이언트 측)

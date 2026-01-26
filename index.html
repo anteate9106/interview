@@ -47,6 +47,7 @@
                 <button onclick="openGuideEditor()" class="btn-nav-link">작성안내관리</button>
                 <button onclick="openJobPostingEditor()" class="btn-nav-link">채용공고관리</button>
                 <button onclick="openEvaluatorEditor()" class="btn-nav-link">평가자관리</button>
+                <button onclick="openEmailTemplateEditor()" class="btn-nav-link">메시지관리</button>
                 <span id="currentUserPosting" class="current-user"></span>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
             </div>
@@ -211,6 +212,7 @@
                 <button onclick="openGuideEditor()" class="btn-nav-link">작성안내관리</button>
                 <button onclick="openJobPostingEditor()" class="btn-nav-link">채용공고관리</button>
                 <button onclick="openEvaluatorEditor()" class="btn-nav-link">평가자관리</button>
+                <button onclick="openEmailTemplateEditor()" class="btn-nav-link">메시지관리</button>
                 <span id="currentUser" class="current-user"></span>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
             </div>
@@ -266,6 +268,39 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 이메일 템플릿 관리 모달 -->
+    <div id="emailTemplateModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>📧 합격/불합격 메시지 관리</h2>
+                <button onclick="closeEmailTemplateModal()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">메시지 유형</label>
+                    <select id="templateType" onchange="loadEmailTemplate()" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;">
+                        <option value="passed">합격 메시지</option>
+                        <option value="failed">불합격 메시지</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">이메일 제목</label>
+                    <input type="text" id="templateSubject" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;" placeholder="이메일 제목을 입력하세요">
+                    <p style="font-size: 12px; color: #64748b; margin-top: 4px;">사용 가능한 변수: {이름}, {채용공고}</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">이메일 본문</label>
+                    <textarea id="templateBody" rows="15" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; line-height: 1.6;" placeholder="이메일 본문을 입력하세요"></textarea>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 4px;">사용 가능한 변수: {이름}, {채용공고}</p>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; padding: 20px; border-top: 1px solid #e2e8f0;">
+                <button onclick="closeEmailTemplateModal()" style="padding: 10px 20px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer;">취소</button>
+                <button onclick="saveCurrentEmailTemplate()" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; cursor: pointer; font-weight: 600;">저장</button>
             </div>
         </div>
     </div>

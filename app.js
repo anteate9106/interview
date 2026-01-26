@@ -1529,7 +1529,7 @@ async function setApplicantStatus(applicantId, status) {
 }
 
 // 결과 이메일 발송
-function sendResultEmail(applicantId) {
+async function sendResultEmail(applicantId) {
     const applicant = applicants.find(a => a.id == applicantId);
     if (!applicant) {
         alert('지원자를 찾을 수 없습니다.');
@@ -1542,55 +1542,26 @@ function sendResultEmail(applicantId) {
     }
 
     const isPassed = applicant.status === 'passed';
-    const statusText = isPassed ? '합격' : '불합격';
+    const templateId = isPassed ? 'passed' : 'failed';
     const jobPosting = applicant.job_posting || '채용공고';
     
-    // 이메일 제목
-    const subject = `[청년들] ${jobPosting} 서류전형 ${statusText} 안내`;
+    // 저장된 템플릿 가져오기
+    const template = await getEmailTemplate(templateId);
     
-    // 이메일 본문
-    let body = '';
-    if (isPassed) {
-        body = `안녕하세요, ${applicant.name}님.
-
-청년들 채용에 지원해 주셔서 감사합니다.
-
-${jobPosting}에 지원하신 서류전형 결과를 안내드립니다.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 서류전형 결과: 합격
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-축하드립니다! 서류전형에 합격하셨습니다.
-
-다음 전형에 대한 안내는 추후 별도로 연락드리겠습니다.
-궁금하신 사항이 있으시면 언제든지 문의해 주세요.
-
-감사합니다.
-
-청년들 채용담당자 드림`;
+    let subject, body;
+    if (template) {
+        // 템플릿의 변수 치환
+        subject = template.subject
+            .replace(/{이름}/g, applicant.name)
+            .replace(/{채용공고}/g, jobPosting);
+        body = template.body
+            .replace(/{이름}/g, applicant.name)
+            .replace(/{채용공고}/g, jobPosting);
     } else {
-        body = `안녕하세요, ${applicant.name}님.
-
-청년들 채용에 지원해 주셔서 감사합니다.
-
-${jobPosting}에 지원하신 서류전형 결과를 안내드립니다.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 서류전형 결과: 불합격
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-안타깝게도 이번 채용에서는 함께하지 못하게 되었습니다.
-
-${applicant.name}님의 역량과 열정은 충분히 인정하지만,
-이번 채용에서는 제한된 인원으로 인해 모든 분께 기회를 드리지 못한 점
-양해 부탁드립니다.
-
-앞으로의 취업 활동에 좋은 결과가 있기를 진심으로 응원합니다.
-
-다시 한번 지원해 주셔서 감사드립니다.
-
-청년들 채용담당자 드림`;
+        // 기본 템플릿 사용
+        const statusText = isPassed ? '합격' : '불합격';
+        subject = `[청년들] ${jobPosting} 서류전형 ${statusText} 안내`;
+        body = `안녕하세요, ${applicant.name}님.\n\n서류전형 결과: ${statusText}\n\n청년들 채용담당자 드림`;
     }
 
     // mailto 링크 생성
@@ -1598,6 +1569,83 @@ ${applicant.name}님의 역량과 열정은 충분히 인정하지만,
     
     // 이메일 클라이언트 열기
     window.location.href = mailtoLink;
+}
+
+// ==================== 이메일 템플릿 관리 ====================
+
+let emailTemplates = {};
+
+// 이메일 템플릿 에디터 열기
+async function openEmailTemplateEditor() {
+    const modal = document.getElementById('emailTemplateModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        await loadEmailTemplate();
+    }
+}
+
+// 이메일 템플릿 에디터 닫기
+function closeEmailTemplateModal() {
+    const modal = document.getElementById('emailTemplateModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 선택된 템플릿 로드
+async function loadEmailTemplate() {
+    const templateType = document.getElementById('templateType').value;
+    const subjectInput = document.getElementById('templateSubject');
+    const bodyInput = document.getElementById('templateBody');
+    
+    // 캐시된 템플릿이 없으면 DB에서 가져오기
+    if (!emailTemplates[templateType]) {
+        const template = await getEmailTemplate(templateType);
+        if (template) {
+            emailTemplates[templateType] = template;
+        }
+    }
+    
+    if (emailTemplates[templateType]) {
+        subjectInput.value = emailTemplates[templateType].subject || '';
+        bodyInput.value = emailTemplates[templateType].body || '';
+    } else {
+        // 기본값
+        if (templateType === 'passed') {
+            subjectInput.value = '[청년들] {채용공고} 서류전형 합격 안내';
+            bodyInput.value = '안녕하세요, {이름}님.\n\n축하드립니다! 서류전형에 합격하셨습니다.\n\n다음 전형에 대한 안내는 추후 별도로 연락드리겠습니다.\n\n청년들 채용담당자 드림';
+        } else {
+            subjectInput.value = '[청년들] {채용공고} 서류전형 불합격 안내';
+            bodyInput.value = '안녕하세요, {이름}님.\n\n안타깝게도 이번 채용에서는 함께하지 못하게 되었습니다.\n\n앞으로의 취업 활동에 좋은 결과가 있기를 응원합니다.\n\n청년들 채용담당자 드림';
+        }
+    }
+}
+
+// 현재 템플릿 저장
+async function saveCurrentEmailTemplate() {
+    const templateType = document.getElementById('templateType').value;
+    const subject = document.getElementById('templateSubject').value.trim();
+    const body = document.getElementById('templateBody').value.trim();
+    
+    if (!subject) {
+        alert('이메일 제목을 입력해주세요.');
+        return;
+    }
+    if (!body) {
+        alert('이메일 본문을 입력해주세요.');
+        return;
+    }
+    
+    try {
+        await saveEmailTemplate(templateType, subject, body);
+        emailTemplates[templateType] = { subject, body };
+        
+        const typeText = templateType === 'passed' ? '합격' : '불합격';
+        alert(`${typeText} 메시지가 저장되었습니다.`);
+    } catch (error) {
+        console.error('Error saving template:', error);
+        alert('메시지 저장 중 오류가 발생했습니다.');
+    }
 }
 
 // ==================== 문의 관리 ====================
