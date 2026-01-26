@@ -1477,3 +1477,42 @@ async function saveSurveyIntro(introText) {
         throw error;
     }
 }
+
+// 전역 스코프에 함수 노출 (app.js에서 사용할 수 있도록)
+if (typeof window !== 'undefined') {
+    // 주요 함수들을 window 객체에 할당
+    window.getAllApplicants = getAllApplicants;
+    window.getAllJobPostings = getAllJobPostings;
+    window.getApplicationGuide = getApplicationGuide;
+    window.getContactInfo = getContactInfo;
+    window.getAllEvaluators = getAllEvaluators;
+    window.getAllSurveyQuestions = getAllSurveyQuestions;
+    window.getApplicantByEmail = getApplicantByEmail;
+    window.getEvaluationsByApplicant = getEvaluationsByApplicant;
+    window.saveEvaluation = saveEvaluation;
+    window.createApplicant = createApplicant;
+    window.updateApplicant = updateApplicant;
+    window.updateApplicantStatus = updateApplicantStatus;
+    window.updateNotificationStatus = updateNotificationStatus;
+    window.getEvaluatorById = getEvaluatorById;
+    window.authenticateEvaluator = authenticateEvaluator;
+    window.createEvaluator = createEvaluator;
+    window.deleteEvaluator = deleteEvaluator;
+    window.updateEvaluatorPassword = updateEvaluatorPassword;
+    window.updateEvaluatorPasswordByAdmin = updateEvaluatorPasswordByAdmin;
+    window.updateEvaluatorAdminStatus = updateEvaluatorAdminStatus;
+    window.createJobPosting = createJobPosting;
+    window.updateJobPosting = updateJobPosting;
+    window.deleteJobPosting = deleteJobPosting;
+    window.saveApplicationGuide = saveApplicationGuide;
+    window.saveContactInfo = saveContactInfo;
+    window.getEmailTemplate = getEmailTemplate;
+    window.saveEmailTemplate = saveEmailTemplate;
+    window.getSurveyIntro = getSurveyIntro;
+    window.saveSurveyIntro = saveSurveyIntro;
+    window.getSurveyByApplicantId = getSurveyByApplicantId;
+    window.saveSurvey = saveSurvey;
+    window.deleteSurveyQuestion = deleteSurveyQuestion;
+    
+    console.log('[db.js] 모든 함수를 window 객체에 할당 완료');
+}

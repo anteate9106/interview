@@ -23,7 +23,16 @@ document.addEventListener('DOMContentLoaded', async function() {
             'getSupabase'
         ];
         
-        const allLoaded = requiredFunctions.every(funcName => typeof window[funcName] === 'function' || typeof eval(funcName) === 'function');
+        const allLoaded = requiredFunctions.every(funcName => {
+            // window 객체에서 먼저 확인
+            if (typeof window[funcName] === 'function') return true;
+            // 전역 스코프에서 확인 (안전하게)
+            try {
+                return typeof eval(funcName) === 'function';
+            } catch {
+                return false;
+            }
+        });
         
         if (allLoaded) {
             console.log('[app.js] db.js 함수들 확인 완료');
