@@ -1764,8 +1764,8 @@ function deleteSurveyQuestionItem(questionId) {
 
 // 모든 설문조사 항목 저장
 async function saveAllSurveyQuestions(event) {
-    // 이벤트가 있으면 기본 동작 방지
-    if (event) {
+    // 이벤트가 있고 preventDefault 메서드가 있으면 기본 동작 방지
+    if (event && typeof event.preventDefault === 'function') {
         event.preventDefault();
         event.stopPropagation();
     }
