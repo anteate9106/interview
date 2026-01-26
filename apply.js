@@ -662,14 +662,15 @@ async function updateStatusBanner(applicant) {
         
         if (notificationSent && (applicant.status === 'passed' || applicant.status === 'failed')) {
             // 결과 통보된 경우
+            banner.style.background = '#ffffff';
             banner.innerHTML = `
                 <div class="status-info">
                     <div class="status-text" style="width: 100%;">
-                        <h4 style="color: ${applicant.status === 'passed' ? '#10b981' : '#ef4444'};">
+                        <h4 style="color: #1f2937; font-size: 18px; margin-bottom: 16px;">
                             서류전형 결과: ${resultText}
                         </h4>
                         ${resultMessage ? `
-                        <div style="margin-top: 16px; padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb;">
+                        <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
                             <p style="line-height: 1.8; color: #374151; white-space: pre-wrap;">${resultMessage}</p>
                         </div>
                         ` : ''}
