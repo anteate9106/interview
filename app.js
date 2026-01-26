@@ -7,22 +7,52 @@ let jobPostings = []; // 동적으로 로드
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', async function() {
-    // Supabase 연결 확인
-    if (typeof window.testSupabaseConnection === 'function') {
-        const connectionTest = await window.testSupabaseConnection();
-        if (!connectionTest.success) {
-            console.error('[app.js] Supabase 연결 실패:', connectionTest.error);
-            alert(`Supabase 연결 실패: ${connectionTest.error}\n\n페이지를 새로고침해주세요.`);
-        } else {
-            console.log('[app.js] ✅ Supabase 연결 정상');
-        }
-    }
+    // db.js 함수들이 로드될 때까지 대기
+    let retryCount = 0;
+    const maxRetries = 50; // 5초 대기
     
-    await loadData();
-    await loadJobPostings();
-    checkAuth();
-    setupEventListeners();
+    const checkDbFunctions = setInterval(() => {
+        if (typeof getAllApplicants === 'function' && 
+            typeof getAllJobPostings === 'function' &&
+            typeof getApplicationGuide === 'function' &&
+            typeof getContactInfo === 'function') {
+            console.log('[app.js] db.js 함수들 확인 완료');
+            clearInterval(checkDbFunctions);
+            initializeApp();
+        } else {
+            retryCount++;
+            if (retryCount >= maxRetries) {
+                console.error('[app.js] db.js 함수들을 찾을 수 없습니다.');
+                clearInterval(checkDbFunctions);
+                alert('데이터베이스 함수를 로드할 수 없습니다. 페이지를 새로고침해주세요.');
+            }
+        }
+    }, 100);
 });
+
+// 앱 초기화 함수
+async function initializeApp() {
+    try {
+        // Supabase 연결 확인
+        if (typeof window.testSupabaseConnection === 'function') {
+            const connectionTest = await window.testSupabaseConnection();
+            if (!connectionTest.success) {
+                console.error('[app.js] Supabase 연결 실패:', connectionTest.error);
+                // 연결 실패해도 계속 진행 (오프라인 모드)
+            } else {
+                console.log('[app.js] ✅ Supabase 연결 정상');
+            }
+        }
+        
+        await loadData();
+        await loadJobPostings();
+        checkAuth();
+        setupEventListeners();
+    } catch (error) {
+        console.error('[app.js] 초기화 오류:', error);
+        alert(`시스템 초기화 중 오류가 발생했습니다.\n\n${error.message || '알 수 없는 오류'}\n\n페이지를 새로고침해주세요.`);
+    }
+}
 
 // 데이터 로드 (Supabase에서)
 async function loadData() {
@@ -88,11 +118,39 @@ async function loadData() {
 // 채용공고 목록 로드
 async function loadJobPostings() {
     try {
+        // getAllJobPostings 함수 확인
+        if (typeof getAllJobPostings !== 'function') {
+            console.error('[loadJobPostings] getAllJobPostings 함수를 찾을 수 없습니다.');
+            // 기본값 사용
+            jobPostings = [
+                '2026년 상반기 신입사원 공채',
+                '2026년 상반기 경력직 수시채용',
+                '2026년 인턴 채용',
+                '2026년 계약직 채용'
+            ];
+            return;
+        }
+        
         const postings = await getAllJobPostings();
-        jobPostings = postings.map(p => p.title);
-        console.log('Loaded job postings:', jobPostings);
+        if (postings && postings.length > 0) {
+            jobPostings = postings.map(p => p.title);
+            console.log('[loadJobPostings] 채용공고 로드 성공:', jobPostings.length, '개');
+        } else {
+            // 기본값 사용
+            jobPostings = [
+                '2026년 상반기 신입사원 공채',
+                '2026년 상반기 경력직 수시채용',
+                '2026년 인턴 채용',
+                '2026년 계약직 채용'
+            ];
+            console.log('[loadJobPostings] 채용공고 데이터가 없어서 기본값 사용');
+        }
     } catch (error) {
-        console.error('Error loading job postings:', error);
+        console.error('[loadJobPostings] 오류 발생:', error);
+        console.error('[loadJobPostings] 오류 상세:', {
+            message: error.message,
+            stack: error.stack
+        });
         // 기본값 사용
         jobPostings = [
             '2026년 상반기 신입사원 공채',
@@ -1136,6 +1194,11 @@ let currentJobPostings = null;
 // 채용공고 관리 모달 열기
 async function openJobPostingEditor() {
     try {
+        // getAllJobPostings 함수 확인
+        if (typeof getAllJobPostings !== 'function') {
+            throw new Error('getAllJobPostings 함수를 찾을 수 없습니다. db.js가 제대로 로드되었는지 확인하세요.');
+        }
+        
         currentJobPostings = await getAllJobPostings();
         renderJobPostingEditor();
         const modal = document.getElementById('jobPostingEditorModal');
@@ -1150,7 +1213,12 @@ async function openJobPostingEditor() {
         });
     } catch (error) {
         console.error('Error loading job postings:', error);
-        alert('채용공고를 불러오는 중 오류가 발생했습니다.');
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            getAllJobPostings: typeof getAllJobPostings
+        });
+        alert(`채용공고를 불러오는 중 오류가 발생했습니다.\n\n${error.message || '알 수 없는 오류'}\n\n페이지를 새로고침해주세요.`);
     }
 }
 
