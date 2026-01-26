@@ -233,22 +233,42 @@ function renderQuestions(questions) {
 
     container.innerHTML = questions.map((q, index) => {
         const questionId = `question_${q.id || index}`;
+        // 질문 텍스트에서 줄바꿈 처리 (개행 문자를 <br>로 변환)
+        const questionText = (q.question_text || '').replace(/\n/g, '<br>');
+        // hint_text도 줄바꿈 처리
+        const hintText = q.hint_text ? (q.hint_text.replace(/\n/g, '<br>')) : '';
+        
         return `
-            <div class="form-section" style="margin-bottom: 30px;">
+            <div class="form-section" style="margin-bottom: 40px; padding: 28px; background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
                 <div class="form-field full-width">
-                    <label for="${questionId}">
-                        ${q.question_number}. ${q.question_text}
-                        ${q.is_required ? '<span class="required">*</span>' : ''}
-                    </label>
-                    ${q.hint_text ? `<small class="field-hint">${q.hint_text}</small>` : ''}
+                    <div style="margin-bottom: 16px;">
+                        <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 12px;">
+                            <div style="min-width: 36px; height: 36px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">
+                                ${q.question_number}
+                            </div>
+                            <div style="flex: 1;">
+                                <label for="${questionId}" style="display: block; font-size: 16px; font-weight: 600; color: #1f2937; line-height: 1.6; margin-bottom: 8px;">
+                                    ${questionText}
+                                    ${q.is_required ? '<span class="required" style="color: #ef4444; margin-left: 4px;">*</span>' : ''}
+                                </label>
+                                ${hintText ? `
+                                <div style="margin-top: 12px; padding: 12px 16px; background: #f8fafc; border-left: 3px solid #10b981; border-radius: 6px;">
+                                    <p style="margin: 0; color: #64748b; font-size: 14px; line-height: 1.7; white-space: pre-wrap;">${hintText}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
                     <textarea 
                         id="${questionId}"
                         data-question-id="${q.id}"
                         data-question-number="${q.question_number}"
-                        rows="6"
-                        style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;"
+                        rows="8"
+                        style="width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; font-family: inherit; resize: vertical; line-height: 1.6; transition: border-color 0.2s;"
                         placeholder="답변을 입력하세요"
                         ${q.is_required ? 'required' : ''}
+                        onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.1)';"
+                        onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';"
                     ></textarea>
                 </div>
             </div>

@@ -2335,28 +2335,44 @@ function renderSecondRoundQuestions() {
         return;
     }
     
-    container.innerHTML = secondRoundQuestions.map((q, index) => `
-        <div class="survey-question-item" data-id="${q.id}" style="margin-bottom: 20px; padding: 20px; background: white; border: 1px solid #10b981; border-radius: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
-                <h3 style="margin: 0; color: #065f46; font-size: 16px;">항목 ${q.question_number}</h3>
-                <button onclick="deleteSecondRoundQuestionItem('${q.id}')" style="padding: 6px 12px; border: 1px solid #ef4444; border-radius: 6px; background: white; color: #ef4444; cursor: pointer; font-size: 12px;">삭제</button>
+    container.innerHTML = secondRoundQuestions.map((q, index) => {
+        // HTML 이스케이프 처리 (줄바꿈은 유지)
+        const escapedText = (q.question_text || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        // 줄바꿈은 textarea에서 그대로 표시되므로 이스케이프하지 않음
+        return `
+        <div class="survey-question-item" data-id="${q.id}" style="margin-bottom: 24px; padding: 24px; background: white; border: 2px solid #10b981; border-radius: 16px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #f0fdf4;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="min-width: 40px; height: 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px;">
+                        ${q.question_number}
+                    </div>
+                    <h3 style="margin: 0; color: #065f46; font-size: 18px; font-weight: 700;">2차 서류전형 질문지 항목</h3>
+                </div>
+                <button onclick="deleteSecondRoundQuestionItem('${q.id}')" style="padding: 8px 16px; border: 1px solid #ef4444; border-radius: 8px; background: white; color: #ef4444; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2';" onmouseout="this.style.background='white';">삭제</button>
             </div>
-            <div style="margin-bottom: 12px;">
-                <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px;">질문 내용</label>
-                <textarea class="second-round-question-text" data-id="${q.id}" rows="5" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="질문 내용을 입력하세요">${(q.question_text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}</textarea>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 600; font-size: 15px; color: #1f2937;">질문 내용 <span style="color: #ef4444;">*</span></label>
+                <textarea class="second-round-question-text" data-id="${q.id}" rows="8" style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: inherit; resize: vertical; line-height: 1.6; transition: border-color 0.2s; white-space: pre-wrap;" placeholder="질문 내용을 입력하세요 (줄바꿈 가능)">${(q.question_text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}</textarea>
+                <p style="margin: 8px 0 0 0; color: #64748b; font-size: 12px;">💡 줄바꿈을 사용하여 질문을 더 읽기 쉽게 작성할 수 있습니다.</p>
             </div>
-            <div style="display: flex; gap: 16px; align-items: center;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" class="second-round-question-required" data-id="${q.id}" ${q.is_required ? 'checked' : ''} style="width: 18px; height: 18px;">
-                    <span style="font-size: 14px;">필수 항목</span>
+            <div style="display: flex; gap: 20px; align-items: center; padding-top: 16px; border-top: 1px solid #f0fdf4;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px 12px; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='#f0fdf4';" onmouseout="this.style.background='transparent';">
+                    <input type="checkbox" class="second-round-question-required" data-id="${q.id}" ${q.is_required ? 'checked' : ''} style="width: 20px; height: 20px; cursor: pointer; accent-color: #10b981;">
+                    <span style="font-size: 14px; font-weight: 600; color: #1f2937;">필수 항목</span>
                 </label>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <label style="font-size: 14px;">항목 번호:</label>
-                    <input type="number" class="second-round-question-number" data-id="${q.id}" value="${q.question_number}" min="1" style="width: 80px; padding: 6px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+                <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #f0fdf4; border-radius: 8px;">
+                    <label style="font-size: 14px; font-weight: 600; color: #1f2937;">항목 번호:</label>
+                    <input type="number" class="second-round-question-number" data-id="${q.id}" value="${q.question_number}" min="1" style="width: 90px; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; transition: border-color 0.2s;" onfocus="this.style.borderColor='#10b981';" onblur="this.style.borderColor='#e2e8f0';">
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // 새 2차 서류전형 질문지 항목 추가
@@ -2434,7 +2450,9 @@ async function saveAllSecondRoundQuestions(event) {
                 return null;
             }
             
-            const questionText = item.querySelector('.second-round-question-text')?.value.trim();
+            // 줄바꿈을 유지하면서 앞뒤 공백만 제거
+            const questionTextRaw = item.querySelector('.second-round-question-text')?.value || '';
+            const questionText = questionTextRaw.replace(/^\s+|\s+$/g, '');
             const isRequired = item.querySelector('.second-round-question-required')?.checked || false;
             const questionNumber = parseInt(item.querySelector('.second-round-question-number')?.value) || 1;
             
