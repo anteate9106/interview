@@ -130,7 +130,6 @@ function renderSurveyQuestions() {
             <textarea id="q${q.question_number}" name="q${q.question_number}" rows="5" 
                 placeholder="${q.question_text}" 
                 ${q.is_required ? 'required' : ''}></textarea>
-            ${q.hint_text ? `<small class="field-hint">💡 ${q.hint_text}</small>` : ''}
         </div>
     `).join('');
 }
