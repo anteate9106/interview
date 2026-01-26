@@ -24,10 +24,6 @@
     {
       "source": "/admin",
       "destination": "/index.html"
-    },
-    {
-      "source": "/survey",
-      "destination": "/surbey.html"
     }
   ]
 }

@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadApplicationGuide(); // 작성 안내 로드
     await loadJobPostingOptions(); // 채용공고 옵션 로드
     await loadContactInfo(); // 문의 정보 로드
+    await loadSurveyQuestions(); // 설문조사 항목 로드
     checkLoginStatus();
     setupEventListeners();
     loadDraft(); // 임시 저장 데이터 불러오기
@@ -187,6 +188,153 @@ function renderContactInfo(contactInfo) {
                 <p>으로 연락 주시기 바랍니다.</p>
             `;
         }
+    }
+}
+
+// 설문조사 항목 로드
+async function loadSurveyQuestions() {
+    try {
+        // 설문조사 안내문 로드
+        const intro = await getSurveyIntro();
+        const introContainer = document.getElementById('surveyIntroContainer');
+        const introText = document.getElementById('surveyIntroText');
+        
+        if (introContainer && introText) {
+            if (intro && intro.intro_text && intro.intro_text.trim()) {
+                introText.textContent = intro.intro_text;
+                introContainer.style.display = 'block';
+            } else {
+                introContainer.style.display = 'none';
+            }
+        }
+        
+        // 설문조사 항목 로드
+        const questions = await getAllSurveyQuestions();
+        renderSurveyQuestions(questions);
+    } catch (error) {
+        console.error('Error loading survey questions:', error);
+        // 에러 시 설문조사 섹션 숨기기
+        const surveySection = document.getElementById('surveySection');
+        if (surveySection) {
+            surveySection.style.display = 'none';
+        }
+    }
+}
+
+// 설문조사 항목 렌더링
+function renderSurveyQuestions(questions) {
+    const container = document.getElementById('surveyQuestionsContainer');
+    const surveySection = document.getElementById('surveySection');
+    
+    if (!container || !surveySection) return;
+    
+    // 활성화된 항목만 필터링
+    const activeQuestions = (questions || []).filter(q => q.is_active !== false);
+    
+    if (activeQuestions.length === 0) {
+        // 설문조사 항목이 없으면 섹션 숨기기
+        surveySection.style.display = 'none';
+        return;
+    }
+    
+    // 항목 번호 순으로 정렬
+    activeQuestions.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
+    
+    // 설문조사 섹션 표시
+    surveySection.style.display = 'block';
+    
+    // 설문조사 항목 렌더링
+    container.innerHTML = activeQuestions.map((q, index) => {
+        const questionId = `survey_question_${q.id || index}`;
+        const isRequired = q.is_required !== false;
+        const hintText = q.hint_text ? `<small class="field-hint" style="display: block; margin-top: 6px; color: #64748b; font-size: 13px;">${q.hint_text}</small>` : '';
+        
+        return `
+            <div class="form-field full-width" style="margin-bottom: 24px;">
+                <label for="${questionId}">
+                    ${q.question_text || '질문 내용'}
+                    ${isRequired ? '<span class="required">*</span>' : ''}
+                </label>
+                <textarea 
+                    id="${questionId}" 
+                    name="${questionId}"
+                    data-question-id="${q.id}"
+                    rows="4" 
+                    style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;"
+                    placeholder="답변을 입력하세요"
+                    ${isRequired ? 'required' : ''}
+                ></textarea>
+                ${hintText}
+            </div>
+        `;
+    }).join('');
+}
+
+// 설문조사 답변 수집
+function collectSurveyAnswers() {
+    const answers = {};
+    const surveyInputs = document.querySelectorAll('[data-question-id]');
+    
+    surveyInputs.forEach(input => {
+        const questionId = input.getAttribute('data-question-id');
+        if (questionId) {
+            answers[questionId] = input.value.trim();
+        }
+    });
+    
+    return answers;
+}
+
+// 설문조사 답변 저장
+async function saveSurveyAnswers(applicantId) {
+    try {
+        const answers = collectSurveyAnswers();
+        const answerEntries = Object.entries(answers);
+        
+        if (answerEntries.length === 0) {
+            console.log('설문조사 답변이 없습니다.');
+            return;
+        }
+        
+        // 지원자 정보 가져오기
+        let applicantName = '';
+        let applicantEmail = '';
+        
+        if (currentApplicant) {
+            applicantName = currentApplicant.name || '';
+            applicantEmail = currentApplicant.email || '';
+        } else {
+            // applicantId로 지원자 정보 조회
+            const applicant = await getApplicantByEmail(localStorage.getItem('loggedInApplicant') || '');
+            if (applicant) {
+                applicantName = applicant.name || '';
+                applicantEmail = applicant.email || '';
+            } else {
+                // applicants 테이블에서 직접 조회 시도
+                const allApplicants = await getAllApplicants();
+                const foundApplicant = allApplicants.find(a => a.id == applicantId);
+                if (foundApplicant) {
+                    applicantName = foundApplicant.name || '';
+                    applicantEmail = foundApplicant.email || '';
+                }
+            }
+        }
+        
+        // 설문조사 데이터 형식으로 변환
+        const surveyData = {
+            applicant_id: applicantId,
+            applicant_name: applicantName,
+            applicant_email: applicantEmail,
+            answers: answers,
+            submitted_at: new Date().toISOString()
+        };
+        
+        await saveSurvey(surveyData);
+        console.log('설문조사 답변 저장 완료');
+    } catch (error) {
+        console.error('설문조사 답변 저장 중 오류:', error);
+        // 설문조사 답변 저장 실패는 치명적이지 않으므로 경고만 표시
+        console.warn('설문조사 답변 저장에 실패했지만 지원서는 제출되었습니다.');
     }
 }
 
@@ -863,6 +1011,12 @@ async function handleSubmit(e) {
         console.log('Submitting application:', application);
         const newApplicant = await createApplicant(application);
         console.log('Application created successfully:', newApplicant);
+        
+        // currentApplicant 설정 (설문조사 답변 저장을 위해)
+        currentApplicant = newApplicant;
+        
+        // 설문조사 답변 저장
+        await saveSurveyAnswers(newApplicant.id);
 
         // 임시 저장 데이터 삭제
         localStorage.removeItem('applicationDraft');
@@ -954,6 +1108,9 @@ async function handleEdit(e) {
     }
 
     try {
+        // 설문조사 답변 저장
+        await saveSurveyAnswers(currentApplicant.id);
+        
         // 비밀번호 변경이 있는 경우
         if (formData.newPassword) {
             formData.password = formData.newPassword;

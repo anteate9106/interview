@@ -1760,6 +1760,7 @@ async function saveCurrentEmailTemplate() {
 // ==================== 설문조사 관리 ====================
 
 let surveyQuestions = [];
+let isSavingSurvey = false; // 저장 중 플래그
 
 // 설문조사 에디터 열기
 async function openSurveyEditor() {
@@ -1807,14 +1808,35 @@ async function loadSurveyIntro() {
 
 // 설문조사 항목 렌더링
 function renderSurveyQuestions() {
+    // 호출 추적 로그 (무한 루프 디버깅용)
+    const stackTrace = new Error().stack;
+    console.log('[renderSurveyQuestions] 호출됨', {
+        timestamp: new Date().toISOString(),
+        surveyQuestionsCount: surveyQuestions.length,
+        isSavingSurvey: isSavingSurvey,
+        caller: stackTrace.split('\n')[2]?.trim() || 'unknown'
+    });
+    
+    // 저장 중이면 렌더링하지 않음
+    if (isSavingSurvey) {
+        console.log('[renderSurveyQuestions] 저장 중이므로 렌더링 건너뜀');
+        return;
+    }
+    
     const container = document.getElementById('surveyQuestionsList');
-    if (!container) return;
+    if (!container) {
+        console.log('[renderSurveyQuestions] container를 찾을 수 없음');
+        return;
+    }
 
     if (surveyQuestions.length === 0) {
         container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">설문조사 항목이 없습니다. 새 항목을 추가해주세요.</p>';
         return;
     }
 
+    // HTML 생성 전 로그
+    console.log('[renderSurveyQuestions] HTML 생성 시작, 항목 수:', surveyQuestions.length);
+    
     container.innerHTML = surveyQuestions.map((q, index) => `
         <div class="survey-question-item" data-id="${q.id}" style="margin-bottom: 20px; padding: 20px; background: white; border: 1px solid #e2e8f0; border-radius: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
@@ -1837,6 +1859,8 @@ function renderSurveyQuestions() {
             </div>
         </div>
     `).join('');
+    
+    console.log('[renderSurveyQuestions] HTML 생성 완료');
 }
 
 // 새 설문조사 항목 추가
@@ -1880,14 +1904,45 @@ async function saveAllSurveyQuestions(event) {
     if (event && typeof event.preventDefault === 'function') {
         event.preventDefault();
         event.stopPropagation();
+        event.stopImmediatePropagation();
     }
     
-    // 저장 버튼 비활성화
+    // 이미 저장 중이면 중복 실행 방지
+    if (isSavingSurvey) {
+        console.log('[중복 방지] 이미 저장 중입니다. 중복 실행을 방지합니다.');
+        if (event && typeof event.stopImmediatePropagation === 'function') {
+            event.stopImmediatePropagation();
+        }
+        return;
+    }
+    
+    console.log('[saveAllSurveyQuestions] 함수 호출됨, isSavingSurvey:', isSavingSurvey);
+    
+    // 저장 중 플래그 설정 (즉시 설정하여 중복 호출 방지)
+    isSavingSurvey = true;
+    
+    // 저장 버튼 비활성화 및 클릭 이벤트 제거
     const saveBtn = document.getElementById('saveSurveyBtn');
     if (saveBtn) {
         saveBtn.disabled = true;
         saveBtn.style.opacity = '0.6';
+        saveBtn.style.pointerEvents = 'none'; // 클릭 방지
+        saveBtn.style.cursor = 'not-allowed';
         saveBtn.textContent = '저장 중...';
+        
+        // onclick 이벤트 완전히 제거
+        saveBtn.onclick = null;
+        saveBtn.removeAttribute('onclick');
+        
+        // 모든 이벤트 리스너 제거를 위해 클론
+        const newBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newBtn, saveBtn);
+        newBtn.id = 'saveSurveyBtn';
+        newBtn.disabled = true;
+        newBtn.style.opacity = '0.6';
+        newBtn.style.pointerEvents = 'none';
+        newBtn.style.cursor = 'not-allowed';
+        newBtn.textContent = '저장 중...';
     }
     
     try {
@@ -1939,6 +1994,16 @@ async function saveAllSurveyQuestions(event) {
         console.log('수집된 항목:', questionsToSave.length, '개');
         
         if (questionsToSave.length === 0) {
+            // 플래그 리셋 후 return
+            isSavingSurvey = false;
+            const saveBtn = document.getElementById('saveSurveyBtn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.pointerEvents = 'auto';
+                saveBtn.textContent = '저장';
+                saveBtn.setAttribute('onclick', 'saveAllSurveyQuestions(event)');
+            }
             alert('저장할 설문 항목이 없습니다.');
             return;
         }
@@ -1947,6 +2012,16 @@ async function saveAllSurveyQuestions(event) {
         const numbers = questionsToSave.map(q => q.question_number);
         const duplicates = numbers.filter((n, i) => numbers.indexOf(n) !== i);
         if (duplicates.length > 0) {
+            // 플래그 리셋 후 return
+            isSavingSurvey = false;
+            const saveBtn = document.getElementById('saveSurveyBtn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.pointerEvents = 'auto';
+                saveBtn.textContent = '저장';
+                saveBtn.setAttribute('onclick', 'saveAllSurveyQuestions(event)');
+            }
             alert(`항목 번호가 중복됩니다: ${[...new Set(duplicates)].join(', ')}`);
             return;
         }
@@ -1954,12 +2029,129 @@ async function saveAllSurveyQuestions(event) {
         // 저장
         console.log('데이터베이스에 저장 중...');
         console.log('저장할 데이터:', JSON.stringify(questionsToSave, null, 2));
-        const result = await saveAllSurveyQuestions(questionsToSave);
-        console.log('저장 결과:', result);
         
-        alert('✅ 설문조사 안내문과 항목이 저장되었습니다.');
-        await loadSurveyQuestions();
+        // db.js의 saveAllSurveyQuestions 함수 호출 (함수 이름 충돌 방지)
+        const getSupabaseFunc = window.getSupabase || getSupabase;
+        if (typeof getSupabaseFunc !== 'function') {
+            console.error('getSupabase 함수를 찾을 수 없습니다.');
+            throw new Error('getSupabase 함수를 찾을 수 없습니다. db.js가 제대로 로드되었는지 확인하세요.');
+        }
+        
+        console.log('getSupabase 함수 확인 완료');
+        const supabaseClient = getSupabaseFunc();
+        if (!supabaseClient) {
+            console.error('Supabase 클라이언트를 사용할 수 없습니다.');
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+        }
+        
+        console.log('Supabase 클라이언트 확인 완료');
+        
+        // 직접 저장 로직 실행 (db.js의 saveAllSurveyQuestions와 동일한 로직)
+        console.log('저장 루프 시작, 항목 수:', questionsToSave.length);
+        const results = [];
+        for (let i = 0; i < questionsToSave.length; i++) {
+            const q = questionsToSave[i];
+            console.log(`[${i + 1}/${questionsToSave.length}] 항목 처리 시작:`, {
+                id: q.id,
+                question_number: q.question_number,
+                question_text: q.question_text?.substring(0, 30) + '...'
+            });
+            
+            const questionData = {
+                question_number: q.question_number,
+                question_text: q.question_text,
+                hint_text: q.hint_text || null,
+                is_required: q.is_required !== undefined ? q.is_required : true,
+                is_active: q.is_active !== undefined ? q.is_active : true,
+                updated_at: new Date().toISOString()
+            };
+            
+            try {
+                if (q.id && !q.id.startsWith('temp_')) {
+                    // 기존 항목 업데이트
+                    console.log(`[${i + 1}] 기존 항목 업데이트 시도: id=${q.id}, question_number=${q.question_number}`);
+                    const { data, error } = await supabaseClient
+                        .from('survey_questions')
+                        .update(questionData)
+                        .eq('id', q.id)
+                        .select()
+                        .single();
+                    
+                    if (error) {
+                        console.error(`[${i + 1}] 항목 업데이트 실패:`, error);
+                        throw new Error(`항목 ${i + 1} 업데이트 실패: ${error.message || '알 수 없는 오류'}`);
+                    }
+                    console.log(`[${i + 1}] 항목 업데이트 성공:`, data?.id);
+                    results.push(data);
+                } else {
+                    // 새 항목 생성
+                    console.log(`[${i + 1}] 새 항목 생성 시도: question_number=${q.question_number}`);
+                    const { data, error } = await supabaseClient
+                        .from('survey_questions')
+                        .insert(questionData)
+                        .select()
+                        .single();
+                    
+                    if (error) {
+                        console.error(`[${i + 1}] 항목 생성 실패:`, error);
+                        throw new Error(`항목 ${i + 1} 생성 실패: ${error.message || '알 수 없는 오류'}`);
+                    }
+                    console.log(`[${i + 1}] 항목 생성 성공:`, data?.id);
+                    results.push(data);
+                }
+            } catch (itemError) {
+                console.error(`[${i + 1}] 항목 처리 중 에러:`, itemError);
+                throw itemError;
+            }
+        }
+        
+        console.log('저장 루프 완료, 결과 개수:', results.length);
+        console.log('저장 결과:', results.map(r => ({ id: r.id, question_number: r.question_number })));
+        
+        // 저장 완료 - UI 업데이트 없이 메시지만 표시 (무한 루프 방지)
+        // surveyQuestions 배열만 업데이트 (다음 로드 시 사용)
+        surveyQuestions = results.map((result) => {
+            // questionsToSave에서 해당 항목 찾기
+            const original = questionsToSave.find(q => 
+                (q.id && q.id === result.id) || 
+                (q.question_number === result.question_number)
+            );
+            
+            return {
+                id: result.id,
+                question_number: result.question_number,
+                question_text: result.question_text,
+                hint_text: result.hint_text || null,
+                is_required: result.is_required,
+                is_active: result.is_active,
+                ...(original || {}) // 원본 데이터의 다른 필드 유지
+            };
+        });
+        
+        // UI 업데이트하지 않음 - 사용자가 수동으로 새로고침하거나 모달을 닫았다가 다시 열면 최신 데이터가 로드됨
+        // renderSurveyQuestions() 호출 제거 - 무한 루프 방지
+        // loadSurveyIntro() 호출 제거 - textarea 값 변경이 이벤트를 트리거할 수 있음
+        
         console.log('=== 설문조사 저장 완료 ===');
+        
+        // 플래그를 먼저 리셋 (alert 전에)
+        isSavingSurvey = false;
+        
+        // 저장 버튼 복원
+        const saveBtnAfter = document.getElementById('saveSurveyBtn');
+        if (saveBtnAfter) {
+            saveBtnAfter.disabled = false;
+            saveBtnAfter.style.opacity = '1';
+            saveBtnAfter.style.pointerEvents = 'auto';
+            saveBtnAfter.style.cursor = 'pointer';
+            saveBtnAfter.textContent = '저장';
+            saveBtnAfter.setAttribute('onclick', 'saveAllSurveyQuestions(event)');
+        }
+        
+        // alert는 마지막에 (사용자 확인 후에도 이벤트가 발생하지 않도록)
+        setTimeout(() => {
+            alert('✅ 설문조사 안내문과 항목이 저장되었습니다.');
+        }, 100);
         
     } catch (error) {
         console.error('=== 설문조사 저장 에러 ===');
@@ -1968,18 +2160,26 @@ async function saveAllSurveyQuestions(event) {
         console.error('Error details:', error.error || error.details);
         console.error('Full error:', JSON.stringify(error, null, 2));
         
+        // 에러 발생 시 즉시 플래그 리셋
+        isSavingSurvey = false;
+        
+        // 저장 버튼 복원
+        const saveBtnError = document.getElementById('saveSurveyBtn');
+        if (saveBtnError) {
+            saveBtnError.disabled = false;
+            saveBtnError.style.opacity = '1';
+            saveBtnError.style.pointerEvents = 'auto';
+            saveBtnError.style.cursor = 'pointer';
+            saveBtnError.textContent = '저장';
+            saveBtnError.setAttribute('onclick', 'saveAllSurveyQuestions(event)');
+        }
+        
         const errorMessage = error.message || error.error?.message || error.details?.message || '알 수 없는 오류';
         const errorDetails = error.error || error.details || {};
         
-        alert(`설문조사 저장 중 오류가 발생했습니다.\n\n오류 내용: ${errorMessage}\n\n자세한 내용은 브라우저 콘솔(F12)을 확인해주세요.`);
-    } finally {
-        // 저장 버튼 다시 활성화
-        const saveBtn = document.getElementById('saveSurveyBtn');
-        if (saveBtn) {
-            saveBtn.disabled = false;
-            saveBtn.style.opacity = '1';
-            saveBtn.textContent = '저장';
-        }
+        setTimeout(() => {
+            alert(`설문조사 저장 중 오류가 발생했습니다.\n\n오류 내용: ${errorMessage}\n\n자세한 내용은 브라우저 콘솔(F12)을 확인해주세요.`);
+        }, 100);
     }
 }
 

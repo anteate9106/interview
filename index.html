@@ -48,7 +48,6 @@
                 <button onclick="openJobPostingEditor()" class="btn-nav-link">채용공고관리</button>
                 <button onclick="openEvaluatorEditor()" class="btn-nav-link">평가자관리</button>
                 <button onclick="openEmailTemplateEditor()" class="btn-nav-link">메시지관리</button>
-                <button onclick="openSurveyEditor()" class="btn-nav-link">설문조사관리</button>
                 <span id="currentUserPosting" class="current-user"></span>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
             </div>
@@ -214,7 +213,6 @@
                 <button onclick="openJobPostingEditor()" class="btn-nav-link">채용공고관리</button>
                 <button onclick="openEvaluatorEditor()" class="btn-nav-link">평가자관리</button>
                 <button onclick="openEmailTemplateEditor()" class="btn-nav-link">메시지관리</button>
-                <button onclick="openSurveyEditor()" class="btn-nav-link">설문조사관리</button>
                 <span id="currentUser" class="current-user"></span>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
             </div>
@@ -342,7 +340,7 @@
             </div>
             <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; padding: 20px; border-top: 1px solid #e2e8f0;">
                 <button onclick="closeSurveyModal()" style="padding: 10px 20px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer;">취소</button>
-                <button onclick="saveAllSurveyQuestions()" id="saveSurveyBtn" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; cursor: pointer; font-weight: 600; transition: opacity 0.2s;">저장</button>
+                <button onclick="saveAllSurveyQuestions(event)" id="saveSurveyBtn" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; cursor: pointer; font-weight: 600; transition: opacity 0.2s;">저장</button>
             </div>
         </div>
     </div>

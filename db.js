@@ -1148,7 +1148,18 @@ async function getSurveyByApplicantId(applicantId) {
             .single();
         
         if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
-        return data;
+        
+        if (!data) return null;
+        
+        // answers JSONB를 q1, q2, q3 형식으로 변환 (하위 호환성)
+        const convertedData = { ...data };
+        if (data.answers && typeof data.answers === 'object') {
+            Object.keys(data.answers).forEach(questionNumber => {
+                convertedData[`q${questionNumber}`] = data.answers[questionNumber];
+            });
+        }
+        
+        return convertedData;
     } catch (error) {
         console.error('Error fetching survey:', error);
         return null;
@@ -1158,6 +1169,33 @@ async function getSurveyByApplicantId(applicantId) {
 // 설문조사 데이터 저장
 async function saveSurvey(surveyData) {
     try {
+        // q1, q2, q3 등의 동적 필드를 answers JSONB로 변환
+        const answers = {};
+        const baseData = {
+            applicant_id: surveyData.applicant_id,
+            applicant_name: surveyData.applicant_name || surveyData.applicantName,
+            applicant_email: surveyData.applicant_email || surveyData.applicantEmail,
+            submitted_at: surveyData.submitted_at || surveyData.submittedAt || new Date().toISOString()
+        };
+        
+        // 모든 q{number} 필드를 answers 객체로 수집
+        Object.keys(surveyData).forEach(key => {
+            if (key.startsWith('q') && /^q\d+$/.test(key)) {
+                const questionNumber = key.substring(1);
+                answers[questionNumber] = surveyData[key];
+            }
+        });
+        
+        // answers가 비어있고 surveyData.answers가 있으면 사용
+        if (Object.keys(answers).length === 0 && surveyData.answers) {
+            Object.assign(answers, surveyData.answers);
+        }
+        
+        const dataToSave = {
+            ...baseData,
+            answers: answers
+        };
+        
         // 기존 설문이 있는지 확인
         const existing = await getSurveyByApplicantId(surveyData.applicant_id);
         
@@ -1169,10 +1207,7 @@ async function saveSurvey(surveyData) {
 
             const { data, error } = await supabaseClient
                 .from('surveys')
-                .update({
-                    ...surveyData,
-                    updated_at: new Date().toISOString()
-                })
+                .update(dataToSave)
                 .eq('applicant_id', surveyData.applicant_id)
                 .select()
                 .single();
@@ -1187,7 +1222,7 @@ async function saveSurvey(surveyData) {
 
             const { data, error } = await supabaseClient
                 .from('surveys')
-                .insert(surveyData)
+                .insert(dataToSave)
                 .select()
                 .single();
             
@@ -1481,6 +1516,7 @@ async function saveSurveyIntro(introText) {
 // 전역 스코프에 함수 노출 (app.js에서 사용할 수 있도록)
 if (typeof window !== 'undefined') {
     // 주요 함수들을 window 객체에 할당
+    window.getSupabase = getSupabase;
     window.getAllApplicants = getAllApplicants;
     window.getAllJobPostings = getAllJobPostings;
     window.getApplicationGuide = getApplicationGuide;
