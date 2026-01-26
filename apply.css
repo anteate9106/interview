@@ -438,14 +438,7 @@ body {
 }
 
 .apply-content::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--gradient-primary);
-    border-radius: 24px 24px 0 0;
+    display: none;
 }
 
 /* 폼 섹션 */
