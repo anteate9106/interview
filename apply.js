@@ -630,25 +630,18 @@ async function updateStatusBanner(applicant) {
     const banner = document.getElementById('statusBanner');
     const hasEvaluations = applicant.evaluations && applicant.evaluations.length > 0;
     const notificationSent = applicant.notification_sent;
+    const isPassed = applicant.status === 'passed';
+    const isFailed = applicant.status === 'failed';
     
-    if (hasEvaluations) {
+    // 합격/불합격 상태인 경우 무조건 수정 불가
+    if (isPassed || isFailed) {
         banner.className = 'status-banner evaluated';
-        // 합격/불합격 상태 확인
-        let resultText = '심사중';
-        let resultIcon = '🔒';
+        let resultText = isPassed ? '합격' : '불합격';
         let resultMessage = '';
         
-        if (applicant.status === 'passed') {
-            resultText = '합격';
-            resultIcon = '🎉';
-        } else if (applicant.status === 'failed') {
-            resultText = '불합격';
-            resultIcon = '📋';
-        }
-        
         // 결과 통보가 된 경우 메시지 표시
-        if (notificationSent && (applicant.status === 'passed' || applicant.status === 'failed')) {
-            const templateId = applicant.status === 'passed' ? 'passed' : 'failed';
+        if (notificationSent) {
+            const templateId = isPassed ? 'passed' : 'failed';
             const template = await getEmailTemplate(templateId);
             
             if (template) {
@@ -660,8 +653,8 @@ async function updateStatusBanner(applicant) {
             }
         }
         
-        if (notificationSent && (applicant.status === 'passed' || applicant.status === 'failed')) {
-            // 결과 통보된 경우
+        // 결과 통보된 경우
+        if (notificationSent) {
             banner.style.background = '#ffffff';
             banner.innerHTML = `
                 <div class="status-info">
@@ -678,7 +671,7 @@ async function updateStatusBanner(applicant) {
                 </div>
             `;
         } else {
-            // 평가 완료되었지만 결과 통보 전
+            // 합격/불합격 상태지만 아직 통보 전
             banner.innerHTML = `
                 <div class="status-info">
                     <div class="status-icon">🔒</div>
@@ -713,7 +706,44 @@ async function updateStatusBanner(applicant) {
             formContent.style.opacity = '0.7';
             formContent.style.pointerEvents = 'none';
         }
+    } else if (hasEvaluations) {
+        // 평가는 있지만 합격/불합격 결정 전
+        banner.className = 'status-banner evaluated';
+        banner.innerHTML = `
+            <div class="status-info">
+                <div class="status-icon">🔒</div>
+                <div class="status-text">
+                    <h4>평가 완료 - 수정 불가</h4>
+                    <p>서류 전형이 완료되었습니다. 결과는 별도로 안내될 예정입니다.</p>
+                    <p style="margin-top: 8px; color: #ef4444; font-weight: 600; font-size: 15px;">
+                        ⚠️ 평가가 완료되어 지원서를 수정할 수 없습니다.<br>
+                        수정이 필요한 경우 담당자에게 문의하시기 바랍니다.
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        // 수정 버튼 숨기고 취소 버튼을 "확인" 버튼으로 변경
+        const submitBtn = document.querySelector('#editForm .btn-submit');
+        const cancelBtn = document.querySelector('#editForm .btn-reset');
+        
+        if (submitBtn) {
+            submitBtn.style.display = 'none';
+        }
+        
+        if (cancelBtn) {
+            cancelBtn.textContent = '확인';
+            cancelBtn.onclick = function() { handleLogout(); };
+        }
+        
+        // 폼 전체를 읽기 전용으로 표시
+        const formContent = document.getElementById('editFormContent');
+        if (formContent) {
+            formContent.style.opacity = '0.7';
+            formContent.style.pointerEvents = 'none';
+        }
     } else {
+        // 평가 대기 중
         banner.className = 'status-banner pending';
         banner.innerHTML = `
             <div class="status-info">
