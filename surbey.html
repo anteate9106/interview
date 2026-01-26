@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>청년들 설문조사</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+    <link rel="stylesheet" href="apply.css">
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="db.js"></script>
+</head>
+<body>
+    <!-- 로그인 페이지 -->
+    <div id="loginPage" class="page active">
+        <div class="login-container">
+            <div class="login-box">
+                <h2>설문조사 접속</h2>
+                <p class="login-subtitle">1차 서류전형 합격자만 접근 가능합니다</p>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">이메일</label>
+                        <input type="email" id="loginEmail" placeholder="이메일을 입력하세요" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">비밀번호</label>
+                        <input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요" required>
+                    </div>
+                    <button type="submit" class="btn-login">접속하기</button>
+                </form>
+                <p class="login-help">* 지원서 제출 시 설정한 비밀번호를 입력하세요</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 설문조사 페이지 -->
+    <div id="surveyPage" class="page">
+        <div class="apply-container">
+            <div class="apply-header">
+                <h1>청년들 설문조사</h1>
+                <p class="subtitle" id="welcomeText">환영합니다</p>
+            </div>
+
+            <div class="apply-content">
+                <form id="surveyForm" class="apply-form">
+                    <!-- 인적사항 확인 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <span class="section-number">01</span>
+                            인적사항 확인
+                        </h2>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label>이름</label>
+                                <input type="text" id="applicantName" readonly style="background: #f3f4f6;">
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>이메일</label>
+                                <input type="email" id="applicantEmail" readonly style="background: #f3f4f6;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 설문 항목 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <span class="section-number">02</span>
+                            설문 항목
+                        </h2>
+
+                        <div class="form-field full-width">
+                            <label for="q1">1. 청년들에 지원하게 된 계기나 동기를 자유롭게 작성해주세요. <span class="required">*</span></label>
+                            <textarea id="q1" rows="5" placeholder="청년들에 지원하게 된 계기나 동기를 작성해주세요" required></textarea>
+                            <small class="field-hint">💡 지원 동기와 회사에 대한 관심을 자유롭게 표현해주세요</small>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="q2">2. 입사 후 어떤 업무를 하고 싶으신가요? <span class="required">*</span></label>
+                            <textarea id="q2" rows="5" placeholder="입사 후 희망하는 업무나 역할에 대해 작성해주세요" required></textarea>
+                            <small class="field-hint">💡 자신의 강점과 희망 업무를 연결하여 작성해주세요</small>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="q3">3. 본인의 강점과 약점을 각각 2가지씩 작성해주세요. <span class="required">*</span></label>
+                            <textarea id="q3" rows="5" placeholder="강점과 약점을 각각 2가지씩 작성해주세요" required></textarea>
+                            <small class="field-hint">💡 약점에 대해서는 개선 노력이나 보완 방안도 함께 작성해주시면 좋습니다</small>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="q4">4. 팀워크와 협업에 대한 본인의 생각을 작성해주세요. <span class="required">*</span></label>
+                            <textarea id="q4" rows="5" placeholder="팀워크와 협업에 대한 경험이나 생각을 작성해주세요" required></textarea>
+                            <small class="field-hint">💡 과거 협업 경험이나 팀 프로젝트 경험을 바탕으로 작성해주세요</small>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="q5">5. 업무 중 스트레스를 받을 때 어떻게 대처하시나요? <span class="required">*</span></label>
+                            <textarea id="q5" rows="5" placeholder="스트레스 관리 방법이나 대처 방안을 작성해주세요" required></textarea>
+                            <small class="field-hint">💡 구체적인 스트레스 해소 방법이나 경험을 작성해주세요</small>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="q6">6. 5년 후 본인의 모습을 그려보세요. <span class="required">*</span></label>
+                            <textarea id="q6" rows="5" placeholder="5년 후 자신의 모습이나 목표를 작성해주세요" required></textarea>
+                            <small class="field-hint">💡 장기적인 비전과 목표를 포함하여 작성해주세요</small>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="q7">7. 청년들에서 가장 기대하는 점은 무엇인가요? <span class="required">*</span></label>
+                            <textarea id="q7" rows="5" placeholder="청년들에서 기대하는 점을 작성해주세요" required></textarea>
+                            <small class="field-hint">💡 회사 문화, 업무 환경, 성장 기회 등 다양한 관점에서 작성해주세요</small>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="q8">8. 추가로 전달하고 싶은 사항이 있으시면 자유롭게 작성해주세요.</label>
+                            <textarea id="q8" rows="5" placeholder="추가로 전달하고 싶은 사항을 작성해주세요"></textarea>
+                            <small class="field-hint">💡 자유롭게 작성해주세요</small>
+                        </div>
+                    </div>
+
+                    <!-- 제출 버튼 -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">제출하기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="surbey.js"></script>
+</body>
+</html>

@@ -788,3 +788,76 @@ async function getJobPostingStats() {
         return {};
     }
 }
+
+// ==================== 설문조사 관련 ====================
+
+// 지원자 이메일로 지원자 정보 가져오기
+async function getApplicantByEmail(email) {
+    try {
+        const { data, error } = await supabase
+            .from('applicants')
+            .select('*')
+            .eq('email', email)
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error fetching applicant by email:', error);
+        return null;
+    }
+}
+
+// 지원자 ID로 설문조사 데이터 가져오기
+async function getSurveyByApplicantId(applicantId) {
+    try {
+        const { data, error } = await supabase
+            .from('surveys')
+            .select('*')
+            .eq('applicant_id', applicantId)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+        return data;
+    } catch (error) {
+        console.error('Error fetching survey:', error);
+        return null;
+    }
+}
+
+// 설문조사 데이터 저장
+async function saveSurvey(surveyData) {
+    try {
+        // 기존 설문이 있는지 확인
+        const existing = await getSurveyByApplicantId(surveyData.applicant_id);
+        
+        if (existing) {
+            // 업데이트
+            const { data, error } = await supabase
+                .from('surveys')
+                .update({
+                    ...surveyData,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('applicant_id', surveyData.applicant_id)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return data;
+        } else {
+            // 새로 생성
+            const { data, error } = await supabase
+                .from('surveys')
+                .insert(surveyData)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return data;
+        }
+    } catch (error) {
+        console.error('Error saving survey:', error);
+        throw error;
+    }
+}
