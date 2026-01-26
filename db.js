@@ -1323,15 +1323,11 @@ async function saveAllSurveyQuestions(questions) {
                     // 기존 항목 업데이트
                     console.log(`기존 항목 업데이트: id=${q.id}`);
                     // supabase 클라이언트 확인 (매번 최신 클라이언트 가져오기)
-                    const supabaseClient = getSupabase() || supabase;
+                    const supabaseClient = getSupabase();
                     if (!supabaseClient) {
                         throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
                     }
                     console.log(`[db.js] 항목 ${i + 1} 업데이트 시도:`, { id: q.id, question_number: q.question_number });
-                    const supabaseClient = getSupabase();
-
-                    if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
                     const { data, error } = await supabaseClient
                         .from('survey_questions')
                         .update(questionData)
@@ -1349,15 +1345,11 @@ async function saveAllSurveyQuestions(questions) {
                     // 새 항목 생성
                     console.log(`새 항목 생성: question_number=${q.question_number}`);
                     // supabase 클라이언트 확인 (매번 최신 클라이언트 가져오기)
-                    const supabaseClient = getSupabase() || supabase;
+                    const supabaseClient = getSupabase();
                     if (!supabaseClient) {
                         throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
                     }
                     console.log(`[db.js] 항목 ${i + 1} 생성 시도:`, { question_number: q.question_number });
-                    const supabaseClient = getSupabase();
-
-                    if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
                     const { data, error } = await supabaseClient
                         .from('survey_questions')
                         .insert(questionData)
