@@ -1713,10 +1713,6 @@ function renderSurveyQuestions() {
                 <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px;">질문 내용</label>
                 <textarea class="survey-question-text" data-id="${q.id}" rows="3" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit;">${q.question_text || ''}</textarea>
             </div>
-            <div style="margin-bottom: 12px;">
-                <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px;">힌트 텍스트</label>
-                <input type="text" class="survey-question-hint" data-id="${q.id}" value="${q.hint_text || ''}" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;" placeholder="힌트 텍스트를 입력하세요">
-            </div>
             <div style="display: flex; gap: 16px; align-items: center;">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                     <input type="checkbox" class="survey-question-required" data-id="${q.id}" ${q.is_required ? 'checked' : ''} style="width: 18px; height: 18px;">
@@ -1779,7 +1775,6 @@ async function saveAllSurveyQuestions() {
             if (!item) return null;
             
             const questionText = item.querySelector('.survey-question-text')?.value.trim();
-            const hintText = item.querySelector('.survey-question-hint')?.value.trim();
             const isRequired = item.querySelector('.survey-question-required')?.checked || false;
             const questionNumber = parseInt(item.querySelector('.survey-question-number')?.value) || 1;
             
@@ -1792,7 +1787,7 @@ async function saveAllSurveyQuestions() {
                 id: q.id.startsWith('temp_') ? undefined : q.id,
                 question_number: questionNumber,
                 question_text: questionText,
-                hint_text: hintText || null,
+                hint_text: null,
                 is_required: isRequired,
                 is_active: true
             };
