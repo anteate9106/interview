@@ -151,6 +151,52 @@ function handleLogout(skipConfirm = false) {
     }
 }
 
+// 지원 현황 업데이트
+function updateApplicationStatus(applicant) {
+    const statusDiv = document.getElementById('applicationStatus');
+    if (!statusDiv) return;
+    
+    const hasEvaluations = applicant.evaluations && applicant.evaluations.length > 0;
+    const notificationSent = applicant.notification_sent;
+    
+    // 제출일 포맷팅
+    let submitDate = '미입력';
+    if (applicant.submit_date) {
+        const date = new Date(applicant.submit_date);
+        submitDate = date.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } else if (applicant.submitDate) {
+        // 하위 호환성
+        submitDate = applicant.submitDate;
+    }
+    
+    // 합격/불합격 상태
+    let resultText = '';
+    let resultStyle = '';
+    if (notificationSent && applicant.status === 'passed') {
+        resultText = '🎉 합격';
+        resultStyle = 'color: #10b981; font-weight: 700; font-size: 16px;';
+    } else if (notificationSent && applicant.status === 'failed') {
+        resultText = '불합격';
+        resultStyle = 'color: #ef4444; font-weight: 700;';
+    } else if (applicant.status === 'passed' || applicant.status === 'failed') {
+        resultText = '결과 확인 중';
+        resultStyle = 'color: #f59e0b; font-weight: 600;';
+    } else {
+        resultText = hasEvaluations ? '심사중' : '평가대기';
+        resultStyle = 'color: #64748b;';
+    }
+
+    statusDiv.innerHTML = `
+        <p><strong>채용공고</strong> <span style="color: #6366f1; font-weight: 600;">${applicant.job_posting || '미선택'}</span></p>
+        <p><strong>제출일</strong> <span>${submitDate}</span></p>
+        <p><strong>평가결과</strong> <span style="${resultStyle}">${resultText}</span></p>
+    `;
+}
+
 // 지원자 데이터 로드
 async function loadApplicantData(email) {
     try {
@@ -173,6 +219,9 @@ async function loadApplicantData(email) {
         currentApplicant = applicant;
 
         document.getElementById('applicantWelcome').textContent = `${applicant.name}님, 환영합니다!`;
+
+        // 지원 현황 업데이트
+        updateApplicationStatus(applicant);
 
         // 질문지 로드
         await loadQuestions();

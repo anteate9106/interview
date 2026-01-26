@@ -42,6 +42,9 @@
     <div id="questionPage" class="page">
         <div class="apply-container">
             <div class="apply-header">
+                <div class="header-actions">
+                    <button onclick="handleLogout()" class="btn-logout-light">로그아웃</button>
+                </div>
                 <h1>🎯 2차 서류전형 질문지</h1>
                 <p class="subtitle">축하합니다! 1차 서류전형에 합격하셨습니다</p>
             </div>
@@ -84,6 +87,25 @@
                         </p>
                     </div>
                 </form>
+            </div>
+
+            <!-- 사이드바 -->
+            <div class="sidebar">
+                <div class="info-card">
+                    <h3>✏️ 수정 안내</h3>
+                    <ul>
+                        <li>이메일은 변경할 수 없습니다</li>
+                        <li>제출 전까지만 수정 가능합니다</li>
+                        <li><strong style="color: #ef4444;">제출 완료 시 수정 불가</strong></li>
+                        <li>변경사항은 즉시 반영됩니다</li>
+                        <li>신중하게 작성해주세요</li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <h3>📊 지원 현황</h3>
+                    <div id="applicationStatus"></div>
+                </div>
             </div>
         </div>
     </div>
