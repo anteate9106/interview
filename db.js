@@ -81,7 +81,7 @@ async function testSupabaseConnection() {
         console.log('[db.js] Supabase 연결 테스트 시작...');
         
         // 클라이언트 초기화 확인
-        const supabaseClient = getSupabase();
+        let supabaseClient = getSupabase();
         if (!supabaseClient) {
             const initialized = initSupabaseForDb();
             if (!initialized) {
@@ -91,10 +91,10 @@ async function testSupabaseConnection() {
                     details: 'config.js가 먼저 로드되었는지 확인하세요.'
                 };
             }
+            supabaseClient = getSupabase();
         }
         
-        const finalClient = getSupabase();
-        if (!finalClient) {
+        if (!supabaseClient) {
             return {
                 success: false,
                 error: 'Supabase 클라이언트가 null입니다.',
@@ -102,15 +102,10 @@ async function testSupabaseConnection() {
             };
         }
         
-        const supabaseClient = getSupabase();
         console.log('[db.js] Supabase 클라이언트 확인됨:', !!supabaseClient);
         console.log('[db.js] Supabase URL:', supabaseClient?.supabaseUrl || 'N/A');
         
         // 간단한 쿼리로 연결 테스트
-        const supabaseClient = getSupabase();
-
-        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
-
         const { data, error } = await supabaseClient
             .from('survey_questions')
             .select('id')
@@ -155,35 +150,70 @@ if (typeof window !== 'undefined') {
 // 모든 지원자 가져오기
 async function getAllApplicants() {
     try {
+        // Supabase 클라이언트 확인 및 초기화
         let supabaseClient = getSupabase();
         if (!supabaseClient) {
+            console.log('[getAllApplicants] Supabase 클라이언트가 없어서 초기화 시도...');
             initSupabaseForDb();
+            // 초기화 후 잠시 대기
+            await new Promise(resolve => setTimeout(resolve, 100));
             supabaseClient = getSupabase();
         }
+        
         if (!supabaseClient) {
-            throw new Error('Supabase 클라이언트를 사용할 수 없습니다.');
+            console.error('[getAllApplicants] Supabase 클라이언트를 초기화할 수 없습니다.');
+            throw new Error('Supabase 클라이언트를 사용할 수 없습니다. 페이지를 새로고침해주세요.');
         }
+        
+        console.log('[getAllApplicants] Supabase 클라이언트 확인됨, 데이터 조회 시작...');
         const { data, error } = await supabaseClient
             .from('applicants')
             .select('*')
             .order('created_at', { ascending: false });
         
-        if (error) throw error;
+        if (error) {
+            console.error('[getAllApplicants] Supabase 쿼리 오류:', error);
+            throw error;
+        }
+        
+        console.log('[getAllApplicants] 지원자 데이터 조회 성공:', data ? data.length : 0, '명');
+        
+        if (!data || data.length === 0) {
+            console.warn('[getAllApplicants] 지원자 데이터가 없습니다.');
+            return [];
+        }
         
         // 각 지원자의 평가 데이터 가져오기
+        console.log('[getAllApplicants] 평가 데이터 로딩 시작...');
         const applicantsWithEvaluations = await Promise.all(
             data.map(async (applicant) => {
-                const evaluations = await getEvaluationsByApplicant(applicant.id);
-                return {
-                    ...applicant,
-                    evaluations: evaluations
-                };
+                try {
+                    const evaluations = await getEvaluationsByApplicant(applicant.id);
+                    return {
+                        ...applicant,
+                        evaluations: evaluations || []
+                    };
+                } catch (evalError) {
+                    console.error(`[getAllApplicants] 지원자 ${applicant.id}의 평가 데이터 로딩 실패:`, evalError);
+                    return {
+                        ...applicant,
+                        evaluations: []
+                    };
+                }
             })
         );
         
+        console.log('[getAllApplicants] 모든 데이터 로딩 완료:', applicantsWithEvaluations.length, '명');
         return applicantsWithEvaluations;
     } catch (error) {
-        console.error('Error fetching applicants:', error);
+        console.error('[getAllApplicants] 오류 발생:', error);
+        console.error('[getAllApplicants] 오류 상세:', {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+        });
+        // 에러가 발생해도 빈 배열 반환 (UI가 깨지지 않도록)
         return [];
     }
 }
