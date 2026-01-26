@@ -1645,5 +1645,163 @@ async function saveCurrentEmailTemplate() {
     }
 }
 
+// ==================== 설문조사 관리 ====================
+
+let surveyQuestions = [];
+
+// 설문조사 에디터 열기
+async function openSurveyEditor() {
+    const modal = document.getElementById('surveyModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        await loadSurveyQuestions();
+    }
+}
+
+// 설문조사 에디터 닫기
+function closeSurveyModal() {
+    const modal = document.getElementById('surveyModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 설문조사 항목 로드
+async function loadSurveyQuestions() {
+    try {
+        surveyQuestions = await getAllSurveyQuestions();
+        renderSurveyQuestions();
+    } catch (error) {
+        console.error('Error loading survey questions:', error);
+        alert('설문조사 항목을 불러오는 중 오류가 발생했습니다.');
+    }
+}
+
+// 설문조사 항목 렌더링
+function renderSurveyQuestions() {
+    const container = document.getElementById('surveyQuestionsList');
+    if (!container) return;
+
+    if (surveyQuestions.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">설문조사 항목이 없습니다. 새 항목을 추가해주세요.</p>';
+        return;
+    }
+
+    container.innerHTML = surveyQuestions.map((q, index) => `
+        <div class="survey-question-item" data-id="${q.id}" style="margin-bottom: 20px; padding: 20px; background: white; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                <h3 style="margin: 0; color: #1f2937; font-size: 16px;">항목 ${q.question_number}</h3>
+                <button onclick="deleteSurveyQuestionItem('${q.id}')" style="padding: 6px 12px; border: 1px solid #ef4444; border-radius: 6px; background: white; color: #ef4444; cursor: pointer; font-size: 12px;">삭제</button>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px;">질문 내용</label>
+                <textarea class="survey-question-text" data-id="${q.id}" rows="3" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit;">${q.question_text || ''}</textarea>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px;">힌트 텍스트</label>
+                <input type="text" class="survey-question-hint" data-id="${q.id}" value="${q.hint_text || ''}" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;" placeholder="힌트 텍스트를 입력하세요">
+            </div>
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" class="survey-question-required" data-id="${q.id}" ${q.is_required ? 'checked' : ''} style="width: 18px; height: 18px;">
+                    <span style="font-size: 14px;">필수 항목</span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-size: 14px;">항목 번호:</label>
+                    <input type="number" class="survey-question-number" data-id="${q.id}" value="${q.question_number}" min="1" style="width: 80px; padding: 6px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 새 설문조사 항목 추가
+function addNewSurveyQuestion() {
+    const newQuestion = {
+        id: `temp_${Date.now()}`,
+        question_number: surveyQuestions.length > 0 ? Math.max(...surveyQuestions.map(q => q.question_number)) + 1 : 1,
+        question_text: '',
+        hint_text: '',
+        is_required: true,
+        is_active: true
+    };
+    
+    surveyQuestions.push(newQuestion);
+    renderSurveyQuestions();
+    
+    // 새로 추가된 항목으로 스크롤
+    setTimeout(() => {
+        const newItem = document.querySelector(`[data-id="${newQuestion.id}"]`);
+        if (newItem) {
+            newItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const textarea = newItem.querySelector('.survey-question-text');
+            if (textarea) textarea.focus();
+        }
+    }, 100);
+}
+
+// 설문조사 항목 삭제
+function deleteSurveyQuestionItem(questionId) {
+    if (!confirm('이 설문 항목을 삭제하시겠습니까?')) {
+        return;
+    }
+    
+    surveyQuestions = surveyQuestions.filter(q => q.id !== questionId);
+    renderSurveyQuestions();
+}
+
+// 모든 설문조사 항목 저장
+async function saveAllSurveyQuestions() {
+    try {
+        // 입력값 수집
+        const questionsToSave = surveyQuestions.map(q => {
+            const item = document.querySelector(`[data-id="${q.id}"]`);
+            if (!item) return null;
+            
+            const questionText = item.querySelector('.survey-question-text')?.value.trim();
+            const hintText = item.querySelector('.survey-question-hint')?.value.trim();
+            const isRequired = item.querySelector('.survey-question-required')?.checked || false;
+            const questionNumber = parseInt(item.querySelector('.survey-question-number')?.value) || 1;
+            
+            if (!questionText) {
+                alert(`항목 ${questionNumber}의 질문 내용을 입력해주세요.`);
+                return null;
+            }
+            
+            return {
+                id: q.id.startsWith('temp_') ? undefined : q.id,
+                question_number: questionNumber,
+                question_text: questionText,
+                hint_text: hintText || null,
+                is_required: isRequired,
+                is_active: true
+            };
+        }).filter(q => q !== null);
+        
+        if (questionsToSave.length === 0) {
+            alert('저장할 설문 항목이 없습니다.');
+            return;
+        }
+        
+        // 항목 번호 중복 확인
+        const numbers = questionsToSave.map(q => q.question_number);
+        const duplicates = numbers.filter((n, i) => numbers.indexOf(n) !== i);
+        if (duplicates.length > 0) {
+            alert(`항목 번호가 중복됩니다: ${[...new Set(duplicates)].join(', ')}`);
+            return;
+        }
+        
+        // 저장
+        await saveAllSurveyQuestions(questionsToSave);
+        
+        alert('✅ 설문조사 항목이 저장되었습니다.');
+        await loadSurveyQuestions();
+        
+    } catch (error) {
+        console.error('Error saving survey questions:', error);
+        alert('설문조사 항목 저장 중 오류가 발생했습니다.');
+    }
+}
+
 // ==================== 문의 관리 ====================
 // (작성 안내 관리에 통합됨)

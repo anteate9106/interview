@@ -1,9 +1,11 @@
 // 전역 변수
 let currentApplicant = null;
+let surveyQuestions = [];
 
 // 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     setupEventListeners();
+    await loadSurveyQuestions();
     checkLoginStatus();
 });
 
@@ -81,6 +83,40 @@ async function handleLogin(e) {
     }
 }
 
+// 설문조사 항목 로드
+async function loadSurveyQuestions() {
+    try {
+        surveyQuestions = await getAllSurveyQuestions();
+        renderSurveyQuestions();
+    } catch (error) {
+        console.error('Error loading survey questions:', error);
+    }
+}
+
+// 설문조사 항목 렌더링
+function renderSurveyQuestions() {
+    const container = document.getElementById('surveyQuestionsContainer');
+    if (!container) return;
+
+    if (surveyQuestions.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">설문조사 항목이 없습니다.</p>';
+        return;
+    }
+
+    container.innerHTML = surveyQuestions.map((q, index) => `
+        <div class="form-field full-width">
+            <label for="q${q.question_number}">
+                ${q.question_number}. ${q.question_text}
+                ${q.is_required ? '<span class="required">*</span>' : ''}
+            </label>
+            <textarea id="q${q.question_number}" name="q${q.question_number}" rows="5" 
+                placeholder="${q.question_text}" 
+                ${q.is_required ? 'required' : ''}></textarea>
+            ${q.hint_text ? `<small class="field-hint">💡 ${q.hint_text}</small>` : ''}
+        </div>
+    `).join('');
+}
+
 // 지원자 데이터 로드
 async function loadApplicantData(email) {
     try {
@@ -108,13 +144,13 @@ async function loadSurveyData(applicantId) {
     try {
         const survey = await getSurveyByApplicantId(applicantId);
         if (survey) {
-            // 설문 항목 채우기
-            for (let i = 1; i <= 8; i++) {
-                const field = document.getElementById(`q${i}`);
-                if (field && survey[`q${i}`]) {
-                    field.value = survey[`q${i}`];
+            // 설문 항목 채우기 (동적으로 생성된 필드에 맞춰서)
+            surveyQuestions.forEach(q => {
+                const field = document.getElementById(`q${q.question_number}`);
+                if (field && survey[`q${q.question_number}`]) {
+                    field.value = survey[`q${q.question_number}`];
                 }
-            }
+            });
         }
     } catch (error) {
         console.error('Error loading survey data:', error);
@@ -131,12 +167,12 @@ async function handleSurveySubmit(e) {
     }
 
     // 필수 항목 확인
-    const requiredFields = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7'];
-    for (const fieldId of requiredFields) {
-        const field = document.getElementById(fieldId);
+    const requiredQuestions = surveyQuestions.filter(q => q.is_required);
+    for (const q of requiredQuestions) {
+        const field = document.getElementById(`q${q.question_number}`);
         if (!field || !field.value.trim()) {
-            alert(`${field.previousElementSibling.textContent.replace('*', '').trim()} 항목을 작성해주세요.`);
-            field.focus();
+            alert(`${q.question_number}. ${q.question_text} 항목을 작성해주세요.`);
+            if (field) field.focus();
             return;
         }
     }
@@ -147,21 +183,21 @@ async function handleSurveySubmit(e) {
     }
 
     try {
-        // 설문 데이터 수집
+        // 설문 데이터 수집 (동적으로 생성된 필드에서)
         const surveyData = {
             applicant_id: currentApplicant.id,
             applicant_name: currentApplicant.name,
             applicant_email: currentApplicant.email,
-            q1: document.getElementById('q1').value.trim(),
-            q2: document.getElementById('q2').value.trim(),
-            q3: document.getElementById('q3').value.trim(),
-            q4: document.getElementById('q4').value.trim(),
-            q5: document.getElementById('q5').value.trim(),
-            q6: document.getElementById('q6').value.trim(),
-            q7: document.getElementById('q7').value.trim(),
-            q8: document.getElementById('q8').value.trim() || null,
             submitted_at: new Date().toISOString()
         };
+        
+        // 각 설문 항목의 답변 수집
+        surveyQuestions.forEach(q => {
+            const field = document.getElementById(`q${q.question_number}`);
+            if (field) {
+                surveyData[`q${q.question_number}`] = field.value.trim() || null;
+            }
+        });
 
         // 설문 데이터 저장
         await saveSurvey(surveyData);

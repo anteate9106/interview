@@ -861,3 +861,83 @@ async function saveSurvey(surveyData) {
         throw error;
     }
 }
+
+// ==================== 설문조사 항목 관리 ====================
+
+// 모든 설문조사 항목 가져오기
+async function getAllSurveyQuestions() {
+    try {
+        const { data, error } = await supabase
+            .from('survey_questions')
+            .select('*')
+            .eq('is_active', true)
+            .order('question_number', { ascending: true });
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching survey questions:', error);
+        return [];
+    }
+}
+
+// 설문조사 항목 저장
+async function saveSurveyQuestion(questionData) {
+    try {
+        const { data, error } = await supabase
+            .from('survey_questions')
+            .upsert({
+                ...questionData,
+                updated_at: new Date().toISOString()
+            }, {
+                onConflict: 'id'
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving survey question:', error);
+        throw error;
+    }
+}
+
+// 여러 설문조사 항목 일괄 저장
+async function saveAllSurveyQuestions(questions) {
+    try {
+        const { data, error } = await supabase
+            .from('survey_questions')
+            .upsert(questions.map(q => ({
+                ...q,
+                updated_at: new Date().toISOString()
+            })), {
+                onConflict: 'id'
+            })
+            .select();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving all survey questions:', error);
+        throw error;
+    }
+}
+
+// 설문조사 항목 삭제 (비활성화)
+async function deleteSurveyQuestion(questionId) {
+    try {
+        const { data, error } = await supabase
+            .from('survey_questions')
+            .update({ is_active: false })
+            .eq('id', questionId)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error deleting survey question:', error);
+        throw error;
+    }
+}
