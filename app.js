@@ -1711,7 +1711,7 @@ function renderSurveyQuestions() {
             </div>
             <div style="margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px;">질문 내용</label>
-                <textarea class="survey-question-text" data-id="${q.id}" rows="5" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="질문 내용을 입력하세요">${(q.question_text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                <textarea class="survey-question-text" data-id="${q.id}" rows="5" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="질문 내용을 입력하세요">${(q.question_text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}</textarea>
             </div>
             <div style="display: flex; gap: 16px; align-items: center;">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
