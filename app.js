@@ -593,21 +593,46 @@ function showCoverLetter(applicant) {
             score3: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score3 || 0), 0) / evaluationsWithTotal.length),
             score4: Math.round(evaluationsWithTotal.reduce((sum, e) => sum + (e.score4 || 0), 0) / evaluationsWithTotal.length)
         };
+
+        // 합격/불합격 상태 및 추천
+        const currentStatus = applicant.status || 'pending';
+        const isPassRecommended = totalAvgScore >= 80;
+        const statusText = currentStatus === 'passed' ? '합격' : currentStatus === 'failed' ? '불합격' : '미정';
+        const statusColor = currentStatus === 'passed' ? '#10b981' : currentStatus === 'failed' ? '#ef4444' : '#94a3b8';
+        const statusBg = currentStatus === 'passed' ? '#dcfce7' : currentStatus === 'failed' ? '#fee2e2' : '#f1f5f9';
         
         evaluationSummary = `
             <div class="section-block" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 4px solid #10b981; margin-bottom: 24px;">
                 <h3 style="margin-bottom: 20px; color: #10b981; font-size: 20px;">📊 평가 평균 점수</h3>
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
                     <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">전체 평균 점수</div>
-                        <div style="font-size: 42px; font-weight: 800; color: #10b981; line-height: 1;">${totalAvgScore}점</div>
-                        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">/ 100점 만점</div>
+                        <div style="font-size: 42px; font-weight: 800; color: ${totalAvgScore >= 80 ? '#10b981' : '#ef4444'}; line-height: 1;">${totalAvgScore}점</div>
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">/ 100점 만점 ${totalAvgScore >= 80 ? '✓ 합격기준 충족' : '✗ 합격기준 미달'}</div>
                     </div>
                     <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">평가자 수</div>
                         <div style="font-size: 42px; font-weight: 800; color: #6366f1; line-height: 1;">${evaluationsWithTotal.length}명</div>
                         <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">평가 완료</div>
+                    </div>
+                    <div style="background: ${statusBg}; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 2px solid ${statusColor};">
+                        <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">합격 여부</div>
+                        <div style="font-size: 32px; font-weight: 800; color: ${statusColor}; line-height: 1;">${statusText}</div>
+                        <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: center;">
+                            <button onclick="setApplicantStatus(${applicant.id}, 'passed')" 
+                                style="padding: 6px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;
+                                ${currentStatus === 'passed' ? 'background: #10b981; color: white;' : 'background: #e2e8f0; color: #64748b;'}">
+                                합격
+                            </button>
+                            <button onclick="setApplicantStatus(${applicant.id}, 'failed')" 
+                                style="padding: 6px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;
+                                ${currentStatus === 'failed' ? 'background: #ef4444; color: white;' : 'background: #e2e8f0; color: #64748b;'}"
+                                ${totalAvgScore >= 80 ? '' : ''}>
+                                불합격
+                            </button>
+                        </div>
+                        ${totalAvgScore < 80 && currentStatus !== 'failed' ? '<div style="font-size: 11px; color: #ef4444; margin-top: 8px;">⚠️ 80점 미만 - 불합격 권장</div>' : ''}
                     </div>
                 </div>
                 
@@ -1445,6 +1470,50 @@ async function changeEvaluatorPasswordByAdmin() {
     } catch (error) {
         console.error('Error changing evaluator password:', error);
         alert('비밀번호 변경 중 오류가 발생했습니다.\n' + error.message);
+    }
+}
+
+// ==================== 합격/불합격 관리 ====================
+
+// 지원자 합격/불합격 상태 설정
+async function setApplicantStatus(applicantId, status) {
+    try {
+        // 현재 지원자 찾기
+        const applicant = applicants.find(a => a.id == applicantId);
+        if (!applicant) {
+            alert('지원자를 찾을 수 없습니다.');
+            return;
+        }
+
+        // 평균 점수 계산
+        let avgScore = 0;
+        if (applicant.evaluations && applicant.evaluations.length > 0) {
+            const totalScores = applicant.evaluations.map(e => {
+                return e.total_score || ((e.score1 || 0) + (e.score2 || 0) + (e.score3 || 0) + (e.score4 || 0));
+            });
+            avgScore = Math.round(totalScores.reduce((a, b) => a + b, 0) / totalScores.length);
+        }
+
+        // 80점 미만인데 합격 처리하려는 경우 경고
+        if (status === 'passed' && avgScore < 80) {
+            const confirm = window.confirm(`평균 점수가 ${avgScore}점으로 합격 기준(80점)에 미달합니다.\n그래도 합격 처리하시겠습니까?`);
+            if (!confirm) return;
+        }
+
+        // 상태 업데이트
+        await updateApplicantStatus(applicantId, status);
+        
+        // 로컬 데이터 업데이트
+        applicant.status = status;
+        
+        // UI 새로고침
+        showCoverLetter(applicant);
+        
+        const statusText = status === 'passed' ? '합격' : '불합격';
+        alert(`${applicant.name}님이 ${statusText} 처리되었습니다.`);
+    } catch (error) {
+        console.error('Error setting applicant status:', error);
+        alert('상태 변경 중 오류가 발생했습니다.\n' + error.message);
     }
 }
 

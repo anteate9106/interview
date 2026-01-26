@@ -96,6 +96,25 @@ async function updateApplicant(email, updates) {
     }
 }
 
+// 지원자 합격/불합격 상태 업데이트
+async function updateApplicantStatus(applicantId, status) {
+    try {
+        const { data, error } = await supabase
+            .from('applicants')
+            .update({ status: status })
+            .eq('id', applicantId)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        console.log('Updated applicant status:', applicantId, status);
+        return data;
+    } catch (error) {
+        console.error('Error updating applicant status:', error);
+        throw error;
+    }
+}
+
 // ==================== 평가 관련 ====================
 
 // 특정 지원자의 모든 평가 가져오기
