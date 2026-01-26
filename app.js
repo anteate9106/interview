@@ -634,6 +634,15 @@ function showCoverLetter(applicant) {
                                 불합격
                             </button>
                         </div>
+                        ${currentStatus === 'passed' || currentStatus === 'failed' ? `
+                        <div style="margin-top: 12px;">
+                            <button onclick="sendResultEmail(${applicant.id})" 
+                                style="padding: 8px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;
+                                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; display: flex; align-items: center; gap: 6px; margin: 0 auto;">
+                                📧 결과 이메일 발송
+                            </button>
+                        </div>
+                        ` : ''}
                         ${totalAvgScore < 80 && currentStatus !== 'failed' ? '<div style="font-size: 11px; color: #ef4444; margin-top: 8px;">⚠️ 80점 미만 - 불합격 권장</div>' : ''}
                     </div>
                 </div>
@@ -1517,6 +1526,78 @@ async function setApplicantStatus(applicantId, status) {
         console.error('Error setting applicant status:', error);
         alert('상태 변경 중 오류가 발생했습니다.\n' + error.message);
     }
+}
+
+// 결과 이메일 발송
+function sendResultEmail(applicantId) {
+    const applicant = applicants.find(a => a.id == applicantId);
+    if (!applicant) {
+        alert('지원자를 찾을 수 없습니다.');
+        return;
+    }
+
+    if (!applicant.email) {
+        alert('지원자의 이메일 주소가 없습니다.');
+        return;
+    }
+
+    const isPassed = applicant.status === 'passed';
+    const statusText = isPassed ? '합격' : '불합격';
+    const jobPosting = applicant.job_posting || '채용공고';
+    
+    // 이메일 제목
+    const subject = `[청년들] ${jobPosting} 서류전형 ${statusText} 안내`;
+    
+    // 이메일 본문
+    let body = '';
+    if (isPassed) {
+        body = `안녕하세요, ${applicant.name}님.
+
+청년들 채용에 지원해 주셔서 감사합니다.
+
+${jobPosting}에 지원하신 서류전형 결과를 안내드립니다.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 서류전형 결과: 합격
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+축하드립니다! 서류전형에 합격하셨습니다.
+
+다음 전형에 대한 안내는 추후 별도로 연락드리겠습니다.
+궁금하신 사항이 있으시면 언제든지 문의해 주세요.
+
+감사합니다.
+
+청년들 채용담당자 드림`;
+    } else {
+        body = `안녕하세요, ${applicant.name}님.
+
+청년들 채용에 지원해 주셔서 감사합니다.
+
+${jobPosting}에 지원하신 서류전형 결과를 안내드립니다.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 서류전형 결과: 불합격
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+안타깝게도 이번 채용에서는 함께하지 못하게 되었습니다.
+
+${applicant.name}님의 역량과 열정은 충분히 인정하지만,
+이번 채용에서는 제한된 인원으로 인해 모든 분께 기회를 드리지 못한 점
+양해 부탁드립니다.
+
+앞으로의 취업 활동에 좋은 결과가 있기를 진심으로 응원합니다.
+
+다시 한번 지원해 주셔서 감사드립니다.
+
+청년들 채용담당자 드림`;
+    }
+
+    // mailto 링크 생성
+    const mailtoLink = `mailto:${applicant.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // 이메일 클라이언트 열기
+    window.location.href = mailtoLink;
 }
 
 // ==================== 문의 관리 ====================
