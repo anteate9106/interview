@@ -1814,7 +1814,8 @@ async function saveAllSurveyQuestions() {
         
     } catch (error) {
         console.error('Error saving survey questions:', error);
-        alert('설문조사 저장 중 오류가 발생했습니다.');
+        const errorMessage = error.message || error.error?.message || '알 수 없는 오류';
+        alert(`설문조사 저장 중 오류가 발생했습니다.\n\n오류 내용: ${errorMessage}\n\n콘솔을 확인해주세요.`);
     }
 }
 

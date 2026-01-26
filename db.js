@@ -906,18 +906,45 @@ async function saveSurveyQuestion(questionData) {
 // 여러 설문조사 항목 일괄 저장
 async function saveAllSurveyQuestions(questions) {
     try {
-        const { data, error } = await supabase
-            .from('survey_questions')
-            .upsert(questions.map(q => ({
-                ...q,
-                updated_at: new Date().toISOString()
-            })), {
-                onConflict: 'id'
-            })
-            .select();
+        // 각 항목을 개별적으로 저장 (id가 없는 경우와 있는 경우 모두 처리)
+        const results = [];
         
-        if (error) throw error;
-        return data;
+        for (const q of questions) {
+            const questionData = {
+                question_number: q.question_number,
+                question_text: q.question_text,
+                hint_text: q.hint_text,
+                is_required: q.is_required,
+                is_active: q.is_active,
+                updated_at: new Date().toISOString()
+            };
+            
+            if (q.id && !q.id.startsWith('temp_')) {
+                // 기존 항목 업데이트
+                questionData.id = q.id;
+                const { data, error } = await supabase
+                    .from('survey_questions')
+                    .update(questionData)
+                    .eq('id', q.id)
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                results.push(data);
+            } else {
+                // 새 항목 생성
+                const { data, error } = await supabase
+                    .from('survey_questions')
+                    .insert(questionData)
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                results.push(data);
+            }
+        }
+        
+        return results;
     } catch (error) {
         console.error('Error saving all survey questions:', error);
         throw error;
