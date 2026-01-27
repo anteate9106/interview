@@ -256,12 +256,6 @@ async function loadQuestions() {
             
             // 이미지 디자인에 맞게 안내문 포맷팅 (관리자가 작성한 내용만 표시)
             introText.innerHTML = `
-                <hr style="border: none; border-top: 1px solid #d1d5db; margin: 0 0 16px 0;">
-                <div style="display: flex; align-items: center; gap: 8px; margin: 0 0 16px 0;">
-                    <span style="font-size: 18px;">📄</span>
-                    <span style="color: #374151; font-weight: 600;">서류전형 결과: 합격</span>
-                </div>
-                <hr style="border: none; border-top: 1px solid #d1d5db; margin: 0 0 16px 0;">
                 <p style="margin: 0; color: #374151;">${introContent.replace(/\n/g, '<br>')}</p>
             `;
         }
