@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             'getApplicantByEmail',
             'getAllSecondRoundQuestions',
             'getSecondRoundIntro',
+            'getSecondRoundSidebarInfo',
             'getSecondRoundResponseByApplicantId',
             'saveSecondRoundResponse',
             'verifyPassword'
@@ -228,14 +229,59 @@ async function loadApplicantData(email) {
         welcomeElement.textContent = `${applicant.name}님, 환영합니다!`;
     }
 
-    // 지원 현황 업데이트
-    updateApplicationStatus(applicant);
+        // 지원 현황 업데이트
+        updateApplicationStatus(applicant);
 
-    // 질문지 로드
-    await loadQuestions();
-    
-    // 기존 답변 로드
-    await loadExistingResponse();
+        // 사이드바 정보 로드
+        await loadSidebarInfo();
+
+        // 질문지 로드
+        await loadQuestions();
+        
+        // 기존 답변 로드
+        await loadExistingResponse();
+}
+
+// 사이드바 정보 로드
+async function loadSidebarInfo() {
+    try {
+        const sidebarInfo = await getSecondRoundSidebarInfo();
+        const revisionGuideCard = document.querySelector('.sidebar .info-card:first-child');
+        const applicationStatusCard = document.querySelector('.sidebar .info-card:last-child');
+        
+        if (sidebarInfo) {
+            // 수정 안내 항목 업데이트
+            if (revisionGuideCard) {
+                const ul = revisionGuideCard.querySelector('ul');
+                if (ul) {
+                    ul.innerHTML = '';
+                    const items = sidebarInfo.revision_guide_items || [];
+                    items.forEach(item => {
+                        const li = document.createElement('li');
+                        // 강조 표시가 필요한 경우 처리
+                        if (item.includes('제출 완료 시 수정 불가')) {
+                            li.innerHTML = `<strong style="color: #ef4444;">${item}</strong>`;
+                        } else {
+                            li.textContent = item;
+                        }
+                        ul.appendChild(li);
+                    });
+                }
+            }
+            
+            // 지원 현황 라벨 업데이트
+            if (applicationStatusCard) {
+                const h3 = applicationStatusCard.querySelector('h3');
+                if (h3) {
+                    const label = sidebarInfo.application_status_label || '지원 현황';
+                    h3.innerHTML = `📊 ${label}`;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading sidebar info:', error);
+        // 에러가 발생해도 기본값으로 계속 진행
+    }
 }
 
 // 질문지 로드

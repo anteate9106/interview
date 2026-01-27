@@ -1677,6 +1677,51 @@ async function saveSecondRoundIntro(introText) {
     }
 }
 
+// 2차 서류전형 사이드바 정보 가져오기
+async function getSecondRoundSidebarInfo() {
+    try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
+            .from('second_round_sidebar_info')
+            .select('*')
+            .eq('id', 'second_round_sidebar_info')
+            .single();
+        
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+        return data;
+    } catch (error) {
+        console.error('Error fetching second round sidebar info:', error);
+        return null;
+    }
+}
+
+// 2차 서류전형 사이드바 정보 저장
+async function saveSecondRoundSidebarInfo(revisionGuideItems, applicationStatusLabel) {
+    try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) throw new Error("Supabase 클라이언트를 사용할 수 없습니다.");
+
+        const { data, error } = await supabaseClient
+            .from('second_round_sidebar_info')
+            .upsert({
+                id: 'second_round_sidebar_info',
+                revision_guide_items: revisionGuideItems,
+                application_status_label: applicationStatusLabel || '지원 현황',
+                updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving second round sidebar info:', error);
+        throw error;
+    }
+}
+
 // 지원자 ID로 2차 서류전형 답변 가져오기
 async function getSecondRoundResponseByApplicantId(applicantId) {
     try {
@@ -1786,6 +1831,8 @@ if (typeof window !== 'undefined') {
     window.deleteSecondRoundQuestion = deleteSecondRoundQuestion;
     window.getSecondRoundIntro = getSecondRoundIntro;
     window.saveSecondRoundIntro = saveSecondRoundIntro;
+    window.getSecondRoundSidebarInfo = getSecondRoundSidebarInfo;
+    window.saveSecondRoundSidebarInfo = saveSecondRoundSidebarInfo;
     window.getSecondRoundResponseByApplicantId = getSecondRoundResponseByApplicantId;
     window.saveSecondRoundResponse = saveSecondRoundResponse;
     

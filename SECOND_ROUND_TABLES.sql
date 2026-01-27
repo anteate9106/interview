@@ -41,3 +41,26 @@ VALUES (
 모든 항목을 성실하게 작성해주세요.'
 )
 ON CONFLICT (id) DO NOTHING;
+
+-- 2차 서류전형 사이드바 정보 테이블 생성
+CREATE TABLE IF NOT EXISTS second_round_sidebar_info (
+  id TEXT PRIMARY KEY DEFAULT 'second_round_sidebar_info',
+  revision_guide_items TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  application_status_label TEXT NOT NULL DEFAULT '지원 현황',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2차 서류전형 사이드바 정보 초기 데이터 삽입
+INSERT INTO second_round_sidebar_info (id, revision_guide_items, application_status_label)
+VALUES (
+  'second_round_sidebar_info',
+  ARRAY[
+    '이메일은 변경할 수 없습니다',
+    '제출 전까지만 수정 가능합니다',
+    '제출 완료 시 수정 불가',
+    '변경사항은 즉시 반영됩니다',
+    '신중하게 작성해주세요'
+  ],
+  '지원 현황'
+)
+ON CONFLICT (id) DO NOTHING;
