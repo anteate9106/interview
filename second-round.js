@@ -241,13 +241,35 @@ async function loadApplicantData(email) {
 // 질문지 로드
 async function loadQuestions() {
     try {
-        // 안내문 로드
+        // 안내문 로드 및 디자인 적용
         const intro = await getSecondRoundIntro();
+        const introContainer = document.getElementById('introContainer');
         const introText = document.getElementById('introText');
-        if (introText && intro) {
-            introText.textContent = intro.intro_text || '축하합니다! 1차 서류전형에 합격하셨습니다.\n\n2차 서류전형을 위해 아래 질문에 답변해주시기 바랍니다.';
-        } else if (introText) {
-            introText.textContent = '축하합니다! 1차 서류전형에 합격하셨습니다.\n\n2차 서류전형을 위해 아래 질문에 답변해주시기 바랍니다.';
+        
+        if (introContainer && introText) {
+            let introContent = '';
+            if (intro && intro.intro_text) {
+                introContent = intro.intro_text;
+            } else {
+                introContent = '축하합니다! 1차 서류전형에 합격하셨습니다.\n\n2차 서류전형을 위해 아래 질문에 답변해주시기 바랍니다.';
+            }
+            
+            // 이미지 디자인에 맞게 안내문 포맷팅
+            const jobPosting = currentApplicant?.job_posting || '채용공고';
+            const applicantName = currentApplicant?.name || '지원자';
+            
+            introText.innerHTML = `
+                <p style="margin: 0 0 12px 0; color: #374151;">안녕하세요, ${applicantName}님.</p>
+                <p style="margin: 0 0 12px 0; color: #374151;">청년들 채용에 지원해 주셔서 감사합니다.</p>
+                <p style="margin: 0 0 16px 0; color: #374151;">${jobPosting}에 지원하신 서류전형 결과를 안내드립니다.</p>
+                <hr style="border: none; border-top: 1px solid #d1d5db; margin: 16px 0;">
+                <div style="display: flex; align-items: center; gap: 8px; margin: 16px 0;">
+                    <span style="font-size: 18px;">📄</span>
+                    <span style="color: #374151; font-weight: 600;">서류전형 결과: 합격</span>
+                </div>
+                <hr style="border: none; border-top: 1px solid #d1d5db; margin: 16px 0;">
+                <p style="margin: 16px 0 0 0; color: #374151;">${introContent.replace(/\n/g, '<br>')}</p>
+            `;
         }
 
         // 질문지 항목 로드
