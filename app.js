@@ -2293,10 +2293,23 @@ function closeSecondRoundModal() {
 
 // 2차 서류전형 사이드바 안내 관리 모달 열기
 async function openSecondRoundSidebarEditor() {
-    const modal = document.getElementById('secondRoundSidebarModal');
-    if (modal) {
-        modal.style.display = 'flex';
+    try {
         await loadSecondRoundSidebarInfo();
+        const modal = document.getElementById('secondRoundSidebarModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+            
+            // 모달 배경 클릭 시 닫기
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeSecondRoundSidebarModal();
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error loading sidebar info:', error);
+        alert('사이드바 정보를 불러오는 중 오류가 발생했습니다.');
     }
 }
 
@@ -2305,6 +2318,7 @@ function closeSecondRoundSidebarModal() {
     const modal = document.getElementById('secondRoundSidebarModal');
     if (modal) {
         modal.style.display = 'none';
+        modal.classList.remove('active');
     }
 }
 
@@ -2312,108 +2326,37 @@ function closeSecondRoundSidebarModal() {
 async function loadSecondRoundSidebarInfo() {
     try {
         const sidebarInfo = await getSecondRoundSidebarInfo();
-        const itemsList = document.getElementById('revisionGuideItemsList');
-        const statusLabel = document.getElementById('applicationStatusLabel');
+        const revisionGuideTextarea = document.getElementById('revisionGuideTextarea');
+        const statusLabelTextarea = document.getElementById('applicationStatusLabelTextarea');
         
         if (sidebarInfo) {
-            // 수정 안내 항목 렌더링
-            if (itemsList) {
-                itemsList.innerHTML = '';
-                const items = sidebarInfo.revision_guide_items || [];
-                items.forEach((item, index) => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.style.cssText = 'display: flex; gap: 8px; margin-bottom: 8px; align-items: center;';
-                    itemDiv.innerHTML = `
-                        <input type="text" class="revision-guide-item" data-index="${index}" value="${item.replace(/"/g, '&quot;')}" 
-                               style="flex: 1; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
-                        <button onclick="removeRevisionGuideItem(${index})" style="padding: 8px 12px; border: 1px solid #ef4444; border-radius: 6px; background: white; color: #ef4444; cursor: pointer; font-size: 13px;">삭제</button>
-                    `;
-                    itemsList.appendChild(itemDiv);
-                });
+            // 수정 안내 항목을 textarea에 표시 (자유형식)
+            if (revisionGuideTextarea && sidebarInfo.revision_guide_items) {
+                // 배열인 경우 줄바꿈으로 조인
+                if (Array.isArray(sidebarInfo.revision_guide_items)) {
+                    revisionGuideTextarea.value = sidebarInfo.revision_guide_items.join('\n');
+                } else {
+                    revisionGuideTextarea.value = sidebarInfo.revision_guide_items || '';
+                }
             }
             
             // 지원 현황 라벨 설정
-            if (statusLabel) {
-                statusLabel.value = sidebarInfo.application_status_label || '지원 현황';
+            if (statusLabelTextarea) {
+                statusLabelTextarea.value = sidebarInfo.application_status_label || '지원 현황';
             }
         } else {
             // 기본값 설정
-            if (itemsList) {
-                itemsList.innerHTML = '';
-                const defaultItems = [
-                    '이메일은 변경할 수 없습니다',
-                    '제출 전까지만 수정 가능합니다',
-                    '제출 완료 시 수정 불가',
-                    '변경사항은 즉시 반영됩니다',
-                    '신중하게 작성해주세요'
-                ];
-                defaultItems.forEach((item, index) => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.style.cssText = 'display: flex; gap: 8px; margin-bottom: 8px; align-items: center;';
-                    itemDiv.innerHTML = `
-                        <input type="text" class="revision-guide-item" data-index="${index}" value="${item.replace(/"/g, '&quot;')}" 
-                               style="flex: 1; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
-                        <button onclick="removeRevisionGuideItem(${index})" style="padding: 8px 12px; border: 1px solid #ef4444; border-radius: 6px; background: white; color: #ef4444; cursor: pointer; font-size: 13px;">삭제</button>
-                    `;
-                    itemsList.appendChild(itemDiv);
-                });
+            if (revisionGuideTextarea) {
+                revisionGuideTextarea.value = '이메일은 변경할 수 없습니다\n제출 전까지만 수정 가능합니다\n제출 완료 시 수정 불가\n변경사항은 즉시 반영됩니다\n신중하게 작성해주세요';
             }
-            if (statusLabel) {
-                statusLabel.value = '지원 현황';
+            if (statusLabelTextarea) {
+                statusLabelTextarea.value = '지원 현황';
             }
         }
     } catch (error) {
         console.error('Error loading second round sidebar info:', error);
         alert('사이드바 정보를 불러오는 중 오류가 발생했습니다.');
     }
-}
-
-// 수정 안내 항목 추가
-function addRevisionGuideItem() {
-    const itemsList = document.getElementById('revisionGuideItemsList');
-    if (!itemsList) return;
-    
-    const items = Array.from(itemsList.querySelectorAll('.revision-guide-item'));
-    const newIndex = items.length;
-    
-    const itemDiv = document.createElement('div');
-    itemDiv.style.cssText = 'display: flex; gap: 8px; margin-bottom: 8px; align-items: center;';
-    itemDiv.innerHTML = `
-        <input type="text" class="revision-guide-item" data-index="${newIndex}" value="" 
-               placeholder="항목을 입력하세요" style="flex: 1; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
-        <button onclick="removeRevisionGuideItem(${newIndex})" style="padding: 8px 12px; border: 1px solid #ef4444; border-radius: 6px; background: white; color: #ef4444; cursor: pointer; font-size: 13px;">삭제</button>
-    `;
-    itemsList.appendChild(itemDiv);
-    
-    // 인덱스 재설정
-    updateRevisionGuideItemIndices();
-}
-
-// 수정 안내 항목 삭제
-function removeRevisionGuideItem(index) {
-    const itemsList = document.getElementById('revisionGuideItemsList');
-    if (!itemsList) return;
-    
-    const items = Array.from(itemsList.querySelectorAll('.revision-guide-item'));
-    if (items[index]) {
-        items[index].closest('div').remove();
-        updateRevisionGuideItemIndices();
-    }
-}
-
-// 수정 안내 항목 인덱스 업데이트
-function updateRevisionGuideItemIndices() {
-    const itemsList = document.getElementById('revisionGuideItemsList');
-    if (!itemsList) return;
-    
-    const items = Array.from(itemsList.querySelectorAll('.revision-guide-item'));
-    items.forEach((item, newIndex) => {
-        item.setAttribute('data-index', newIndex);
-        const deleteBtn = item.nextElementSibling;
-        if (deleteBtn) {
-            deleteBtn.setAttribute('onclick', `removeRevisionGuideItem(${newIndex})`);
-        }
-    });
 }
 
 // 2차 서류전형 사이드바 정보 저장
@@ -2431,13 +2374,12 @@ async function saveSecondRoundSidebarInfo(event) {
     }
     
     try {
-        // 수정 안내 항목 수집
-        const items = Array.from(document.querySelectorAll('.revision-guide-item'))
-            .map(item => item.value.trim())
-            .filter(item => item.length > 0);
+        // 수정 안내 항목 파싱 (자유형식 - 전체 텍스트 저장)
+        const revisionGuideTextarea = document.getElementById('revisionGuideTextarea');
+        const guideContent = revisionGuideTextarea.value.trim();
         
-        if (items.length === 0) {
-            alert('수정 안내 항목을 최소 1개 이상 입력해주세요.');
+        if (!guideContent || guideContent.length === 0) {
+            alert('수정 안내 내용을 입력해주세요.');
             if (saveBtn) {
                 saveBtn.disabled = false;
                 saveBtn.style.opacity = '1';
@@ -2447,12 +2389,18 @@ async function saveSecondRoundSidebarInfo(event) {
             return;
         }
         
+        // 줄바꿈으로 구분하여 배열로 저장 (기존 호환성 유지)
+        const guideItems = guideContent
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+        
         // 지원 현황 라벨 가져오기
-        const statusLabel = document.getElementById('applicationStatusLabel');
-        const statusLabelText = statusLabel ? statusLabel.value.trim() : '지원 현황';
+        const statusLabelTextarea = document.getElementById('applicationStatusLabelTextarea');
+        const statusLabelText = statusLabelTextarea ? statusLabelTextarea.value.trim() : '지원 현황';
         
         // 저장
-        await saveSecondRoundSidebarInfo(items, statusLabelText);
+        await window.saveSecondRoundSidebarInfo(guideItems, statusLabelText);
         
         alert('✅ 2차 서류전형 사이드바 안내가 저장되었습니다.');
         closeSecondRoundSidebarModal();
