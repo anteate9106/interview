@@ -1689,9 +1689,22 @@ async function getSecondRoundSidebarInfo() {
             .eq('id', 'second_round_sidebar_info')
             .single();
         
-        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+        // PGRST116 = no rows returned (테이블이 없거나 데이터가 없음)
+        if (error) {
+            if (error.code === 'PGRST116' || error.code === '42P01') {
+                // 테이블이 없거나 데이터가 없는 경우 null 반환 (기본값 사용)
+                console.log('[getSecondRoundSidebarInfo] 테이블이 없거나 데이터가 없습니다. 기본값을 사용합니다.');
+                return null;
+            }
+            throw error;
+        }
         return data;
     } catch (error) {
+        // 404 에러나 테이블이 없는 경우 조용히 처리
+        if (error.code === '42P01' || error.message?.includes('does not exist') || error.message?.includes('404')) {
+            console.log('[getSecondRoundSidebarInfo] 테이블이 아직 생성되지 않았습니다. 기본값을 사용합니다.');
+            return null;
+        }
         console.error('Error fetching second round sidebar info:', error);
         return null;
     }
@@ -1714,7 +1727,13 @@ async function saveSecondRoundSidebarInfo(revisionGuideItems, applicationStatusL
             .select()
             .single();
         
-        if (error) throw error;
+        if (error) {
+            // 테이블이 없는 경우 명확한 에러 메시지
+            if (error.code === '42P01' || error.message?.includes('does not exist') || error.message?.includes('404')) {
+                throw new Error('second_round_sidebar_info 테이블이 존재하지 않습니다. SECOND_ROUND_TABLES.sql 파일의 SQL을 Supabase에서 실행해주세요.');
+            }
+            throw error;
+        }
         return data;
     } catch (error) {
         console.error('Error saving second round sidebar info:', error);

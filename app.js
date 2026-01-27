@@ -2360,8 +2360,8 @@ async function loadSecondRoundSidebarInfo() {
 }
 
 // 2차 서류전형 사이드바 정보 저장
-async function saveSecondRoundSidebarInfo(event) {
-    if (event) {
+async function saveSecondRoundSidebarInfoHandler(event) {
+    if (event && event.preventDefault) {
         event.preventDefault();
     }
     
@@ -2376,6 +2376,10 @@ async function saveSecondRoundSidebarInfo(event) {
     try {
         // 수정 안내 항목 파싱 (자유형식 - 전체 텍스트 저장)
         const revisionGuideTextarea = document.getElementById('revisionGuideTextarea');
+        if (!revisionGuideTextarea) {
+            throw new Error('수정 안내 입력 필드를 찾을 수 없습니다.');
+        }
+        
         const guideContent = revisionGuideTextarea.value.trim();
         
         if (!guideContent || guideContent.length === 0) {
@@ -2399,8 +2403,12 @@ async function saveSecondRoundSidebarInfo(event) {
         const statusLabelTextarea = document.getElementById('applicationStatusLabelTextarea');
         const statusLabelText = statusLabelTextarea ? statusLabelTextarea.value.trim() : '지원 현황';
         
-        // 저장
-        await window.saveSecondRoundSidebarInfo(guideItems, statusLabelText);
+        // db.js의 함수 호출 (명시적으로 window 객체에서 가져오기)
+        if (typeof window.saveSecondRoundSidebarInfo === 'function') {
+            await window.saveSecondRoundSidebarInfo(guideItems, statusLabelText);
+        } else {
+            throw new Error('saveSecondRoundSidebarInfo 함수를 찾을 수 없습니다. db.js가 로드되었는지 확인하세요.');
+        }
         
         alert('✅ 2차 서류전형 사이드바 안내가 저장되었습니다.');
         closeSecondRoundSidebarModal();
