@@ -324,6 +324,28 @@ async function loadQuestions() {
     }
 }
 
+// URL을 하이퍼링크로 변환하는 함수
+function convertUrlsToLinks(text) {
+    if (!text) return '';
+    
+    // URL 패턴 매칭 (http://, https://, www.로 시작하는 URL)
+    const urlPattern = /(https?:\/\/[^\s<>"{}|\\^`\[\]]+|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.(?:[a-zA-Z]{2,})(?:\/[^\s<>"{}|\\^`\[\]]*)?)/g;
+    
+    return text.replace(urlPattern, (url) => {
+        // http:// 또는 https://로 시작하지 않으면 추가
+        let href = url;
+        if (!url.match(/^https?:\/\//i)) {
+            href = 'https://' + url;
+        }
+        
+        // HTML 이스케이프 처리
+        const escapedUrl = url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const escapedHref = href.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        return `<a href="${escapedHref}" target="_blank" rel="noopener noreferrer" style="color: #6366f1; text-decoration: underline; font-weight: 500;">${escapedUrl}</a>`;
+    });
+}
+
 // 질문지 렌더링
 function renderQuestions(questions) {
     const container = document.getElementById('questionsContainer');
@@ -342,10 +364,16 @@ function renderQuestions(questions) {
 
     container.innerHTML = questions.map((q, index) => {
         const questionId = `question_${q.id || index}`;
-        // 질문 텍스트에서 줄바꿈 처리 (개행 문자를 <br>로 변환)
-        const questionText = (q.question_text || '').replace(/\n/g, '<br>');
-        // hint_text도 줄바꿈 처리
-        const hintText = q.hint_text ? (q.hint_text.replace(/\n/g, '<br>')) : '';
+        // 질문 텍스트에서 줄바꿈 처리 및 URL을 하이퍼링크로 변환
+        let questionText = (q.question_text || '').replace(/\n/g, '<br>');
+        questionText = convertUrlsToLinks(questionText);
+        
+        // hint_text도 줄바꿈 처리 및 URL을 하이퍼링크로 변환
+        let hintText = '';
+        if (q.hint_text) {
+            hintText = q.hint_text.replace(/\n/g, '<br>');
+            hintText = convertUrlsToLinks(hintText);
+        }
         
         return `
             <div class="form-section" style="margin-bottom: 40px; padding: 28px; background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
