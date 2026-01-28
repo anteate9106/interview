@@ -917,14 +917,63 @@ async function loadSecondRoundResponse(applicantId) {
             const answer = response.answers[questionNumber];
             
             if (answer) {
-                // 질문 텍스트에서 줄바꿈 처리
-                const questionText = question ? question.question_text.replace(/\n/g, '<br>') : '질문';
+                // 질문 텍스트에서 줄바꿈 처리 및 URL을 하이퍼링크로 변환
+                let questionText = question ? question.question_text.replace(/\n/g, '<br>') : '질문';
+                // URL을 하이퍼링크로 변환
+                const urlPattern = /(https?:\/\/[^\s<>"{}|\\^`\[\]]+|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.(?:[a-zA-Z]{2,})(?:\/[^\s<>"{}|\\^`\[\]]*)?)/g;
+                questionText = questionText.replace(urlPattern, (url) => {
+                    let href = url;
+                    if (!url.match(/^https?:\/\//i)) {
+                        href = 'https://' + url;
+                    }
+                    const escapedUrl = url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const escapedHref = href.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `<a href="${escapedHref}" target="_blank" rel="noopener noreferrer" style="color: #6366f1; text-decoration: underline; font-weight: 500;">${escapedUrl}</a>`;
+                });
+                
+                // 힌트 텍스트 처리
+                let hintText = '';
+                if (question && question.hint_text) {
+                    let hint = question.hint_text.replace(/\n/g, '<br>');
+                    hint = hint.replace(urlPattern, (url) => {
+                        let href = url;
+                        if (!url.match(/^https?:\/\//i)) {
+                            href = 'https://' + url;
+                        }
+                        const escapedUrl = url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const escapedHref = href.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        return `<a href="${escapedHref}" target="_blank" rel="noopener noreferrer" style="color: #6366f1; text-decoration: underline; font-weight: 500;">${escapedUrl}</a>`;
+                    });
+                    hintText = `<div style="margin-top: 8px; padding: 10px 14px; background: #f8fafc; border-left: 3px solid #6366f1; border-radius: 6px;">
+                        <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 1.6;">${hint}</p>
+                    </div>`;
+                }
+                
                 answersHtml += `
-                    <div style="margin-bottom: 20px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <h4 style="margin: 0 0 12px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
-                            ${questionNumber}. ${questionText}
-                        </h4>
-                        <p class="pre-wrap" style="margin: 0; color: #1f2937; line-height: 1.8; white-space: pre-wrap;">${answer}</p>
+                    <div style="margin-bottom: 24px; padding: 24px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <!-- 질문 섹션 -->
+                        <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0;">
+                            <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 12px;">
+                                <div style="min-width: 32px; height: 32px; background: #6366f1; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">
+                                    ${questionNumber}
+                                </div>
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px; font-weight: 600; line-height: 1.6;">
+                                        ${questionText}
+                                    </h4>
+                                    ${hintText}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 답변 섹션 -->
+                        <div style="padding-top: 16px;">
+                            <div style="margin-bottom: 8px;">
+                                <span style="display: inline-block; padding: 4px 12px; background: #f0fdf4; color: #059669; border-radius: 6px; font-size: 12px; font-weight: 600;">답변</span>
+                            </div>
+                            <div style="padding: 16px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #10b981;">
+                                <p class="pre-wrap" style="margin: 0; color: #1f2937; line-height: 1.8; white-space: pre-wrap; font-size: 14px;">${answer}</p>
+                            </div>
+                        </div>
                     </div>
                 `;
             }
