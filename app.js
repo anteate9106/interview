@@ -713,11 +713,11 @@ function showCoverLetter(applicant) {
         const isPassRecommended = totalAvgScore >= 80;
         const statusText = currentStatus === 'passed' ? '합격' : currentStatus === 'failed' ? '불합격' : '미정';
         const statusColor = currentStatus === 'passed' ? '#10b981' : currentStatus === 'failed' ? '#ef4444' : '#94a3b8';
-        const statusBg = currentStatus === 'passed' ? '#dcfce7' : currentStatus === 'failed' ? '#fee2e2' : '#f1f5f9';
+        const statusBg = 'white';
         
         evaluationSummary = `
-            <div class="section-block" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); margin-bottom: 24px;">
-                <h3 style="margin-bottom: 20px; color: #10b981; font-size: 20px;">📊 평가 평균 점수</h3>
+            <div class="section-block" style="background: white; margin-bottom: 24px;">
+                <h3 style="margin-bottom: 20px; color: #1f2937; font-size: 20px;">📊 평가 평균 점수</h3>
                 
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
                     <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
