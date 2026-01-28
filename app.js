@@ -891,15 +891,15 @@ async function loadSecondRoundResponse(applicantId) {
 
         // 답변 HTML 생성
         let answersHtml = `
-            <div class="section-block" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); margin-top: 24px; border: 2px solid #10b981;">
-                <h3 style="margin-bottom: 20px; color: #065f46; font-size: 20px;">🎯 2차 서류전형 답변</h3>
+            <div class="section-block" style="background: white; margin-top: 24px; border: 2px solid #e2e8f0;">
+                <h3 style="margin-bottom: 20px; color: #1f2937; font-size: 20px; font-weight: 600;">2차 서류전형 답변</h3>
         `;
 
         const submittedDate = response.submitted_at ? new Date(response.submitted_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
         if (submittedDate) {
             answersHtml += `
-                <div style="margin-bottom: 20px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #10b981;">
-                    <p style="margin: 0; color: #047857; font-size: 14px; font-weight: 600;">
+                <div style="margin-bottom: 20px; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <p style="margin: 0; color: #1f2937; font-size: 14px; font-weight: 600;">
                         📅 제출일: ${submittedDate}
                     </p>
                 </div>
@@ -917,12 +917,14 @@ async function loadSecondRoundResponse(applicantId) {
             const answer = response.answers[questionNumber];
             
             if (answer) {
+                // 질문 텍스트에서 줄바꿈 처리
+                const questionText = question ? question.question_text.replace(/\n/g, '<br>') : '질문';
                 answersHtml += `
-                    <div style="margin-bottom: 20px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #10b981;">
-                        <h4 style="margin: 0 0 12px 0; color: #065f46; font-size: 16px; font-weight: 600;">
-                            ${questionNumber}. ${question ? question.question_text : '질문'}
+                    <div style="margin-bottom: 20px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <h4 style="margin: 0 0 12px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
+                            ${questionNumber}. ${questionText}
                         </h4>
-                        <p class="pre-wrap" style="margin: 0; color: var(--text-primary); line-height: 1.8; white-space: pre-wrap;">${answer}</p>
+                        <p class="pre-wrap" style="margin: 0; color: #1f2937; line-height: 1.8; white-space: pre-wrap;">${answer}</p>
                     </div>
                 `;
             }
