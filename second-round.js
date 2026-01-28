@@ -414,6 +414,27 @@ async function loadExistingResponse() {
 
 // 제출 완료 후 폼 비활성화
 function disableFormForSubmitted() {
+    // 이미 처리되었는지 확인 (중복 실행 방지)
+    const formActions = document.querySelector('#secondRoundForm > div:last-child');
+    if (!formActions) return;
+    
+    // 이미 제출 완료 메시지가 있는지 확인
+    const existingMessage = formActions.querySelector('.submitted-message');
+    if (existingMessage) {
+        // 이미 메시지가 있으면 추가 처리만 하고 리턴
+        // textarea와 버튼 상태만 확인하고 업데이트
+        const textareas = document.querySelectorAll('#questionsContainer textarea[data-question-number]');
+        textareas.forEach(textarea => {
+            if (!textarea.disabled) {
+                textarea.disabled = true;
+                textarea.style.backgroundColor = '#f1f5f9';
+                textarea.style.cursor = 'not-allowed';
+                textarea.style.opacity = '0.7';
+            }
+        });
+        return; // 이미 처리되었으므로 리턴
+    }
+    
     // 모든 textarea 비활성화
     const textareas = document.querySelectorAll('#questionsContainer textarea[data-question-number]');
     textareas.forEach(textarea => {
@@ -437,18 +458,21 @@ function disableFormForSubmitted() {
         saveDraftBtn.style.display = 'none';
     }
     
-    // 제출 완료 안내 메시지 표시
-    const formActions = document.querySelector('#secondRoundForm > div:last-child');
-    if (formActions) {
-        const submittedMessage = document.createElement('div');
-        submittedMessage.style.cssText = 'text-align: center; padding: 20px; background: white; border-radius: 12px; border: 2px solid #e2e8f0; margin-top: 20px;';
-        submittedMessage.innerHTML = `
-            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px; font-weight: 600;">제출 완료</h3>
-            <p style="margin: 0; color: #1f2937; font-size: 14px;">2차 서류전형 질문지가 제출되었습니다.</p>
-            <p style="margin: 8px 0 0 0; color: #1f2937; font-size: 13px;">제출된 내용은 수정할 수 없습니다.</p>
-        `;
-        formActions.appendChild(submittedMessage);
-    }
+    // 제출 완료 안내 메시지 표시 (위쪽에 먼저 표시)
+    // 모든 기존 제출 완료 메시지 제거 (안전장치)
+    const allExistingMessages = formActions.querySelectorAll('.submitted-message');
+    allExistingMessages.forEach(msg => msg.remove());
+    
+    const submittedMessage = document.createElement('div');
+    submittedMessage.className = 'submitted-message';
+    submittedMessage.style.cssText = 'text-align: center; padding: 20px; background: white; border-radius: 12px; border: 2px solid #e2e8f0; margin-bottom: 20px;';
+    submittedMessage.innerHTML = `
+        <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px; font-weight: 600;">제출 완료</h3>
+        <p style="margin: 0; color: #1f2937; font-size: 14px;">2차 서류전형 질문지가 제출되었습니다.</p>
+        <p style="margin: 8px 0 0 0; color: #1f2937; font-size: 13px;">제출된 내용은 수정할 수 없습니다.</p>
+    `;
+    // 제출 완료 메시지를 맨 앞에 추가
+    formActions.insertBefore(submittedMessage, formActions.firstChild);
 }
 
 // 답변 로드
