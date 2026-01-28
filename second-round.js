@@ -441,12 +441,11 @@ function disableFormForSubmitted() {
     const formActions = document.querySelector('#secondRoundForm > div:last-child');
     if (formActions) {
         const submittedMessage = document.createElement('div');
-        submittedMessage.style.cssText = 'text-align: center; padding: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; border: 2px solid #10b981; margin-top: 20px;';
+        submittedMessage.style.cssText = 'text-align: center; padding: 20px; background: white; border-radius: 12px; border: 2px solid #e2e8f0; margin-top: 20px;';
         submittedMessage.innerHTML = `
-            <div style="font-size: 24px; margin-bottom: 12px;">✅</div>
-            <h3 style="margin: 0 0 8px 0; color: #065f46; font-size: 18px; font-weight: 600;">제출 완료</h3>
-            <p style="margin: 0; color: #047857; font-size: 14px;">2차 서류전형 질문지가 제출되었습니다.</p>
-            <p style="margin: 8px 0 0 0; color: #059669; font-size: 13px;">제출된 내용은 수정할 수 없습니다.</p>
+            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px; font-weight: 600;">제출 완료</h3>
+            <p style="margin: 0; color: #1f2937; font-size: 14px;">2차 서류전형 질문지가 제출되었습니다.</p>
+            <p style="margin: 8px 0 0 0; color: #1f2937; font-size: 13px;">제출된 내용은 수정할 수 없습니다.</p>
         `;
         formActions.appendChild(submittedMessage);
     }
