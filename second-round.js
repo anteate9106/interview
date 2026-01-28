@@ -394,11 +394,61 @@ async function loadExistingResponse() {
         if (!currentApplicant || !currentApplicant.id) return;
 
         const existingResponse = await getSecondRoundResponseByApplicantId(currentApplicant.id);
-        if (existingResponse && existingResponse.answers) {
-            loadAnswers(existingResponse.answers);
+        if (existingResponse) {
+            // 제출 여부 확인
+            const isSubmitted = existingResponse.submitted_at && existingResponse.submitted_at.length > 0;
+            
+            if (existingResponse.answers) {
+                loadAnswers(existingResponse.answers);
+            }
+            
+            // 제출된 경우 수정 불가 처리
+            if (isSubmitted) {
+                disableFormForSubmitted();
+            }
         }
     } catch (error) {
         console.error('Error loading existing response:', error);
+    }
+}
+
+// 제출 완료 후 폼 비활성화
+function disableFormForSubmitted() {
+    // 모든 textarea 비활성화
+    const textareas = document.querySelectorAll('#questionsContainer textarea[data-question-number]');
+    textareas.forEach(textarea => {
+        textarea.disabled = true;
+        textarea.style.backgroundColor = '#f1f5f9';
+        textarea.style.cursor = 'not-allowed';
+        textarea.style.opacity = '0.7';
+    });
+    
+    // 제출 버튼 비활성화 및 숨기기
+    const submitBtn = document.querySelector('#secondRoundForm button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.display = 'none';
+    }
+    
+    // 임시 저장 버튼 비활성화 및 숨기기
+    const saveDraftBtn = document.querySelector('button[onclick="saveDraft()"]');
+    if (saveDraftBtn) {
+        saveDraftBtn.disabled = true;
+        saveDraftBtn.style.display = 'none';
+    }
+    
+    // 제출 완료 안내 메시지 표시
+    const formActions = document.querySelector('#secondRoundForm > div:last-child');
+    if (formActions) {
+        const submittedMessage = document.createElement('div');
+        submittedMessage.style.cssText = 'text-align: center; padding: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; border: 2px solid #10b981; margin-top: 20px;';
+        submittedMessage.innerHTML = `
+            <div style="font-size: 24px; margin-bottom: 12px;">✅</div>
+            <h3 style="margin: 0 0 8px 0; color: #065f46; font-size: 18px; font-weight: 600;">제출 완료</h3>
+            <p style="margin: 0; color: #047857; font-size: 14px;">2차 서류전형 질문지가 제출되었습니다.</p>
+            <p style="margin: 8px 0 0 0; color: #059669; font-size: 13px;">제출된 내용은 수정할 수 없습니다.</p>
+        `;
+        formActions.appendChild(submittedMessage);
     }
 }
 
@@ -525,6 +575,9 @@ async function handleSubmit(e) {
         
         // 임시 저장 데이터 삭제
         localStorage.removeItem('secondRoundDraft');
+        
+        // 폼 비활성화 (수정 불가)
+        disableFormForSubmitted();
         
         // 제출 완료 모달 표시
         const modal = document.getElementById('successModal');
