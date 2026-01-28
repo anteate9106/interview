@@ -970,7 +970,7 @@ async function loadSecondRoundResponse(applicantId) {
                             <div style="margin-bottom: 8px;">
                                 <span style="display: inline-block; padding: 4px 12px; background: #f0fdf4; color: #059669; border-radius: 6px; font-size: 12px; font-weight: 600;">답변</span>
                             </div>
-                            <div style="padding: 16px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #10b981;">
+                            <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
                                 <p class="pre-wrap" style="margin: 0; color: #1f2937; line-height: 1.8; white-space: pre-wrap; font-size: 14px;">${answer}</p>
                             </div>
                         </div>
